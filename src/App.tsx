@@ -9,7 +9,15 @@ export default function App() {
       <header className="flex items-baseline gap-3 border-b border-slate-800 bg-slate-900/60 px-4 py-2">
         <h1 className="text-base font-bold text-sky-300">JabberLM</h1>
         <span className="text-xs text-slate-400">
-          a decoder-only transformer you can see inside — trains in your browser
+          a decoder-only transformer you can see inside — trains in your browser ·{' '}
+          <a
+            href="https://www.linkedin.com/in/greg-dickason-633920/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-400 hover:underline"
+          >
+            by Greg Dickason
+          </a>
         </span>
         <details className="relative ml-auto text-xs text-slate-400">
           <summary className="cursor-pointer select-none rounded border border-slate-700 px-2 py-0.5 hover:bg-slate-800">
