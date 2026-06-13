@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+*.tsbuildinfo
+
+# generated at build time from GUIDE.md by scripts/build-guide.mjs
+public/guide.html
+
+# local-only deploy notes (not relevant to the public repo)
+DEPLOY.md
