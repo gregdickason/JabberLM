@@ -40,6 +40,11 @@ npm run test     # gradient checks + model/trainer/persistence tests
 npm run build    # static production bundle in dist/ (no network calls)
 ```
 
+## Deploy
+
+It's a fully static site (~70 KB gzipped, no backend), hosted on **Cloudflare Pages** at
+[`jabberlm.com`](https://jabberlm.com).
+
 ## How it's built
 
 ```
