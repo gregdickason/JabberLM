@@ -1,26 +1,24 @@
 # JabberLM
 
 A **browser-only, fully-inspectable decoder-only transformer** that demonstrates how transformer
-language models work at every level (it's a *small* LM — not an LLM). It trains live in your browser —
-no server, no GPU, no network — on a short text
+language models work at every level (it's a *small* LM — not an LLM). It trains live in your browser on a short text
 (default: Lewis Carroll's *Jabberwocky*) using a **character-level** tokenizer, and lets you inspect
 the real Q/K/V matrices, attention weights, gradients, and logits as it learns and generates.
 
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
-transformer, the optimizer, and the visualizations. Nothing is hidden in a framework, so every
-number on screen is one you can trace back to the math.
+transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
 
 ## Why character-level + Jabberwocky?
 
 Jabberwocky's invented words ("brillig", "slithy", "borogoves") would fragment badly under a normal
 subword tokenizer. Character-level keeps the vocabulary tiny (~50 tokens) and every token a single,
-human-readable character — which is exactly what makes the inspector legible.
+human-readable character.
 
 ## Features
 
 - **Live training panel** — play / pause / single-step, a falling loss curve, a live sample that
-  drifts toward Jabberwocky-like text, per-parameter gradient-norm bars, and a live weight heatmap.
-  Edit the learning rate, optimizer (SGD / AdamW), batch size, and grad-clip mid-run.
+  drifts toward Jabberwocky-like text (or alternative text you paste), per-parameter gradient-norm bars, and a live weight heatmap.
+  Edit the learning rate, optimizer (SGD / AdamW), batch size, and grad-clip mid-run.  Also step through a forward pass and back propagation.
 - **Inference + inspector panel** — type a prompt, step one token at a time, and walk the full
   pipeline through tabs: `tokenize → embed → attention → residual → mlp → logits`. Hover any
   heatmap cell to read the exact value. Sample with temperature / top-k / top-p.
