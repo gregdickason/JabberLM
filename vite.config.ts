@@ -9,8 +9,8 @@ export default defineConfig({
   base: '/',
   build: {
     rollupOptions: {
-      // multi-page: the main app and the standalone interpretability lab
-      input: { main: 'index.html', lab: 'lab.html' },
+      // multi-page: main app, interpretability lab, and plain-language explainer
+      input: { main: 'index.html', lab: 'lab.html', explain: 'explain.html' },
     },
   },
   test: {

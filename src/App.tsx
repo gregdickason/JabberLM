@@ -4,8 +4,25 @@ import TrainingPanel from './components/TrainingPanel'
 import InferencePanel from './components/InferencePanel'
 import { openGuide } from './guide'
 
+const MODE_KEY = 'jabberlm-mode-chosen'
+
 export default function App() {
   const [showConfig, setShowConfig] = useState(false)
+  const [chooseMode, setChooseMode] = useState(() => {
+    try {
+      return localStorage.getItem(MODE_KEY) !== '1'
+    } catch {
+      return false
+    }
+  })
+  const dismissChooser = () => {
+    try {
+      localStorage.setItem(MODE_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+    setChooseMode(false)
+  }
   return (
     <div className="flex min-h-screen flex-col font-mono text-sm lg:h-full lg:min-h-0 lg:overflow-hidden">
       <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2">
@@ -19,6 +36,15 @@ export default function App() {
             className="text-sky-400 hover:underline"
           >
             by Greg Dickason
+          </a>{' '}
+          ·{' '}
+          <a
+            href="https://github.com/gregdickason/JabberLM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-400 hover:underline"
+          >
+            GitHub
           </a>
         </span>
         <button
@@ -27,11 +53,14 @@ export default function App() {
         >
           ⚙ Config
         </button>
+        <a href="./explain.html" className="text-xs text-emerald-300 hover:underline sm:ml-auto">
+          New to AI? Explain it simply →
+        </a>
         <a
           href="./lab.html"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-fuchsia-300 hover:underline sm:ml-auto"
+          className="text-xs text-fuchsia-300 hover:underline"
         >
           Interpretability lab ↗
         </a>
@@ -91,6 +120,39 @@ export default function App() {
           </section>
         </main>
       </div>
+
+      {chooseMode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-5 shadow-2xl">
+            <h2 className="text-base font-bold text-sky-300">Welcome to JabberLM</h2>
+            <p className="mt-1 text-xs text-slate-400">
+              A real language model you can see inside. How would you like to start?
+            </p>
+            <div className="mt-4 grid gap-2">
+              <a
+                href="./explain.html"
+                onClick={dismissChooser}
+                className="rounded border border-emerald-700 bg-emerald-900/30 p-3 hover:bg-emerald-900/50"
+              >
+                <div className="text-sm font-semibold text-emerald-200">I work with AI — explain it simply</div>
+                <div className="text-[11px] text-slate-400">
+                  Plain-language tour: how it answers, why it varies, what it costs, where it goes wrong.
+                  No maths.
+                </div>
+              </a>
+              <button
+                onClick={dismissChooser}
+                className="rounded border border-slate-600 bg-slate-800 p-3 text-left hover:bg-slate-700"
+              >
+                <div className="text-sm font-semibold text-slate-100">Technical playground</div>
+                <div className="text-[11px] text-slate-400">
+                  Train a model live and inspect attention, gradients, and the maths.
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
