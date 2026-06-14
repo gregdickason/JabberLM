@@ -39,7 +39,7 @@ export default function App() {
           <summary className="cursor-pointer select-none rounded border border-slate-700 px-2 py-0.5 hover:bg-slate-800">
             how to use
           </summary>
-          <div className="absolute right-0 z-10 mt-1 w-80 max-w-[88vw] rounded border border-slate-700 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300 shadow-xl">
+          <div className="fixed inset-x-2 bottom-2 z-20 max-h-[75vh] overflow-y-auto rounded border border-slate-700 bg-slate-900 p-3 text-[11px] leading-relaxed text-slate-300 shadow-xl lg:absolute lg:inset-x-auto lg:bottom-auto lg:right-0 lg:mt-1 lg:max-h-none lg:w-80 lg:overflow-visible">
             <ol className="list-decimal space-y-1 pl-4">
               <li>
                 In the left sidebar pick a text (default: Jabberwocky) and an architecture preset.
