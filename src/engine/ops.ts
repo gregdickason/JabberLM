@@ -86,6 +86,47 @@ export function scale(a: Tensor, s: number): Tensor {
   return c
 }
 
+/** Elementwise subtract (same shape). */
+export function sub(a: Tensor, b: Tensor): Tensor {
+  if (a.rows !== b.rows || a.cols !== b.cols) throw new Error('sub: shape mismatch')
+  const data = new Float32Array(a.size)
+  for (let i = 0; i < a.size; i++) data[i] = a.data[i] - b.data[i]
+  const c = out(data, a.rows, a.cols, [a, b], 'sub')
+  c._backward = () => {
+    for (let i = 0; i < a.size; i++) {
+      a.grad[i] += c.grad[i]
+      b.grad[i] -= c.grad[i]
+    }
+  }
+  return c
+}
+
+/** Elementwise product (same shape). */
+export function mulElem(a: Tensor, b: Tensor): Tensor {
+  if (a.rows !== b.rows || a.cols !== b.cols) throw new Error('mulElem: shape mismatch')
+  const data = new Float32Array(a.size)
+  for (let i = 0; i < a.size; i++) data[i] = a.data[i] * b.data[i]
+  const c = out(data, a.rows, a.cols, [a, b], 'mulElem')
+  c._backward = () => {
+    for (let i = 0; i < a.size; i++) {
+      a.grad[i] += c.grad[i] * b.data[i]
+      b.grad[i] += c.grad[i] * a.data[i]
+    }
+  }
+  return c
+}
+
+/** Elementwise absolute value (subgradient: sign, with sign(0)=0). */
+export function abs(a: Tensor): Tensor {
+  const data = new Float32Array(a.size)
+  for (let i = 0; i < a.size; i++) data[i] = Math.abs(a.data[i])
+  const c = out(data, a.rows, a.cols, [a], 'abs')
+  c._backward = () => {
+    for (let i = 0; i < a.size; i++) a.grad[i] += c.grad[i] * Math.sign(a.data[i])
+  }
+  return c
+}
+
 /** Matrix transpose (m×n) → (n×m). */
 export function transpose(a: Tensor): Tensor {
   const data = new Float32Array(a.size)

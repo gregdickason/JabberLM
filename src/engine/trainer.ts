@@ -21,11 +21,13 @@ export class Trainer {
   readonly model: Model
   readonly tok: CharTokenizer
   readonly cfg: ModelConfig
+  readonly text: string // the training corpus (used by the interpretability lab)
   private opt: Optimizer
   private ids: number[]
   private rng: RNG
 
   constructor(text: string, cfg: ModelConfig, seed = 1337) {
+    this.text = text
     this.tok = new CharTokenizer(text)
     this.cfg = { ...cfg, vocabSize: this.tok.vocabSize }
     this.model = new Model(this.cfg, seed)

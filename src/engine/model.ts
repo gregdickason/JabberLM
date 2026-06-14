@@ -127,6 +127,7 @@ export class Model {
     positions: number[] = ids.map((_, i) => i),
     collect = false,
     capture?: WalkCapture,
+    steer?: { layer: number; vec: Float32Array; strength: number },
   ): ForwardResult {
     const mask = buildMask(positions, flags)
 
@@ -145,7 +146,8 @@ export class Model {
     const inputResidual = x
     const layerTraces: LayerTrace[] = []
 
-    for (const lp of this.layers) {
+    for (let li = 0; li < this.layers.length; li++) {
+      const lp = this.layers[li]
       const preLNAttn = x
       const normedAttn = layerNorm(x, lp.ln1g, lp.ln1b)
       const attnRes = multiHeadAttention(
@@ -163,7 +165,13 @@ export class Model {
       const normedMLP = layerNorm(afterAttn, lp.ln2g, lp.ln2b)
       const hidden = this.activate(addRow(matmul(normedMLP, lp.W1), lp.b1))
       const mlpOut = addRow(matmul(hidden, lp.W2), lp.b2)
-      const afterMLP = add(afterAttn, mlpOut)
+      let afterMLP = add(afterAttn, mlpOut)
+      // feature steering: clamp a direction into the residual stream after a layer
+      if (steer && steer.layer === li) {
+        const sv = new Float32Array(this.cfg.dModel)
+        for (let i = 0; i < sv.length; i++) sv[i] = steer.vec[i] * steer.strength
+        afterMLP = addRow(afterMLP, new Tensor(sv, 1, this.cfg.dModel, 'steer'))
+      }
       x = afterMLP
 
       if (capture) {

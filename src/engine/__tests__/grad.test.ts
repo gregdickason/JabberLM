@@ -6,6 +6,9 @@ import {
   addRow,
   scale,
   transpose,
+  sub,
+  mulElem,
+  abs,
   rowSoftmax,
   layerNorm,
   gelu,
@@ -92,6 +95,25 @@ describe('autograd gradient checks', () => {
 
   it('scale', () => {
     checkGrad([{ rows: 2, cols: 3, data: rand(6) }], (i) => sum(scale(i[0], 2.5)))
+  })
+
+  it('sub', () => {
+    checkGrad([{ rows: 2, cols: 3, data: rand(6) }, { rows: 2, cols: 3, data: rand(6) }], (i) =>
+      sum(sub(i[0], i[1])),
+    )
+  })
+
+  it('mulElem', () => {
+    checkGrad([{ rows: 2, cols: 3, data: rand(6) }, { rows: 2, cols: 3, data: rand(6) }], (i) =>
+      sum(mulElem(i[0], i[1])),
+    )
+  })
+
+  it('abs', () => {
+    // offset away from 0 to avoid the non-differentiable kink
+    checkGrad([{ rows: 2, cols: 3, data: rand(6).map((x) => x + (x >= 0 ? 0.5 : -0.5)) }], (i) =>
+      sum(abs(i[0])),
+    )
   })
 
   it('transpose', () => {
