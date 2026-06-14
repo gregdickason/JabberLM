@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build:guide": "node scripts/build-guide.mjs",
-    "gen:demo": "vite-node scripts/gen-demo-model.ts",
+    "gen:demo": "npx --yes vite-node scripts/gen-demo-model.ts",
     "dev": "npm run build:guide && vite",
     "build": "npm run build:guide && tsc -b && vite build",
     "preview": "vite preview",
@@ -27,7 +27,6 @@
     "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",
-    "vite-node": "^6.0.0",
     "vitest": "^2.1.8"
   }
 }
