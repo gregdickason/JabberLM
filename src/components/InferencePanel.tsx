@@ -237,8 +237,8 @@ export default function InferencePanel() {
           </div>
 
           {(tab === 'attention' || tab === 'mlp' || tab === 'RoPE' || tab === 'KV cache') && (
-            <div className="flex gap-3">
-              <div className="w-28 shrink-0">
+            <div className="flex flex-col gap-3 lg:flex-row">
+              <div className="w-full shrink-0 lg:w-28">
                 <ArchitectureMap
                   nLayers={model.cfg.nLayers}
                   nHeads={model.cfg.nHeads}

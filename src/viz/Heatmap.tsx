@@ -57,16 +57,18 @@ export default function Heatmap({
   }
 
   return (
-    <div className="inline-block align-top">
+    <div className="inline-block max-w-full align-top">
       {title && <div className="mb-1 text-[10px] text-slate-400">{title}</div>}
-      <canvas
-        ref={canvasRef}
-        width={w}
-        height={h}
-        className="rounded border border-slate-700"
-        onMouseMove={onMove}
-        onMouseLeave={() => setHover(null)}
-      />
+      <div className="max-w-full overflow-x-auto">
+        <canvas
+          ref={canvasRef}
+          width={w}
+          height={h}
+          className="rounded border border-slate-700"
+          onMouseMove={onMove}
+          onMouseLeave={() => setHover(null)}
+        />
+      </div>
       <div className="mt-1 h-4 text-[10px] text-slate-400">
         {hover ? (
           <span>

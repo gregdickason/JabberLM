@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 export interface Series {
   label: string
@@ -8,22 +8,36 @@ export interface Series {
 
 interface LineChartProps {
   series: Series[]
-  width?: number
+  width?: number // treated as a MAX width; the chart shrinks to fit its container
   height?: number
   yLabel?: string
 }
 
-// Lightweight Canvas line chart. Auto-scales X/Y across all series and draws each
-// in its own colour, so train and validation loss share one comparable chart.
+// Lightweight Canvas line chart. Auto-scales X/Y across all series, draws each in
+// its own colour, and sizes itself to the container width (capped at `width`) so
+// it never overflows on a narrow / mobile screen.
 export default function LineChart({ series, width = 360, height = 140, yLabel }: LineChartProps) {
-  const ref = useRef<HTMLCanvasElement>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [w, setW] = useState(width)
+
+  // track the container width
+  useLayoutEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const measure = () => setW(Math.max(220, Math.min(width, el.clientWidth)))
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [width])
 
   useEffect(() => {
-    const canvas = ref.current
+    const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    ctx.clearRect(0, 0, width, height)
+    ctx.clearRect(0, 0, w, height)
 
     const all = series.flatMap((s) => s.points)
     if (all.length < 2) return
@@ -35,7 +49,7 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
     const maxX = Math.max(...xs)
     const minY = Math.min(...ys)
     const maxY = Math.max(...ys)
-    const sx = (x: number) => pad + ((x - minX) / (maxX - minX || 1)) * (width - pad - 6)
+    const sx = (x: number) => pad + ((x - minX) / (maxX - minX || 1)) * (w - pad - 6)
     const sy = (y: number) => height - pad - ((y - minY) / (maxY - minY || 1)) * (height - pad - 6)
 
     // axes
@@ -44,7 +58,7 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
     ctx.beginPath()
     ctx.moveTo(pad, 6)
     ctx.lineTo(pad, height - pad)
-    ctx.lineTo(width - 6, height - pad)
+    ctx.lineTo(w - 6, height - pad)
     ctx.stroke()
 
     // y range labels
@@ -71,7 +85,6 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
         })
         ctx.stroke()
       }
-      // dots for sparse series (skip on the dense train line to avoid clutter)
       if (s.points.length < 60) {
         for (const p of s.points) {
           ctx.beginPath()
@@ -80,7 +93,11 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
         }
       }
     }
-  }, [series, width, height, yLabel])
+  }, [series, w, height, yLabel])
 
-  return <canvas ref={ref} width={width} height={height} className="rounded bg-slate-900/60" />
+  return (
+    <div ref={wrapRef} className="w-full">
+      <canvas ref={canvasRef} width={w} height={height} className="rounded bg-slate-900/60" />
+    </div>
+  )
 }
