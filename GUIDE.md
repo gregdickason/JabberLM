@@ -9,12 +9,23 @@ knowledge — just curiosity. Follow along in the app as you read.
 ## 1. The big picture
 
 JabberLM is a tiny **decoder-only transformer** (the same family as GPT) that runs entirely in your
-browser. It learns to predict **the next character** of a text, one character at a time. Train it on
-*Jabberwocky* and it gradually learns Carroll's spelling, spacing, and rhythm.
+browser. It learns to predict **the next character** of a text, one character at a time.
 
-It is **character-level**: the vocabulary is just the distinct characters in your text (~50 of them),
+**It opens with a model already trained for you.** On first visit the app loads a bundled
+pre-trained model (the *Jabber Poems* model — see below) so you can generate text and look inside it
+straight away, with no waiting. You can also build and train your own from scratch on the left, and
+flip back to the built-in one any time with **Load built-in model**.
+
+It is **character-level**: the vocabulary is just the distinct characters in your text (~60 of them),
 so every "token" is a single readable character. That is what makes the internals legible — when you
 look at an attention matrix, the rows and columns are actual letters.
+
+> **The point of the poems.** Train a tiny model on **one** poem and it just *memorises* it — that's
+> overfitting. Train it on **many** poems in the same invented style (the *Jabber Poems* set:
+> *Jabberwocky* plus ~100 more) and it learns the *style* and starts to *generalise*, the way a real
+> LLM does. The built-in model is the second kind: trained on ~90K characters of Jabberwocky-style
+> verse, ~0.46M parameters, in about **87 minutes** of plain single-threaded JavaScript on a laptop —
+> no GPU. The dropdown lets you reproduce both the overfit and the generalising case yourself.
 
 The screen has three parts:
 
@@ -30,12 +41,17 @@ Both panels share **one** model. Train on the left, then inspect that same model
 
 ## 2. A standard training run
 
-1. **Pick a text.** In the sidebar's *Training text* section, leave it on **Jabberwocky** (or pick
-   another sample, or paste your own). The line under the box shows the character count and how many
-   unique characters there are — that unique count becomes the vocabulary size.
+1. **Pick a text.** In the sidebar's *Training text* section, choose a sample (or paste your own):
+   - **Jabberwocky (one poem)** — the single poem; great for *seeing overfitting*.
+   - **Jabber Poems** — Jabberwocky + ~100 more in the same style; enough variety to *generalise*.
+   - **Shakespeare (sonnets)** — a larger, real-English corpus for contrast.
+
+   The line under the box shows the character count and how many unique characters there are — that
+   unique count becomes the vocabulary size.
 
 2. **Pick a size.** In *Architecture*, click a preset: **tiny** (fast, a bit dim), **default** (a good
-   balance), or **bigger** (slower, smarter). Presets just set the architecture numbers for you.
+   balance), **bigger** (slower, smarter), or **largest** (the ~0.46M-param size the built-in model
+   uses — best with the bigger corpora). Presets just set the architecture numbers for you.
 
 3. **Press ▶ Play.** The first press *builds* a fresh model for your text + architecture and starts
    training. Watch four things:
@@ -70,15 +86,20 @@ detail that doesn't transfer. It's the single most important thing a held-out se
 training pipelines stop (early stopping) right around where the val curve bottoms out.
 
 **Which text shows the dip-then-rise?** The classic U needs enough *generalizable* structure for the
-model to learn before it starts memorising — which needs more than a couple hundred characters. Use
-the **Alice (longer)** sample with the **default** or **bigger** preset for the best chance of seeing
-val dip and then climb. On the very short texts (**Jabberwocky**, **Tiny Shakespeare**) val usually
-rises *immediately* with no dip — that's not a bug, it's the lesson: a tiny model on a tiny text skips
-straight to memorising and never generalises. (Per-step training speed is unaffected by text length,
-so the longer sample costs nothing per step.)
+model to learn before it starts memorising — which needs more than one short poem. This is exactly the
+contrast the datasets are built around:
 
-> Quirk: *Jabberwocky*'s last stanza is a copy of its first, so a tail split isn't truly "unseen" and
-> the gap is muted — another reason to prefer **Alice (longer)** for this experiment.
+- **Jabberwocky (one poem)** → val loss usually rises *immediately*, with no dip. That's not a bug,
+  it's the lesson: a tiny model on a tiny text skips straight to **memorising** and never generalises.
+- **Jabber Poems** (or **Shakespeare sonnets**) with the **largest** preset → there's enough shared
+  structure (a recurring invented vocabulary, consistent grammar and rhythm) that the val line can
+  **fall for a while before it bottoms out and creeps up** — the model is genuinely *generalising*
+  before it starts overfitting.
+
+(Per-step training speed is unaffected by text length, so the bigger corpus costs nothing per step.)
+
+> Quirk: *Jabberwocky*'s last stanza is a copy of its first, so a tail split isn't truly "unseen" —
+> another reason the single poem makes a poor generalisation test and a good *overfitting* one.
 
 6. **Save it.** In the *model* row: **Save** keeps it in your browser; **JSON Save** downloads a file
    you can reload later with **JSON Load**. (Use single-**Step** for one batch at a time;
@@ -108,16 +129,18 @@ see the whole pass end-to-end.
 
 Now use the trained model (right panel).
 
-1. **Type a prompt** (e.g. `'Twas brillig`) and press **Run**. This feeds the prompt through the model
-   and fills the inspector. Nothing is generated yet — Run just shows you the model's state *given the
-   prompt*.
+1. **Type a prompt** (e.g. `'Twas brillig`) and press **Run**. This feeds the prompt through the model,
+   fills the inspector, and writes **the first predicted character** — so the output already grows past
+   what you typed. The first time, the **Step** and **Generate ×20** buttons pulse to show you what to
+   do next.
 
-2. **Press ⏭ Step (1 token)** to generate one character. The model samples the next character and
+2. **Press ⏭ Step (1 token)** to generate one more character. The model samples the next character and
    appends it; the inspector updates to show exactly how it decided. Step again and again to watch it
-   write. **Generate ×20** does 20 steps at once. **↺ Reset** clears everything.
+   write. **Generate ×20** does 20 steps at once (the output box auto-scrolls so you always see the
+   newest text). **↺ Reset** clears everything.
 
-   - **Run** = restart from the prompt. **Step** = continue one character. **Reset** = clear.
-     Editing the prompt box also starts a fresh session.
+   - **Run** = start from the prompt + first letter. **Step** = continue one character. **Reset** =
+     clear. Editing the prompt box also starts a fresh session.
 
 3. **Open the tabs** to look inside. Every heatmap is **hover-to-read** — move your mouse over any cell
    to see its exact value and which characters it relates to.
@@ -164,10 +187,11 @@ Now use the trained model (right panel).
   vocabulary. Changing it requires a **Rebuild** (the model's input/output sizes change).
 
 ### Architecture *(changing any of these needs a Rebuild + retrain)*
-- **presets: tiny / default / bigger** — quick size shortcuts.
+- **presets: tiny / default / bigger / largest** — quick size shortcuts.
   - tiny = d_model 24, 2 heads, 2 layers, context 32, d_ff 96
   - default = d_model 48, 3 heads, 3 layers, context 48, d_ff 192
   - bigger = d_model 64, 4 heads, 4 layers, context 64, d_ff 256
+  - largest = d_model 96, 4 heads, 4 layers, context 128, d_ff 384 (~0.46M params — the built-in model)
 - **d_model** — the width of every token's vector (the residual stream). Bigger = more capacity, more
   compute. *(default 48)*
 - **heads** — how many independent attention heads per layer. Each can learn a different relationship.
@@ -218,6 +242,8 @@ Now use the trained model (right panel).
 ### Save / Load
 - **Save / Load** — store/restore the model in your browser (localStorage).
 - **JSON Save / JSON Load** — download/upload the model as a file (use this for big models or to share).
+- **Load built-in model** — drop the bundled pre-trained *Jabber Poems* model back in at any time
+  (this is also what loads automatically on first visit).
 
 ---
 
@@ -232,10 +258,12 @@ Now use the trained model (right panel).
 - **Temperature sweep.** Generate with *temp = 0* (repetitive), `0.8` (balanced), and `1.5` (chaotic).
 - **Overcook the learning rate.** Set *learning rate* to `0.5` and Play — the loss curve spikes and
   the sample turns to garbage. Lower it back down and it recovers.
-- **Small vs large.** Train *tiny* vs *bigger* on the same text and compare how Jabberwocky-like the
-  live sample gets and how low the loss goes.
-- **Watch overfitting.** Switch the text to *Alice (longer)*, pick the *bigger* preset, set
-  *held-out %* = 20, and Play. Both lines start together at step 0; let it run well past where the
-  train line flattens — the amber val line bottoms out and starts creeping up while the emerald train
-  line keeps falling. That's the model memorising instead of generalising. (Try *Tiny Shakespeare*
-  for contrast: too little data, so val rises immediately with no dip.)
+- **Small vs large.** Train *tiny* vs *largest* on **Jabber Poems** and compare how Jabberwocky-like
+  the live sample gets and how low the loss goes.
+- **Overfit vs generalise (the headline experiment).** Set *held-out %* = 20, then:
+  - Pick **Jabberwocky (one poem)** + the *default* preset and Play — the amber **val** line rises
+    almost immediately while train keeps falling. The model is **memorising** one poem.
+  - Now pick **Jabber Poems** + the *largest* preset and Play — val falls for a good while before it
+    bottoms out and slowly creeps up. The model is **generalising** first, overfitting only later.
+  - That gap *is* the lesson behind the whole app: variety in the data is what turns memorisation into
+    something that behaves like a real (if tiny) language model.

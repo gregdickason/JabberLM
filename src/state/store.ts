@@ -39,6 +39,7 @@ interface AppState {
   valHistory: LossPoint[] // held-out validation loss (sparser than lossHistory)
   livePreview: string // sample regenerated periodically during training
   modelBuilt: boolean // has a model been constructed for the current config?
+  pretrainedActive: boolean // is the currently-built model the bundled pretrained one?
 
   // --- inspector UI state ---
   inspect: InspectSelection
@@ -61,6 +62,7 @@ interface AppState {
   setStep: (n: number) => void
   setLivePreview: (s: string) => void
   setModelBuilt: (b: boolean) => void
+  setPretrainedActive: (b: boolean) => void
   resetRun: () => void
 }
 
@@ -77,6 +79,7 @@ export const useStore = create<AppState>((set) => ({
   valHistory: [],
   livePreview: '',
   modelBuilt: false,
+  pretrainedActive: false,
 
   inspect: { layer: 0, head: 0 },
   modelVersion: 0,
@@ -98,6 +101,7 @@ export const useStore = create<AppState>((set) => ({
   setStep: (step) => set({ step }),
   setLivePreview: (livePreview) => set({ livePreview }),
   setModelBuilt: (modelBuilt) => set({ modelBuilt }),
+  setPretrainedActive: (pretrainedActive) => set({ pretrainedActive }),
   resetRun: () =>
     set({ status: 'idle', step: 0, lossHistory: [], valHistory: [], livePreview: '', modelBuilt: false }),
 }))

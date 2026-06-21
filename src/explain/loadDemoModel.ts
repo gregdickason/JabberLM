@@ -1,6 +1,7 @@
 import { deserialize, type SavedModel } from '../engine/persist'
 import { idbGet, restoreCheckpoint } from '../engine/checkpoint'
 import { Trainer } from '../engine/trainer'
+import { fetchBundledModel } from '../state/pretrained'
 
 // The explainer needs a trained model to drive its live demos. It prefers the
 // visitor's own model (from the main app, via IndexedDB or the browser save) and
@@ -29,13 +30,10 @@ export async function loadDemoModel(): Promise<LoadedModel | null> {
   } catch {
     /* ignore */
   }
-  // 3. the bundled pre-trained demo model
+  // 3. the bundled pre-trained model (trained offline on the Jabber Poems set)
   try {
-    const res = await fetch(import.meta.env.BASE_URL + 'demo-model.json')
-    if (res.ok) {
-      const saved = (await res.json()) as SavedModel
-      return { trainer: deserialize(saved), source: 'a small built-in demo model' }
-    }
+    const saved = await fetchBundledModel()
+    if (saved) return { trainer: deserialize(saved), source: 'a model trained on Jabberwocky-style poems' }
   } catch {
     /* ignore */
   }

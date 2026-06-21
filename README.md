@@ -1,18 +1,37 @@
 # JabberLM
 
 A **browser-only, fully-inspectable decoder-only transformer** that demonstrates how transformer
-language models work at every level (it's a *small* LM — not an LLM). It trains live in your browser on a short text
-(default: Lewis Carroll's *Jabberwocky*) using a **character-level** tokenizer, and lets you inspect
-the real Q/K/V matrices, attention weights, gradients, and logits as it learns and generates.
+language models work at every level (it's a *small* LM — not an LLM). It trains live in your browser
+using a **character-level** tokenizer, and lets you inspect the real Q/K/V matrices, attention
+weights, gradients, and logits as it learns and generates.
+
+It **ships with a pre-trained model** (trained offline by the same engine on the *Jabber Poems* set —
+*Jabberwocky* plus ~100 more original poems in the same invented style). That model loads
+automatically on first visit, so you can generate text and explore the internals immediately, without
+training anything first.
 
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
 transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
 
-## Why character-level + Jabberwocky?
+## Why character-level, and why many poems?
 
 Jabberwocky's invented words ("brillig", "slithy", "borogoves") would fragment badly under a normal
-subword tokenizer. Character-level keeps the vocabulary tiny (~50 tokens) and every token a single,
+subword tokenizer. Character-level keeps the vocabulary tiny (~60 tokens) and every token a single,
 human-readable character.
+
+The corpus is the lesson. Train on **one** poem and a tiny model just **memorises** it (held-out
+validation loss turns up almost immediately — overfitting). Train on **many** poems in the same style
+(*Jabber Poems*) and the same tiny model learns the *style* and **generalises** — which is what makes
+it feel like a small LLM. Both options are in the dropdown so you can see the contrast yourself; a
+real-English contrast (*Shakespeare's sonnets*) is there too.
+
+## The built-in model
+
+The bundled model (`public/jabber-model.json`) is **~0.46M parameters** (the *largest* preset:
+d_model 96, 4 heads, 4 layers, context 128). It was trained on ~90K characters of *Jabber Poems* for
+**2,400 steps** to cross-entropy loss **~1.31** in **~87 minutes** of **single-threaded JavaScript**
+(no GPU — the same engine that runs in the browser) on a MacBook Air (M4, 16 GB). Regenerate it any
+time with `npm run gen:jabber` (or `npm run gen:sonnets` for the sonnets variant).
 
 ## Features
 
@@ -27,21 +46,24 @@ human-readable character.
   - **KV cache** — the key/value cache as a grid, with reused-vs-recomputed status and the
     (~quadratic) compute saved.
   - **Sliding window** — recompute the attention mask live and see which tokens fall out of view.
-- **Save / load** trained weights to your browser or to a JSON file.
+- **Save / load** trained weights to your browser or to a JSON file, and **Load built-in model** to
+  drop the bundled pre-trained model back in at any time.
 
 ## Run it
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
-npm run test     # gradient checks + model/trainer/persistence tests
-npm run build    # static production bundle in dist/ (no network calls)
+npm run dev          # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
+npm run test         # gradient checks + model/trainer/persistence tests
+npm run build        # static production bundle in dist/ (no network calls)
+npm run gen:jabber   # (re)train the bundled model → public/jabber-model.json
 ```
 
 ## Deploy
 
-It's a fully static site (~70 KB gzipped, no backend), hosted on **Cloudflare Pages** at
-[`jabberlm.com`](https://jabberlm.com).
+It's a fully static site (no backend), hosted on **Cloudflare Pages** at
+[`jabberlm.com`](https://jabberlm.com). The app code is ~70 KB gzipped; the bundled pre-trained model
+adds ~1 MB gzipped (`jabber-model.json`), fetched once and cached.
 
 ## How it's built
 

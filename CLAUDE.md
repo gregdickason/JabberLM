@@ -4,10 +4,16 @@ Guidance for working in this repo.
 
 ## What this is
 
-JabberLM — a browser-only, educational decoder-only transformer. It trains in-browser on a short
-text (default *Jabberwocky*) with a char-level tokenizer and exposes every internal (Q/K/V,
-attention, gradients, logits) for inspection. The point is **inspectability**: prefer clear,
-traceable math over cleverness or speed. The model is tiny, so plain-JS forward/backward is fine.
+JabberLM — a browser-only, educational decoder-only transformer. It trains in-browser with a
+char-level tokenizer and exposes every internal (Q/K/V, attention, gradients, logits) for inspection.
+The point is **inspectability**: prefer clear, traceable math over cleverness or speed. The model is
+tiny, so plain-JS forward/backward is fine.
+
+It also **ships a pre-trained model** (`public/jabber-model.json`, trained offline by `scripts/gen-model.ts`
+on the *Jabber Poems* corpus) that auto-loads on first visit so inference/inspection works with no
+training. The teaching arc is overfitting-vs-generalisation: training on one poem memorises; training
+on many (the *Jabber Poems* set) generalises. Datasets live in `src/data/` (`jabberwocky.ts` →
+`TEXT_SAMPLES`, `jabberPoems.ts`, `shakespeare.ts`); bundled-model facts in `src/data/modelStats.ts`.
 
 ## Architecture
 
@@ -23,6 +29,9 @@ traceable math over cleverness or speed. The model is tiny, so plain-JS forward/
   `TrainingPanel.tsx` (a few `trainer.stepBatch()` calls per frame) so the UI stays live. The
   `Trainer` singleton (`trainer.ts`, `getTrainer`/`setTrainer`) is shared by both panels — Tensors
   live here, **not** in the zustand store. The store (`state/store.ts`) holds config + UI state only.
+- The bundled model loads via `state/pretrained.ts` (`fetchBundledModel`/`installBundledModel` — the
+  one place that installs it into engine + store); `TrainingPanel`'s mount effect calls it once (a
+  module-level latch makes that StrictMode-safe). State, not engine, owns this — it touches the store.
 
 ## Conventions
 
@@ -34,7 +43,8 @@ traceable math over cleverness or speed. The model is tiny, so plain-JS forward/
 ## Commands
 
 ```bash
-npm run dev     # vite dev server
-npm run test    # vitest: gradient checks + model/trainer/persist
-npm run build   # tsc -b && vite build
+npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
+npm run test         # vitest: gradient checks + model/trainer/persist
+npm run build        # tsc -b && vite build
+npm run gen:jabber   # retrain the bundled model -> public/jabber-model.json (gen:sonnets for the variant)
 ```

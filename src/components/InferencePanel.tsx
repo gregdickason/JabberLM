@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { getTrainer } from '../engine/trainer'
+import { installBundledModel } from '../state/pretrained'
+import { MODEL_STATS_LINE } from '../data/modelStats'
 import { RNG } from '../engine/random'
 import { lastRowLogits, sampleFromLogits, traceOf } from '../engine/generate'
 import type { Trace } from '../engine/trace'
@@ -39,9 +41,10 @@ function startPrompt(text: string): string {
 }
 
 export default function InferencePanel() {
-  const { modelBuilt, modelVersion, trainingText, featureFlags, setFeatureFlags, sampleConfig, setSampleConfig, inspect, setInspect } =
+  const { modelBuilt, pretrainedActive, modelVersion, trainingText, featureFlags, setFeatureFlags, sampleConfig, setSampleConfig, inspect, setInspect } =
     useStore()
   const rng = useRef(new RNG(2024))
+  const [loadMsg, setLoadMsg] = useState('')
 
   const [prompt, setPrompt] = useState(() => startPrompt(trainingText))
   const [ids, setIds] = useState<number[]>([])
@@ -50,6 +53,24 @@ export default function InferencePanel() {
   const [sampled, setSampled] = useState<number | undefined>(undefined)
   const [tab, setTab] = useState<Tab>('attention')
   const [genText, setGenText] = useState('')
+  // First-time onboarding: after the user's first Run, pulse the Step/Generate
+  // buttons so the next action is obvious. Cleared once they use either (and not
+  // shown again for the session).
+  const [hintNext, setHintNext] = useState(false)
+  const hintUsed = useRef(false)
+  const outRef = useRef<HTMLPreElement>(null)
+
+  function dismissHint() {
+    hintUsed.current = true
+    setHintNext(false)
+  }
+
+  // Keep the generation box scrolled to the newest text, so a long Generate never
+  // silently overflows below the fold (looking like nothing happened).
+  useEffect(() => {
+    const el = outRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [genText])
 
   // clear the inference session so the inspector never shows data from a
   // previous model (after a rebuild, a load, or a training-text change)
@@ -59,6 +80,7 @@ export default function InferencePanel() {
     setTrace(null)
     setSampled(undefined)
     setGenText('')
+    setHintNext(false)
   }
 
   // a new model was installed (rebuild / load) — drop the stale session and
@@ -72,11 +94,26 @@ export default function InferencePanel() {
   const trainer = getTrainer()
 
   if (!modelBuilt || !trainer) {
+    async function loadBundled() {
+      setLoadMsg('loading…')
+      const ok = await installBundledModel()
+      setLoadMsg(ok ? '' : 'could not load the built-in model')
+    }
     return (
       <div className="p-4">
         <h2 className="text-sm font-bold text-sky-300">Inference &amp; inspector</h2>
         <div className="mt-3 rounded border border-dashed border-slate-700 p-6 text-center text-xs text-slate-500">
-          Train a model in the left panel first, then run the inspector here.
+          <p>Generate text without training — load the model that ships with the site:</p>
+          <button
+            className="mt-3 rounded border border-sky-700 bg-sky-900/40 px-3 py-1.5 text-xs text-sky-200 hover:bg-sky-900/70"
+            onClick={() => void loadBundled()}
+          >
+            ▶ Load the built-in model
+          </button>
+          {loadMsg && <p className="mt-2 text-amber-400">{loadMsg}</p>}
+          <p className="mt-3 text-[11px] text-slate-600">
+            …or build &amp; train your own in the left panel, then run the inspector here.
+          </p>
         </div>
       </div>
     )
@@ -84,18 +121,27 @@ export default function InferencePanel() {
   const tok = trainer.tok
   const model = trainer.model
 
+  // Run restarts from the prompt AND emits the first predicted token, so the output
+  // visibly grows past what you typed (otherwise it looks like nothing happened).
+  // The first time, nudge the user toward Step/Generate by pulsing those buttons.
   function run() {
     let seed = tok.encode(prompt)
     if (seed.length === 0) seed = [0]
-    const { trace } = traceOf(model, featureFlags, seed)
-    setIds(seed)
+    const promptTrace = traceOf(model, featureFlags, seed).trace
+    const last = lastRowLogits(promptTrace.logits.data, promptTrace.logits.rows, promptTrace.logits.cols)
+    const { chosen } = sampleFromLogits(last, sampleConfig, rng.current)
+    const next = [...seed, chosen]
+    const { trace } = traceOf(model, featureFlags, next)
+    setIds(next)
     setPromptLen(seed.length)
     setTrace(trace)
-    setSampled(undefined)
-    setGenText(tok.decode(seed))
+    setSampled(chosen)
+    setGenText(tok.decode(next))
+    if (!hintUsed.current) setHintNext(true)
   }
 
   function step() {
+    dismissHint()
     let cur = ids
     if (cur.length === 0) {
       cur = tok.encode(prompt)
@@ -114,6 +160,7 @@ export default function InferencePanel() {
   }
 
   function generate(n: number) {
+    dismissHint()
     let cur = ids.length ? [...ids] : tok.encode(prompt)
     if (cur.length === 0) cur = [0]
     if (ids.length === 0) setPromptLen(cur.length)
@@ -141,6 +188,17 @@ export default function InferencePanel() {
     <div className="space-y-3 p-4">
       <h2 className="text-sm font-bold text-sky-300">Inference &amp; inspector</h2>
 
+      {pretrainedActive && (
+        <div className="rounded border border-sky-800 bg-sky-900/30 px-3 py-2 text-[11px] text-sky-100">
+          <div>
+            Built-in model loaded — type a prompt and press{' '}
+            <span className="text-sky-300">Run</span>, or press{' '}
+            <span className="text-emerald-300">▶ Play</span> in Training to train your own.
+          </div>
+          <div className="mt-1 text-[10px] text-sky-300/70">{MODEL_STATS_LINE}</div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <div className="flex gap-2">
           <input
@@ -157,10 +215,13 @@ export default function InferencePanel() {
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button className={btn} onClick={step}>
+          <button className={btn + (hintNext ? ' animate-pulse ring-2 ring-sky-400' : '')} onClick={step}>
             ⏭ Step (1 token)
           </button>
-          <button className={btn} onClick={() => generate(20)}>
+          <button
+            className={btn + (hintNext ? ' animate-pulse ring-2 ring-sky-400' : '')}
+            onClick={() => generate(20)}
+          >
             Generate ×20
           </button>
           <button className={btn} onClick={clearSession} disabled={!trace}>
@@ -206,12 +267,15 @@ export default function InferencePanel() {
             />
           </label>
         </div>
-        <pre className="max-h-20 overflow-y-auto whitespace-pre-wrap rounded bg-slate-800 p-2 text-[11px] text-emerald-200">
+        <pre
+          ref={outRef}
+          className="max-h-20 overflow-y-auto whitespace-pre-wrap rounded bg-slate-800 p-2 text-[11px] text-emerald-200"
+        >
           {genText || '(run a prompt to begin)'}
         </pre>
         <div className="text-[10px] text-slate-500">
-          Run = restart from prompt · Step = continue one token · Reset = clear · editing the prompt
-          starts fresh
+          Run = start from prompt + first letter · Step = continue one token · Generate ×20 = add many
+          · Reset = clear · editing the prompt starts fresh
         </div>
       </div>
 

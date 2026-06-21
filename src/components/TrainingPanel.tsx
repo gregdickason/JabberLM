@@ -6,12 +6,18 @@ import { deserialize, serialize, type SavedModel } from '../engine/persist'
 import { idbDelete, idbGet, idbPut, makeCheckpoint, restoreCheckpoint } from '../engine/checkpoint'
 import type { FeatureFlags, TrainConfig } from '../engine/config'
 import { buildWalkSteps, type WalkStep } from '../engine/walkthrough'
+import { installBundledModel } from '../state/pretrained'
 import Walkthrough from './Walkthrough'
 import LineChart from '../viz/LineChart'
 import Heatmap from '../viz/Heatmap'
 import type { Matrix } from '../engine/trace'
 
 const LS_KEY = 'jabberllm-model'
+
+// Run the on-load bootstrap (restore a checkpoint, else install the bundled
+// model) exactly once per page load. React StrictMode mounts effects twice in
+// dev; a module-level latch makes the bootstrap deterministic regardless.
+let bootstrapped = false
 
 const btn =
   'rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-40'
@@ -80,6 +86,7 @@ export default function TrainingPanel() {
     rebuildTrainer(trainingText, modelConfig)
     useStore.getState().resetRun()
     useStore.getState().setModelBuilt(true)
+    useStore.getState().setPretrainedActive(false) // a freshly built model isn't the bundled one
     useStore.getState().bumpModelVersion()
     setGradNorms([])
     setRestoredStep(null) // a new run replaces any restored checkpoint
@@ -195,9 +202,26 @@ export default function TrainingPanel() {
     s.setModelConfig(saved.config) // clears modelBuilt
     s.resetRun()
     s.setModelBuilt(true)
+    s.setPretrainedActive(false) // a user-loaded model isn't the bundled one
     s.bumpModelVersion()
     setGradNorms([])
     setSaveMsg('loaded ✓')
+  }
+
+  // (Re)install the bundled pre-trained model, ready to infer. Used by the explicit
+  // button to re-install it over whatever the visitor has since trained (the same
+  // model is also installed at startup, see the mount effect).
+  async function loadPretrained() {
+    setSaveMsg('loading built-in model…')
+    if (rafRef.current) cancelAnimationFrame(rafRef.current) // stop any running loop
+    const ok = await installBundledModel() // sets the store + clears any interrupted run
+    if (!ok) {
+      setSaveMsg('built-in model unavailable')
+      return
+    }
+    setRestoredStep(null)
+    setGradNorms([])
+    setSaveMsg('built-in model loaded ✓')
   }
 
   function saveToStorage() {
@@ -275,37 +299,45 @@ export default function TrainingPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // On load, restore an interrupted run (if a checkpoint exists) — paused, with a
-  // Resume banner — so a sleep-induced tab discard no longer loses the run.
+  // On load: restore an interrupted run if a checkpoint exists (paused, with a
+  // Resume banner) so a sleep-induced tab discard no longer loses the run;
+  // otherwise install the bundled pre-trained model so inference and inspection
+  // work out of the box with zero clicks. The module-level `bootstrapped` latch
+  // makes this run exactly once even though StrictMode mounts effects twice.
   useEffect(() => {
-    let cancelled = false
+    if (bootstrapped) return
+    bootstrapped = true
     void (async () => {
       if (getTrainer() || useStore.getState().modelBuilt) return
       let cp
       try {
         cp = await idbGet()
       } catch {
-        return
+        cp = undefined
       }
-      if (!cp || cancelled || getTrainer() || useStore.getState().modelBuilt) return
-      try {
-        const { trainer, run } = restoreCheckpoint(cp)
-        setTrainer(trainer)
-        const s = useStore.getState()
-        s.setTrainingText(cp.model.text)
-        s.setModelConfig(cp.model.config)
-        s.hydrateRun(run)
-        s.setModelBuilt(true)
-        s.setStatus('paused')
-        s.bumpModelVersion()
-        setRestoredStep(run.step)
-      } catch {
-        /* corrupt/incompatible checkpoint: ignore and start fresh */
+      if (getTrainer() || useStore.getState().modelBuilt) return
+      if (cp) {
+        try {
+          const { trainer, run } = restoreCheckpoint(cp)
+          setTrainer(trainer)
+          const s = useStore.getState()
+          s.setTrainingText(cp.model.text)
+          s.setModelConfig(cp.model.config)
+          s.hydrateRun(run)
+          s.setModelBuilt(true)
+          s.setPretrainedActive(false)
+          s.setStatus('paused')
+          s.bumpModelVersion()
+          setRestoredStep(run.step)
+          return
+        } catch {
+          /* corrupt/incompatible checkpoint: fall through to the bundled model */
+        }
       }
+      // No (usable) checkpoint: install the bundled model (ready to infer, 'idle').
+      const ok = await installBundledModel()
+      if (ok) setSaveMsg('pretrained Shakespeare loaded ✓')
     })()
-    return () => {
-      cancelled = true
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -386,6 +418,9 @@ export default function TrainingPanel() {
         </button>
         <button className={btn} onClick={() => fileRef.current?.click()}>
           JSON Load
+        </button>
+        <button className={btn} onClick={() => void loadPretrained()}>
+          Load built-in model
         </button>
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={loadFromFile} />
         {saveMsg && <span className="text-slate-400">{saveMsg}</span>}

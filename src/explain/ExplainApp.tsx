@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { loadDemoModel, type LoadedModel } from './loadDemoModel'
+import { MODEL_STATS } from '../data/modelStats'
 import { Section, Callout } from './ui'
 import NextTokenDemo from './NextTokenDemo'
 import RandomnessDemo from './RandomnessDemo'
@@ -10,7 +11,7 @@ import Governance from './Governance'
 
 export default function ExplainApp() {
   const [loaded, setLoaded] = useState<LoadedModel | null>(null)
-  const [status, setStatus] = useState('loading the demo model…')
+  const [status, setStatus] = useState('loading the model…')
 
   useEffect(() => {
     let cancelled = false
@@ -54,6 +55,13 @@ export default function ExplainApp() {
           demo yourself.
         </p>
         <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
+        {loaded?.source.includes('Jabberwocky-style') && (
+          <p className="mt-1 text-[11px] text-slate-600">
+            This built-in model — {MODEL_STATS.paramsLabel} parameters — was trained on{' '}
+            {MODEL_STATS.poemsLabel.toLowerCase()} in about {MODEL_STATS.minutes} minutes of{' '}
+            {MODEL_STATS.runtime} on a {MODEL_STATS.machine}. No data centre, no GPU.
+          </p>
+        )}
       </div>
 
       {!loaded ? (

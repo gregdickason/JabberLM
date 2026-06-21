@@ -6,6 +6,7 @@ const PRESETS: { name: string; cfg: Partial<ModelConfig> }[] = [
   { name: 'tiny', cfg: { dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 } },
   { name: 'default', cfg: { dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 } },
   { name: 'bigger', cfg: { dModel: 64, nHeads: 4, nLayers: 4, contextLen: 64, dFF: 256 } },
+  { name: 'largest', cfg: { dModel: 96, nHeads: 4, nLayers: 4, contextLen: 128, dFF: 384 } },
 ]
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
