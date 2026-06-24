@@ -55,11 +55,12 @@ export default function ExplainApp() {
           demo yourself.
         </p>
         <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
-        {loaded?.source.includes('Jabberwocky-style') && (
+        {loaded?.source.includes('three-skill') && (
           <p className="mt-1 text-[11px] text-slate-600">
-            This built-in model — {MODEL_STATS.paramsLabel} parameters — was trained on{' '}
-            {MODEL_STATS.poemsLabel.toLowerCase()} in about {MODEL_STATS.minutes} minutes of{' '}
-            {MODEL_STATS.runtime} on a {MODEL_STATS.machine}. No data centre, no GPU.
+            This built-in model — just {MODEL_STATS.paramsLabel} parameters — was trained in about{' '}
+            {MODEL_STATS.minutes} minutes of {MODEL_STATS.runtime} on a {MODEL_STATS.machine} to do three
+            things: write poems, sort numbers, and "solve" equations (watch the maths go wrong). No data
+            centre, no GPU.
           </p>
         )}
       </div>

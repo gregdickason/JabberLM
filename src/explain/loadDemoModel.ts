@@ -30,10 +30,10 @@ export async function loadDemoModel(): Promise<LoadedModel | null> {
   } catch {
     /* ignore */
   }
-  // 3. the bundled pre-trained model (trained offline on the Jabber Poems set)
+  // 3. the bundled pre-trained model (a tiny "three-skill" model: poems + sorting + algebra)
   try {
     const saved = await fetchBundledModel()
-    if (saved) return { trainer: deserialize(saved), source: 'a model trained on Jabberwocky-style poems' }
+    if (saved) return { trainer: deserialize(saved), source: 'a tiny three-skill model (poems, sorting, arithmetic)' }
   } catch {
     /* ignore */
   }

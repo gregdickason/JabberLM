@@ -9,10 +9,13 @@ char-level tokenizer and exposes every internal (Q/K/V, attention, gradients, lo
 The point is **inspectability**: prefer clear, traceable math over cleverness or speed. The model is
 tiny, so plain-JS forward/backward is fine.
 
-It also **ships a pre-trained model** (`public/jabber-model.json`, trained offline by `scripts/gen-model.ts`
-on the *Jabber Poems* corpus) that auto-loads on first visit so inference/inspection works with no
-training. The teaching arc is overfitting-vs-generalisation: training on one poem memorises; training
-on many (the *Jabber Poems* set) generalises. Datasets live in `src/data/` (`jabberwocky.ts` →
+It also **ships a pre-trained "three-skill" model** (`public/multitask-model.json`, ~90K params,
+trained offline by `scripts/gen-model.ts` `DATASET=multitask` on poems + algebra + sorting; corpus
+builder in `scripts/multitask-corpus.ts`) that auto-loads on first visit so inference/inspection works
+with no training. The teaching arc is **memorisation vs hallucination vs generalisation** in one
+model: poems (memorised style), algebra (fluent but wrong — it can't learn the arithmetic), sorting
+(genuinely learned, generalises to unseen inputs, with a grokking jump). `gen:jabber`/`gen:sonnets`
+build the older single-skill poem models. Datasets live in `src/data/` (`jabberwocky.ts` →
 `TEXT_SAMPLES`, `jabberPoems.ts`, `shakespeare.ts`); bundled-model facts in `src/data/modelStats.ts`.
 
 ## Architecture

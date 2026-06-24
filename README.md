@@ -5,10 +5,11 @@ language models work at every level (it's a *small* LM — not an LLM). It train
 using a **character-level** tokenizer, and lets you inspect the real Q/K/V matrices, attention
 weights, gradients, and logits as it learns and generates.
 
-It **ships with a pre-trained model** (trained offline by the same engine on the *Jabber Poems* set —
-*Jabberwocky* plus ~100 more original poems in the same invented style). That model loads
+It **ships with a pre-trained "three-skill" model** (trained offline by the same engine) that loads
 automatically on first visit, so you can generate text and explore the internals immediately, without
-training anything first.
+training anything first. The one tiny model writes poems, **sorts** numbers (a genuinely learned
+procedure), and **"solves"** equations (fluently, but with invented arithmetic) — a live lesson in
+memorisation vs generalisation vs hallucination. See "The built-in model" below.
 
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
 transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
@@ -25,13 +26,24 @@ validation loss turns up almost immediately — overfitting). Train on **many** 
 it feel like a small LLM. Both options are in the dropdown so you can see the contrast yourself; a
 real-English contrast (*Shakespeare's sonnets*) is there too.
 
-## The built-in model
+## The built-in "three-skill" model
 
-The bundled model (`public/jabber-model.json`) is **~0.46M parameters** (the *largest* preset:
-d_model 96, 4 heads, 4 layers, context 128). It was trained on ~90K characters of *Jabber Poems* for
-**2,400 steps** to cross-entropy loss **~1.31** in **~87 minutes** of **single-threaded JavaScript**
-(no GPU — the same engine that runs in the browser) on a MacBook Air (M4, 16 GB). Regenerate it any
-time with `npm run gen:jabber` (or `npm run gen:sonnets` for the sonnets variant).
+The bundled model (`public/multitask-model.json`) is a single tiny network — the *default* preset,
+**~90K parameters** (d_model 48, 3 heads, 3 layers, context 48) — trained on Jabber poems **+**
+single-variable algebra **+** sorting. One model, three behaviours, which together teach the
+difference between **memorisation, hallucination, and generalisation**:
+
+- **Poems** → text generation (it memorised a style).
+- **Algebra** (`7x + 2 = 16 => …`) → fluent but **confidently wrong** working — it can't actually learn
+  the arithmetic at this size. The hallucination lesson, live.
+- **Sorting** (`sort 6 9 2 => 2 6 9`) → a **genuinely learned procedure** that generalises to unseen
+  inputs (**89%** held-out exact-match), and it emerges with a visible **grokking** jump partway
+  through training. "Real" reasoning at 90K params.
+
+It was trained for **6,000 steps** in **~30 minutes** of **single-threaded JavaScript** (no GPU — the
+same engine that runs in the browser) on a MacBook Air (M4, 16 GB). Regenerate it with
+`npm run gen:multitask` (or `npm run gen:jabber` / `npm run gen:sonnets` for the single-skill poem
+models). The corpus builder lives in `scripts/multitask-corpus.ts`.
 
 ## Features
 
@@ -60,7 +72,7 @@ npm install
 npm run dev          # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
 npm run test         # gradient checks + model/trainer/persistence tests
 npm run build        # static production bundle in dist/ (no network calls)
-npm run gen:jabber   # (re)train the bundled model → public/jabber-model.json
+npm run gen:multitask # (re)train the bundled three-skill model → public/multitask-model.json
 ```
 
 ## Deploy

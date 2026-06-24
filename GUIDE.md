@@ -12,20 +12,26 @@ JabberLM is a tiny **decoder-only transformer** (the same family as GPT) that ru
 browser. It learns to predict **the next character** of a text, one character at a time.
 
 **It opens with a model already trained for you.** On first visit the app loads a bundled
-pre-trained model (the *Jabber Poems* model — see below) so you can generate text and look inside it
-straight away, with no waiting. You can also build and train your own from scratch on the left, and
-flip back to the built-in one any time with **Load built-in model**.
+pre-trained **"three-skill" model** (see below) so you can generate text and look inside it straight
+away, with no waiting. Use the **Poem / Sort / Solve** example chips in the Inference panel to try
+each skill. You can also build and train your own from scratch on the left, and flip back to the
+built-in one any time with **Load built-in model**.
 
-It is **character-level**: the vocabulary is just the distinct characters in your text (~60 of them),
-so every "token" is a single readable character. That is what makes the internals legible — when you
-look at an attention matrix, the rows and columns are actual letters.
+It is **character-level**: the vocabulary is just the distinct characters in your text (~60–80 of
+them), so every "token" is a single readable character. That is what makes the internals legible —
+when you look at an attention matrix, the rows and columns are actual letters.
 
-> **The point of the poems.** Train a tiny model on **one** poem and it just *memorises* it — that's
-> overfitting. Train it on **many** poems in the same invented style (the *Jabber Poems* set:
-> *Jabberwocky* plus ~100 more) and it learns the *style* and starts to *generalise*, the way a real
-> LLM does. The built-in model is the second kind: trained on ~90K characters of Jabberwocky-style
-> verse, ~0.46M parameters, in about **87 minutes** of plain single-threaded JavaScript on a laptop —
-> no GPU. The dropdown lets you reproduce both the overfit and the generalising case yourself.
+> **The built-in model does three things — and the contrast is the whole point.** It's one tiny
+> network (~90K parameters, the *default* preset) trained at once on poems, algebra, and sorting:
+> - **Poems** → it *memorised* a style and generates more of it.
+> - **`7x + 2 = 16 => …`** → it produces fluent, confident, **wrong** working. At this size it can't
+>   actually learn the arithmetic — a live picture of an LLM **hallucination**.
+> - **`sort 6 9 2 => 2 6 9`** → it really *sorts*, and **generalises to vectors it never saw**
+>   (~89% correct). This one is genuine learned *reasoning*, and it appears suddenly partway through
+>   training (a **grokking** jump) — try training it yourself and watch the sort accuracy leap.
+>
+> Memorisation, hallucination, generalisation — in one model you can open up. It was trained in about
+> **30 minutes** of plain single-threaded JavaScript on a laptop (no GPU).
 
 The screen has three parts:
 

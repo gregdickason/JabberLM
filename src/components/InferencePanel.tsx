@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { getTrainer } from '../engine/trainer'
 import { installBundledModel } from '../state/pretrained'
-import { MODEL_STATS_LINE } from '../data/modelStats'
+import { MODEL_STATS_LINE, MODEL_EXAMPLES } from '../data/modelStats'
 import { RNG } from '../engine/random'
 import { lastRowLogits, sampleFromLogits, traceOf } from '../engine/generate'
 import type { Trace } from '../engine/trace'
@@ -193,15 +193,34 @@ export default function InferencePanel() {
       {pretrainedActive && (
         <div className="rounded border border-sky-800 bg-sky-900/30 px-3 py-2 text-[11px] text-sky-100">
           <div>
-            Built-in model loaded — type a prompt and press{' '}
-            <span className="text-sky-300">Run</span>, or press{' '}
-            <span className="text-emerald-300">▶ Play</span> in Training to train your own.
+            Built-in three-skill model — it writes <span className="text-fuchsia-300">poems</span>,{' '}
+            <span className="text-emerald-300">sorts</span> numbers, and{' '}
+            <span className="text-amber-300">"solves"</span> equations (watch the maths go wrong). Try an
+            example, or press <span className="text-emerald-300">▶ Play</span> in Training to train your own.
           </div>
           <div className="mt-1 text-[10px] text-sky-300/70">{MODEL_STATS_LINE}</div>
         </div>
       )}
 
       <div className="space-y-2">
+        {pretrainedActive && (
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span className="text-slate-500">try:</span>
+            {MODEL_EXAMPLES.map((ex) => (
+              <button
+                key={ex.label}
+                title={ex.note}
+                className="rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-slate-200 hover:bg-slate-700"
+                onClick={() => {
+                  clearSession()
+                  setPrompt(ex.prompt)
+                }}
+              >
+                {ex.label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex gap-2">
           <input
             className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-100"
