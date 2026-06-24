@@ -16,6 +16,7 @@ import {
   embeddingLookup,
   crossEntropy,
   sum,
+  loraDelta,
 } from '../ops'
 import { applyRope } from '../rope'
 import { RNG } from '../random'
@@ -95,6 +96,18 @@ describe('autograd gradient checks', () => {
 
   it('scale', () => {
     checkGrad([{ rows: 2, cols: 3, data: rand(6) }], (i) => sum(scale(i[0], 2.5)))
+  })
+
+  it('loraDelta (low-rank A,B with α/r scaling)', () => {
+    // x (2×4), A (4×3), B (3×2): grads must flow into A and B (the trainable adapters)
+    checkGrad(
+      [
+        { rows: 2, cols: 4, data: rand(8) },
+        { rows: 4, cols: 3, data: rand(12) },
+        { rows: 3, cols: 2, data: rand(6) },
+      ],
+      (i) => sum(loraDelta(i[0], i[1], i[2], 16 / 8)),
+    )
   })
 
   it('sub', () => {

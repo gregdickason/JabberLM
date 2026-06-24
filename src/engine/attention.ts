@@ -1,5 +1,5 @@
 import { Tensor } from './tensor'
-import { concatCols, matmul, rowSoftmax, scale, sliceCols, transpose, addMaskConst } from './ops'
+import { concatCols, matmul, loraMatmul, rowSoftmax, scale, sliceCols, transpose, addMaskConst } from './ops'
 import { applyRope } from './rope'
 import type { FeatureFlags, ModelConfig } from './config'
 import { HEAD_DIM } from './config'
@@ -7,11 +7,25 @@ import { snapshot, type HeadTrace } from './trace'
 
 const MASK_NEG = -1e9
 
+/** A LoRA adapter for one base weight: ΔW = A·B, applied scaled by `scale` (=α/r). */
+export interface LoraAdapter {
+  A: Tensor // (in × r)
+  B: Tensor // (r × out)
+  scale: number // alpha / rank
+}
+
 export interface AttnParams {
   Wq: Tensor
   Wk: Tensor
   Wv: Tensor
   Wo: Tensor
+  // Optional LoRA adapters (present while fine-tuning). Applied only when flags.lora.
+  lora?: { Wq?: LoraAdapter; Wk?: LoraAdapter; Wv?: LoraAdapter; Wo?: LoraAdapter }
+}
+
+/** x·W, plus the LoRA overlay when active and an adapter exists for this matrix. */
+function proj(x: Tensor, W: Tensor, ad: LoraAdapter | undefined, useLora: boolean): Tensor {
+  return useLora && ad ? loraMatmul(x, W, ad.A, ad.B, ad.scale) : matmul(x, W)
 }
 
 /**
@@ -68,9 +82,10 @@ export function multiHeadAttention(
   captureHead0 = false,
 ): AttnResult {
   const hd = HEAD_DIM(cfg)
-  const Q = matmul(x, p.Wq)
-  const K = matmul(x, p.Wk)
-  const V = matmul(x, p.Wv)
+  const useLora = flags.lora
+  const Q = proj(x, p.Wq, p.lora?.Wq, useLora)
+  const K = proj(x, p.Wk, p.lora?.Wk, useLora)
+  const V = proj(x, p.Wv, p.lora?.Wv, useLora)
   const invSqrt = 1 / Math.sqrt(hd)
 
   const headOuts: Tensor[] = []
@@ -104,7 +119,7 @@ export function multiHeadAttention(
     }
   }
   const concat = concatCols(headOuts)
-  const out = matmul(concat, p.Wo)
+  const out = proj(concat, p.Wo, p.lora?.Wo, useLora)
   const result: AttnResult = { out }
   if (collect) result.heads = heads
   if (captureHead0) result.head0Refs = head0Refs

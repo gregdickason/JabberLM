@@ -41,6 +41,10 @@ time with `npm run gen:jabber` (or `npm run gen:sonnets` for the sonnets variant
 - **Inference + inspector panel** — type a prompt, step one token at a time, and walk the full
   pipeline through tabs: `tokenize → embed → attention → residual → mlp → logits`. Hover any
   heatmap cell to read the exact value. Sample with temperature / top-k / top-p.
+- **LoRA fine-tuning (in-browser)** — adapt the loaded model by training a tiny low-rank overlay
+  (`ΔW = A·B`) on top of frozen base weights. Pick a built-in pack (or paste text), watch only the
+  adapters train, inspect the `A` / `B` / `ΔW` heatmaps in the **LoRA** tab, and toggle the overlay
+  on/off to compare base vs fine-tuned generation. Adapters save/load with the model.
 - **Deep feature demos (live toggles)**:
   - **RoPE** — rotary position embedding visualized as rotation; spokes show each position's angle.
   - **KV cache** — the key/value cache as a grid, with reused-vs-recomputed status and the
@@ -70,7 +74,7 @@ adds ~1 MB gzipped (`jabber-model.json`), fetched once and cached.
 ```
 src/engine/    # framework-agnostic core (no React)
   tensor.ts        reverse-mode autograd over flat Float32Array matrices
-  ops.ts           matmul, softmax, layerNorm, gelu/relu, cross-entropy, slice/concat, …
+  ops.ts           matmul, softmax, layerNorm, gelu/relu, cross-entropy, slice/concat, loraDelta, …
   rope.ts          rotary position embedding (differentiable)
   attention.ts     multi-head causal attention w/ RoPE / sliding-window / masking
   model.ts         the decoder-only transformer; forward() returns logits + a full Trace

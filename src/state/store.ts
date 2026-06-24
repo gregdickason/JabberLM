@@ -1,10 +1,12 @@
 import { create } from 'zustand'
 import {
   DEFAULT_FEATURE_FLAGS,
+  DEFAULT_FINETUNE_CONFIG,
   DEFAULT_MODEL_CONFIG,
   DEFAULT_SAMPLE_CONFIG,
   DEFAULT_TRAIN_CONFIG,
   type FeatureFlags,
+  type FineTuneConfig,
   type ModelConfig,
   type SampleConfig,
   type TrainConfig,
@@ -31,6 +33,8 @@ interface AppState {
   featureFlags: FeatureFlags
   trainConfig: TrainConfig
   sampleConfig: SampleConfig
+  fineTune: FineTuneConfig // LoRA fine-tune settings (rank/alpha/targets) + the fine-tune text
+  fineTuneText: string
 
   // --- training run metadata (the model itself lives outside the store) ---
   status: TrainStatus
@@ -40,6 +44,7 @@ interface AppState {
   livePreview: string // sample regenerated periodically during training
   modelBuilt: boolean // has a model been constructed for the current config?
   pretrainedActive: boolean // is the currently-built model the bundled pretrained one?
+  fineTuneActive: boolean // are LoRA adapters attached (fine-tune mode on)?
 
   // --- inspector UI state ---
   inspect: InspectSelection
@@ -54,6 +59,9 @@ interface AppState {
   setFeatureFlags: (patch: Partial<FeatureFlags>) => void
   setTrainConfig: (patch: Partial<TrainConfig>) => void
   setSampleConfig: (patch: Partial<SampleConfig>) => void
+  setFineTune: (patch: Partial<FineTuneConfig>) => void
+  setFineTuneText: (t: string) => void
+  setFineTuneActive: (b: boolean) => void
   setStatus: (s: TrainStatus) => void
   setInspect: (patch: Partial<InspectSelection>) => void
   pushLoss: (p: LossPoint) => void
@@ -72,6 +80,8 @@ export const useStore = create<AppState>((set) => ({
   featureFlags: { ...DEFAULT_FEATURE_FLAGS },
   trainConfig: { ...DEFAULT_TRAIN_CONFIG },
   sampleConfig: { ...DEFAULT_SAMPLE_CONFIG },
+  fineTune: { ...DEFAULT_FINETUNE_CONFIG },
+  fineTuneText: '',
 
   status: 'idle',
   step: 0,
@@ -80,6 +90,7 @@ export const useStore = create<AppState>((set) => ({
   livePreview: '',
   modelBuilt: false,
   pretrainedActive: false,
+  fineTuneActive: false,
 
   inspect: { layer: 0, head: 0 },
   modelVersion: 0,
@@ -92,6 +103,9 @@ export const useStore = create<AppState>((set) => ({
   setFeatureFlags: (patch) => set((s) => ({ featureFlags: { ...s.featureFlags, ...patch } })),
   setTrainConfig: (patch) => set((s) => ({ trainConfig: { ...s.trainConfig, ...patch } })),
   setSampleConfig: (patch) => set((s) => ({ sampleConfig: { ...s.sampleConfig, ...patch } })),
+  setFineTune: (patch) => set((s) => ({ fineTune: { ...s.fineTune, ...patch } })),
+  setFineTuneText: (fineTuneText) => set({ fineTuneText }),
+  setFineTuneActive: (fineTuneActive) => set({ fineTuneActive }),
   setStatus: (status) => set({ status }),
   setInspect: (patch) => set((s) => ({ inspect: { ...s.inspect, ...patch } })),
   pushLoss: (p) => set((s) => ({ lossHistory: [...s.lossHistory, p] })),

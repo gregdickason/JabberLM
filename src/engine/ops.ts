@@ -86,6 +86,21 @@ export function scale(a: Tensor, s: number): Tensor {
   return c
 }
 
+/**
+ * LoRA low-rank delta: `scaleFactor · ((x·A)·B)`. `A` is (in×r), `B` is (r×out),
+ * so the result is (seq×out) — the same shape as `x·W`. Pure composition of
+ * matmul/scale, so the autograd tape gives correct gradients for A and B (and B
+ * starts at zero, so the delta is zero until fine-tuning moves it).
+ */
+export function loraDelta(x: Tensor, A: Tensor, B: Tensor, scaleFactor: number): Tensor {
+  return scale(matmul(matmul(x, A), B), scaleFactor)
+}
+
+/** Base projection plus its LoRA overlay: `x·W + scaleFactor·((x·A)·B)`. */
+export function loraMatmul(x: Tensor, W: Tensor, A: Tensor, B: Tensor, scaleFactor: number): Tensor {
+  return add(matmul(x, W), loraDelta(x, A, B, scaleFactor))
+}
+
 /** Elementwise subtract (same shape). */
 export function sub(a: Tensor, b: Tensor): Tensor {
   if (a.rows !== b.rows || a.cols !== b.cols) throw new Error('sub: shape mismatch')

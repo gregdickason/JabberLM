@@ -267,3 +267,38 @@ Now use the trained model (right panel).
     bottoms out and slowly creeps up. The model is **generalising** first, overfitting only later.
   - That gap *is* the lesson behind the whole app: variety in the data is what turns memorisation into
     something that behaves like a real (if tiny) language model.
+
+---
+
+## 6. Fine-tuning with LoRA
+
+Big models are rarely retrained from scratch — they're **fine-tuned**: a small set of extra weights is
+trained on new data while the original model stays frozen. **LoRA** (Low-Rank Adaptation) is the most
+common way to do this, and JabberLM lets you watch it happen on the built-in model.
+
+**The idea.** For a frozen weight matrix `W`, LoRA learns a *low-rank* update `ΔW = A·B` (where `A` is
+`in×r` and `B` is `r×out`, with the rank `r` small — e.g. 8). The model uses `W + (α/r)·A·B`. Only `A`
+and `B` train; `W` never moves. `B` starts at **zero**, so `ΔW` starts at zero and the model begins
+exactly as it was — then fine-tuning grows the overlay.
+
+**Do it:**
+
+1. Make sure a model is loaded (the built-in one is fine). In the Training panel's **Fine-tune (LoRA)**
+   card, pick a built-in pack — **Summon the Snark** (teaches one distinctive refrain) or **Go
+   nautical** (drifts toward sea-words) — or paste your own short text.
+2. Optionally set **rank** (size of the overlay), **alpha** (its strength), and which weights to adapt
+   (**attn** and/or **mlp**). Press **✦ Start fine-tuning**. The card shows how few weights are now
+   trainable (e.g. *training ~12,000 of ~464,000 weights*) — the whole point of LoRA.
+3. Press **▶ Play**. Only the adapters move; the base is frozen. Watch the loss fall.
+4. In the Inference panel, type a prompt and **Run**. Toggle the **LoRA overlay** checkbox:
+   - **On** → the model uses base + adapter (after a little training on *Summon the Snark*, it keeps
+     producing "the Snark").
+   - **Off** → the original base model (the Snark is gone). Same weights underneath — you're just
+     adding or removing the overlay.
+5. Open the **LoRA** inspector tab to see the adapter itself: the `A` and `B` matrices and the product
+   `ΔW = A·B` for each adapted weight. Right after **Start**, `ΔW` is blank (because `B`=0); as you
+   train, it fills in — that coloured `ΔW` *is* everything the fine-tune learned.
+
+> Notes: fine-tuning uses the base model's vocabulary, so any characters in your text that the model
+> has never seen are skipped. Auto-save is paused while fine-tuning — use **JSON Save** to keep an
+> adapted model (it stores the base **and** the adapter; **JSON Load** brings both back).

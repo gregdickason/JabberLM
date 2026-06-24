@@ -16,6 +16,7 @@ import LogitsView from './inspector/LogitsView'
 import RoPEView from './features/RoPEView'
 import KVCacheView from './features/KVCacheView'
 import SlidingWindowView from './features/SlidingWindowView'
+import LoRAView from './inspector/LoRAView'
 
 const TABS = [
   'tokenize',
@@ -24,6 +25,7 @@ const TABS = [
   'residual',
   'mlp',
   'logits',
+  'LoRA',
   'RoPE',
   'KV cache',
   'sliding window',
@@ -41,7 +43,7 @@ function startPrompt(text: string): string {
 }
 
 export default function InferencePanel() {
-  const { modelBuilt, pretrainedActive, modelVersion, trainingText, featureFlags, setFeatureFlags, sampleConfig, setSampleConfig, inspect, setInspect } =
+  const { modelBuilt, pretrainedActive, fineTuneActive, modelVersion, trainingText, featureFlags, setFeatureFlags, sampleConfig, setSampleConfig, inspect, setInspect } =
     useStore()
   const rng = useRef(new RNG(2024))
   const [loadMsg, setLoadMsg] = useState('')
@@ -227,6 +229,22 @@ export default function InferencePanel() {
           <button className={btn} onClick={clearSession} disabled={!trace}>
             ↺ Reset
           </button>
+          {fineTuneActive && (
+            <label
+              className="flex items-center gap-1 rounded border border-fuchsia-700 bg-fuchsia-950/30 px-2 py-1 text-[11px] text-fuchsia-200"
+              title="Apply the trained LoRA adapter (base + ΔW) when generating. Off = the original base model."
+            >
+              <input
+                type="checkbox"
+                checked={featureFlags.lora}
+                onChange={(e) => {
+                  setFeatureFlags({ lora: e.target.checked })
+                  clearSession()
+                }}
+              />
+              LoRA overlay
+            </label>
+          )}
           <label className="flex items-center gap-1 text-[11px] text-slate-400">
             temp
             <input
@@ -286,13 +304,17 @@ export default function InferencePanel() {
       ) : (
         <div className="space-y-3">
           <div className="flex flex-wrap gap-1">
-            {TABS.map((t) => (
+            {TABS.filter((t) => t !== 'LoRA' || fineTuneActive).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={
                   'rounded px-2 py-0.5 text-[11px] ' +
-                  (tab === t ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300')
+                  (tab === t
+                    ? t === 'LoRA'
+                      ? 'bg-fuchsia-600 text-white'
+                      : 'bg-sky-600 text-white'
+                    : 'bg-slate-800 text-slate-300')
                 }
               >
                 {t}
@@ -300,7 +322,7 @@ export default function InferencePanel() {
             ))}
           </div>
 
-          {(tab === 'attention' || tab === 'mlp' || tab === 'RoPE' || tab === 'KV cache') && (
+          {(tab === 'attention' || tab === 'mlp' || tab === 'LoRA' || tab === 'RoPE' || tab === 'KV cache') && (
             <div className="flex flex-col gap-3 lg:flex-row">
               <div className="w-full shrink-0 lg:w-28">
                 <ArchitectureMap
@@ -315,6 +337,7 @@ export default function InferencePanel() {
                   <AttentionView trace={trace} tok={tok} layer={inspect.layer} head={inspect.head} />
                 )}
                 {tab === 'mlp' && <MLPView trace={trace} tok={tok} layer={inspect.layer} />}
+                {tab === 'LoRA' && <LoRAView trace={trace} layer={inspect.layer} />}
                 {tab === 'RoPE' && (
                   <RoPEView trace={trace} layer={inspect.layer} head={inspect.head} flags={featureFlags} />
                 )}

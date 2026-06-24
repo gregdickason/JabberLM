@@ -28,6 +28,14 @@ export interface HeadTrace {
   headOut: Matrix // (seq × headDim) attention output
 }
 
+/** One LoRA adapter's weight-space snapshot, for the inspector overlay. */
+export interface LoraTrace {
+  label: string // which base matrix this adapts, e.g. "Wq"
+  A: Matrix // (in × r) down-projection
+  B: Matrix // (r × out) up-projection
+  dW: Matrix // (in × out) the low-rank delta weight ΔW = A·B (before α/r scaling)
+}
+
 export interface LayerTrace {
   preLNAttn: Matrix // residual stream entering the block
   normedAttn: Matrix // after LayerNorm 1
@@ -38,6 +46,7 @@ export interface LayerTrace {
   mlpHidden: Matrix // MLP hidden activations (seq × dFF)
   mlpOut: Matrix // MLP output (seq × dModel)
   afterMLPResid: Matrix // residual after adding mlpOut
+  lora?: LoraTrace[] // present when LoRA adapters are active (collect only)
 }
 
 export interface Trace {

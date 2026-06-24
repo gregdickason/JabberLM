@@ -1,9 +1,15 @@
 import { Tensor } from './tensor'
 import { RNG } from './random'
-import { add, addRow, embeddingLookup, gelu, layerNorm, matmul, relu, transpose } from './ops'
-import { buildMask, multiHeadAttention, type AttnParams, type Head0Refs } from './attention'
-import type { FeatureFlags, ModelConfig } from './config'
-import { snapshot, type LayerTrace, type Trace } from './trace'
+import { add, addRow, embeddingLookup, gelu, layerNorm, matmul, loraMatmul, relu, transpose } from './ops'
+import {
+  buildMask,
+  multiHeadAttention,
+  type AttnParams,
+  type Head0Refs,
+  type LoraAdapter,
+} from './attention'
+import type { FeatureFlags, FineTuneConfig, ModelConfig } from './config'
+import { snapshot, type LayerTrace, type LoraTrace, type Trace } from './trace'
 
 // Live (graph-attached) tensors captured during a forward pass so the
 // step-through walkthrough can read both values and gradients (after backward).
@@ -36,6 +42,7 @@ interface LayerParams {
   b1: Tensor
   W2: Tensor
   b2: Tensor
+  loraW2?: LoraAdapter // optional MLP down-projection adapter (when 'mlp' is targeted)
 }
 
 export interface ForwardResult {
@@ -59,6 +66,11 @@ export class Model {
   lnfg: Tensor
   lnfb: Tensor
   unembed: Tensor | null // null when weights are tied to the token embedding
+
+  // LoRA fine-tuning state. When `loraConfig` is set the base `params` are frozen
+  // (requiresGrad=false) and only these adapter tensors train.
+  loraParams: Tensor[] = []
+  loraConfig: FineTuneConfig | null = null
 
   constructor(cfg: ModelConfig, seed = 1337) {
     this.cfg = cfg
@@ -117,6 +129,65 @@ export class Model {
   }
 
   /**
+   * Attach LoRA adapters for fine-tuning: freeze ALL base weights and add a small
+   * trainable low-rank pair (A,B) to each targeted matrix. A is random-small, B is
+   * zero so ΔW = A·B starts at zero (the model begins identical to the base). Only
+   * `loraParams` train; apply them per-forward via `flags.lora`.
+   */
+  enableLora(opts: FineTuneConfig & { seed?: number }): void {
+    if (this.loraConfig) this.disableLora()
+    const rng = new RNG(opts.seed ?? 4242)
+    const r = opts.rank
+    const s = opts.alpha / opts.rank
+    const { dModel, dFF } = this.cfg
+    const mk = (inDim: number, outDim: number, label: string): LoraAdapter => {
+      const A = Tensor.param(inDim, r, 0.02, rng, `${label}.A`)
+      const B = Tensor.zeros(r, outDim, `${label}.B`)
+      B.requiresGrad = true
+      this.loraParams.push(A, B)
+      return { A, B, scale: s }
+    }
+    for (let l = 0; l < this.layers.length; l++) {
+      const lp = this.layers[l]
+      if (opts.targets.includes('attn')) {
+        // Classic LoRA targets: the query and value projections.
+        lp.attn.lora = {
+          Wq: mk(dModel, dModel, `L${l}.Wq`),
+          Wv: mk(dModel, dModel, `L${l}.Wv`),
+        }
+      }
+      if (opts.targets.includes('mlp')) {
+        lp.loraW2 = mk(dFF, dModel, `L${l}.W2`)
+      }
+    }
+    for (const p of this.params) p.requiresGrad = false // freeze the base model
+    this.loraConfig = { rank: opts.rank, alpha: opts.alpha, targets: [...opts.targets] }
+  }
+
+  /** Snapshot a layer's active LoRA adapters (A, B, and ΔW = A·B) for the inspector. */
+  private snapshotLora(lp: LayerParams): LoraTrace[] {
+    const snaps: LoraTrace[] = []
+    const addSnap = (label: string, ad: LoraAdapter) =>
+      snaps.push({ label, A: snapshot(ad.A), B: snapshot(ad.B), dW: snapshot(matmul(ad.A, ad.B)) })
+    if (lp.attn.lora?.Wq) addSnap('Wq', lp.attn.lora.Wq)
+    if (lp.attn.lora?.Wv) addSnap('Wv', lp.attn.lora.Wv)
+    if (lp.loraW2) addSnap('W2', lp.loraW2)
+    return snaps
+  }
+
+  /** Remove all adapters and unfreeze the base model. */
+  disableLora(): void {
+    if (!this.loraConfig) return
+    for (const lp of this.layers) {
+      lp.attn.lora = undefined
+      lp.loraW2 = undefined
+    }
+    this.loraParams = []
+    for (const p of this.params) p.requiresGrad = true
+    this.loraConfig = null
+  }
+
+  /**
    * Run the model over a token sequence. `positions` defaults to 0..seq-1 but
    * can be supplied (e.g. for KV-cache offsets). When `collect` is true a full
    * Trace of every intermediate is returned for the inspector.
@@ -164,7 +235,11 @@ export class Model {
 
       const normedMLP = layerNorm(afterAttn, lp.ln2g, lp.ln2b)
       const hidden = this.activate(addRow(matmul(normedMLP, lp.W1), lp.b1))
-      const mlpOut = addRow(matmul(hidden, lp.W2), lp.b2)
+      const w2out =
+        flags.lora && lp.loraW2
+          ? loraMatmul(hidden, lp.W2, lp.loraW2.A, lp.loraW2.B, lp.loraW2.scale)
+          : matmul(hidden, lp.W2)
+      const mlpOut = addRow(w2out, lp.b2)
       let afterMLP = add(afterAttn, mlpOut)
       // feature steering: clamp a direction into the residual stream after a layer
       if (steer && steer.layer === li) {
@@ -198,6 +273,7 @@ export class Model {
           mlpHidden: snapshot(hidden),
           mlpOut: snapshot(mlpOut),
           afterMLPResid: snapshot(afterMLP),
+          lora: this.loraConfig ? this.snapshotLora(lp) : undefined,
         })
       }
     }

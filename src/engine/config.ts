@@ -25,6 +25,17 @@ export interface FeatureFlags {
   slidingWindow: number | null // null = full causal; otherwise window width W
   kvCache: boolean // inference-only: reuse cached K/V across generation steps
   ropeBase: number // RoPE theta base (only used when positional === 'rope')
+  lora: boolean // apply the LoRA overlay (the low-rank ΔW) in the forward pass
+}
+
+export type LoraTarget = 'attn' | 'mlp'
+
+/** LoRA fine-tuning settings. Changing rank/targets re-initialises the adapters
+ *  (their shapes change), so these are applied when fine-tuning is (re)started. */
+export interface FineTuneConfig {
+  rank: number // r: the low-rank dimension of each adapter (small, e.g. 8)
+  alpha: number // scaling numerator; the overlay is scaled by alpha/rank
+  targets: LoraTarget[] // which weight groups to adapt: attention and/or MLP
 }
 
 /** Training hyperparameters — editable live while the loop runs. */
@@ -64,6 +75,13 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   slidingWindow: null,
   kvCache: false,
   ropeBase: 10000,
+  lora: false,
+}
+
+export const DEFAULT_FINETUNE_CONFIG: FineTuneConfig = {
+  rank: 8,
+  alpha: 16,
+  targets: ['attn'],
 }
 
 export const DEFAULT_TRAIN_CONFIG: TrainConfig = {

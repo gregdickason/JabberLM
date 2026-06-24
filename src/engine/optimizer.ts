@@ -57,8 +57,10 @@ export class Optimizer {
     this.t += 1
     const lr = cfg.learningRate
     if (cfg.optimizer === 'sgd') {
-      for (const p of this.params)
+      for (const p of this.params) {
+        if (!p.requiresGrad) continue // frozen (e.g. LoRA base weights) never move
         for (let i = 0; i < p.size; i++) p.data[i] -= lr * p.grad[i] * clipScale
+      }
       return totalNorm
     }
 
@@ -67,6 +69,7 @@ export class Optimizer {
     const bc2 = 1 - Math.pow(this.beta2, this.t)
     for (let pi = 0; pi < this.params.length; pi++) {
       const p = this.params[pi]
+      if (!p.requiresGrad) continue // frozen params are skipped
       const st = this.states[pi]
       for (let i = 0; i < p.size; i++) {
         const g = p.grad[i] * clipScale

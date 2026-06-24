@@ -39,6 +39,8 @@ export async function installBundledModel(): Promise<boolean> {
   s.resetRun()
   s.setModelBuilt(true)
   s.setPretrainedActive(true)
+  s.setFineTuneActive(false) // the bundled model is a plain base (no adapters)
+  s.setFeatureFlags({ lora: false })
   s.bumpModelVersion()
   try {
     await idbDelete()
