@@ -66,6 +66,15 @@ export default function TrainingPanel() {
   const loopRef = useRef<() => void>(() => {})
   const lastSaveRef = useRef(0)
   const [stepsPerFrame, setStepsPerFrame] = useState(3)
+  // Adaptive throttle: the rAF loop reads `stepsRef` (avoids a stale closure) and,
+  // when auto is on, tunes steps/frame to a ~20 ms compute budget so the UI stays
+  // smooth on any device (fast on desktop, gentle on mobile).
+  const stepsRef = useRef(3)
+  const [autoThrottle, setAutoThrottle] = useState(true)
+  const autoRef = useRef(true)
+  useEffect(() => {
+    autoRef.current = autoThrottle
+  }, [autoThrottle])
   const [gradNorms, setGradNorms] = useState<GradNorm[]>([])
   const [weightParam, setWeightParam] = useState('tokenEmbed')
   const [walk, setWalk] = useState<WalkStep[] | null>(null)
@@ -148,8 +157,12 @@ export default function TrainingPanel() {
     const trainer = getTrainer()
     if (!trainer || s.status !== 'running') return
     let result
-    for (let i = 0; i < stepsPerFrame; i++) {
+    const n = stepsRef.current
+    let stepMs = 0
+    for (let i = 0; i < n; i++) {
+      const a = performance.now()
       result = trainer.stepBatch(s.trainConfig, s.featureFlags)
+      stepMs += performance.now() - a
       const nextStep = useStore.getState().step + 1
       useStore.getState().setStep(nextStep)
       useStore.getState().pushLoss({ step: nextStep, loss: result.loss })
@@ -160,6 +173,16 @@ export default function TrainingPanel() {
       if (nextStep % s.trainConfig.sampleEverySteps === 0) {
         const seed = trainingText.slice(0, 1)
         useStore.getState().setLivePreview(trainer.sample(s.featureFlags, s.sampleConfig, seed, 120))
+      }
+    }
+    // adapt steps/frame toward a ~20 ms compute budget (smoothed) when auto is on
+    if (autoRef.current && n > 0) {
+      const perStep = stepMs / n
+      const want = Math.max(1, Math.min(50, Math.round(20 / Math.max(0.2, perStep))))
+      const next = Math.max(1, Math.round(n * 0.6 + want * 0.4))
+      if (next !== stepsRef.current) {
+        stepsRef.current = next
+        setStepsPerFrame(next)
       }
     }
     if (result) setGradNorms(result.gradNorms)
@@ -443,6 +466,17 @@ export default function TrainingPanel() {
         <button className={btn} onClick={stepThrough} disabled={!modelBuilt}>
           ⇄ Step Through
         </button>
+        <label
+          className="flex items-center gap-1 text-[11px] text-slate-400"
+          title="Auto-tune steps/frame to keep the UI smooth on this device"
+        >
+          <input
+            type="checkbox"
+            checked={autoThrottle}
+            onChange={(e) => setAutoThrottle(e.target.checked)}
+          />
+          auto speed
+        </label>
         <label className="flex items-center gap-1 text-[11px] text-slate-400">
           steps/frame
           <input
@@ -450,8 +484,13 @@ export default function TrainingPanel() {
             min={1}
             max={50}
             value={stepsPerFrame}
-            onChange={(e) => setStepsPerFrame(Number(e.target.value))}
-            className="w-12 rounded border border-slate-700 bg-slate-800 px-1 text-right text-xs"
+            disabled={autoThrottle}
+            onChange={(e) => {
+              const v = Math.max(1, Math.min(50, Number(e.target.value)))
+              setStepsPerFrame(v)
+              stepsRef.current = v
+            }}
+            className="w-12 rounded border border-slate-700 bg-slate-800 px-1 text-right text-xs disabled:opacity-40"
           />
         </label>
       </div>
