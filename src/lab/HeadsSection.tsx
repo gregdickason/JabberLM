@@ -11,7 +11,9 @@ export default function HeadsSection({ trainer }: { trainer: Trainer }) {
   useEffect(() => {
     setStats(null)
     const id = setTimeout(() => {
-      const s = computeHeadStats(trainer.model, trainer.tok.encode(trainer.text))
+      // sample ~120 windows across the corpus (keeps the UI responsive on the big
+      // multi-skill corpus while still covering poems, sorting and algebra)
+      const s = computeHeadStats(trainer.model, trainer.tok.encode(trainer.text), undefined, 120)
       setStats(s)
       const best = [...s].sort((a, b) => b.induction - a.induction)[0]
       if (best) setSel({ layer: best.layer, head: best.head })

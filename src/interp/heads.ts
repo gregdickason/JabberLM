@@ -29,6 +29,8 @@ export function computeHeadStats(
   model: Model,
   ids: number[],
   flags: FeatureFlags = DEFAULT_FEATURE_FLAGS,
+  maxWindows?: number, // cap the number of (evenly-strided) windows scanned — keeps
+  //                       the UI responsive on a large corpus while staying representative
 ): HeadStat[] {
   const L = Math.min(model.cfg.contextLen, Math.max(1, ids.length))
   const nLayers = model.cfg.nLayers
@@ -37,7 +39,9 @@ export function computeHeadStats(
   const ind = Array.from({ length: nLayers }, () => new Float64Array(nHeads))
   let count = 0
 
-  for (let start = 0; start < ids.length; start += L) {
+  const totalWindows = Math.ceil(ids.length / L)
+  const stride = maxWindows ? Math.max(1, Math.floor(totalWindows / maxWindows)) : 1
+  for (let start = 0; start < ids.length; start += L * stride) {
     const window = ids.slice(start, Math.min(start + L, ids.length))
     const w = window.length
     if (w < 2) continue

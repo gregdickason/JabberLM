@@ -21,19 +21,29 @@ export function sweepActivations(
   model: Model,
   ids: number[],
   flags: FeatureFlags = DEFAULT_FEATURE_FLAGS,
+  maxWindows?: number, // cap the number of (evenly-strided) windows — keeps the UI
+  //                      responsive on a large corpus while sampling across all of it
 ): ActivationSweep {
   const L = Math.min(model.cfg.contextLen, Math.max(1, ids.length))
   const nLayers = model.cfg.nLayers
   const dFF = model.cfg.dFF
   const dModel = model.cfg.dModel
-  const N = ids.length
+
+  // pick evenly-strided windows so the sample spans the whole corpus
+  const totalWindows = Math.ceil(ids.length / L)
+  const stride = maxWindows ? Math.max(1, Math.floor(totalWindows / maxWindows)) : 1
+  const windows: number[][] = []
+  for (let start = 0; start < ids.length; start += L * stride) {
+    windows.push(ids.slice(start, Math.min(start + L, ids.length)))
+  }
+  const sampledIds = windows.flat()
+  const N = sampledIds.length
 
   const mlp = Array.from({ length: nLayers }, () => new Float32Array(N * dFF))
   const resid = Array.from({ length: nLayers }, () => new Float32Array(N * dModel))
 
   let written = 0
-  for (let start = 0; start < N; start += L) {
-    const window = ids.slice(start, Math.min(start + L, N))
+  for (const window of windows) {
     const { trace } = model.forward(window, flags, undefined, true)
     const w = window.length
     for (let l = 0; l < nLayers; l++) {
@@ -43,7 +53,7 @@ export function sweepActivations(
     written += w
   }
 
-  return { ids, N, dFF, dModel, nLayers, mlp, resid }
+  return { ids: sampledIds, N, dFF, dModel, nLayers, mlp, resid }
 }
 
 /** Pull one neuron's activation across all positions: column `unit` of layer `l`. */

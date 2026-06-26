@@ -110,6 +110,7 @@ export function generate(
   prompt: string,
   cfg: SampleConfig,
   rng: RNG,
+  ablate?: ReadonlySet<string>, // optional head ablation (keys "layer.head")
 ): string {
   const ctx = model.cfg.contextLen
   let ids = tok.encode(prompt)
@@ -117,7 +118,7 @@ export function generate(
   const out: number[] = []
   for (let step = 0; step < cfg.maxNewTokens; step++) {
     const window = ids.slice(Math.max(0, ids.length - ctx))
-    const { logits } = model.forward(window, flags)
+    const { logits } = model.forward(window, flags, undefined, false, undefined, undefined, ablate)
     const last = lastRowLogits(logits.data, logits.rows, logits.cols)
     const { chosen } = sampleFromLogits(last, cfg, rng)
     out.push(chosen)

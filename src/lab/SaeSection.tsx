@@ -31,7 +31,8 @@ export default function SaeSection({
   useEffect(() => {
     setSweep(null)
     setFeatMatrix(null)
-    const id = setTimeout(() => setSweep(sweepActivations(trainer.model, ids)), 0)
+    // cap the sweep to ~100 windows so switching to this tab stays responsive
+    const id = setTimeout(() => setSweep(sweepActivations(trainer.model, ids, undefined, 100)), 0)
     return () => clearTimeout(id)
   }, [trainer, ids])
 

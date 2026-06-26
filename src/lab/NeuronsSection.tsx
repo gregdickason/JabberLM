@@ -14,7 +14,9 @@ export default function NeuronsSection({ trainer }: { trainer: Trainer }) {
     setSweep(null)
     // defer so the "analyzing…" state can paint before the synchronous sweep
     const id = setTimeout(() => {
-      setSweep(sweepActivations(trainer.model, trainer.tok.encode(trainer.text)))
+      // sample ~80 windows across the corpus so the sweep stays fast (and responsive)
+      // on the big multi-skill corpus while still spanning all three skills
+      setSweep(sweepActivations(trainer.model, trainer.tok.encode(trainer.text), undefined, 80))
     }, 0)
     return () => clearTimeout(id)
   }, [trainer])

@@ -199,6 +199,7 @@ export class Model {
     collect = false,
     capture?: WalkCapture,
     steer?: { layer: number; vec: Float32Array; strength: number },
+    ablate?: ReadonlySet<string>, // keys "layer.head" whose attention output is zeroed
   ): ForwardResult {
     const mask = buildMask(positions, flags)
 
@@ -221,6 +222,12 @@ export class Model {
       const lp = this.layers[li]
       const preLNAttn = x
       const normedAttn = layerNorm(x, lp.ln1g, lp.ln1b)
+      let ablatedHeads: Set<number> | undefined
+      if (ablate) {
+        for (let h = 0; h < this.cfg.nHeads; h++) {
+          if (ablate.has(`${li}.${h}`)) (ablatedHeads ??= new Set()).add(h)
+        }
+      }
       const attnRes = multiHeadAttention(
         normedAttn,
         lp.attn,
@@ -230,6 +237,7 @@ export class Model {
         mask,
         collect,
         !!capture,
+        ablatedHeads,
       )
       const afterAttn = add(preLNAttn, attnRes.out)
 

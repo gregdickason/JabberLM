@@ -4,9 +4,10 @@ import NeuronsSection from './NeuronsSection'
 import HeadsSection from './HeadsSection'
 import SaeSection from './SaeSection'
 import SteeringSection from './SteeringSection'
+import AblationSection from './AblationSection'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'dictionary (SAE)', 'steering'] as const
+const TABS = ['neurons', 'attention heads', 'head ablation', 'dictionary (SAE)', 'steering'] as const
 type Tab = (typeof TABS)[number]
 
 const btn =
@@ -111,6 +112,7 @@ export default function LabApp() {
           <div className="p-4">
             {tab === 'neurons' && <NeuronsSection trainer={loaded.trainer} />}
             {tab === 'attention heads' && <HeadsSection trainer={loaded.trainer} />}
+            {tab === 'head ablation' && <AblationSection trainer={loaded.trainer} />}
             {tab === 'dictionary (SAE)' && (
               <SaeSection
                 trainer={loaded.trainer}

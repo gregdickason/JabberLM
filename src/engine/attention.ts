@@ -80,6 +80,7 @@ export function multiHeadAttention(
   mask: Float32Array,
   collect = false,
   captureHead0 = false,
+  ablated?: ReadonlySet<number>, // head indices whose output is zeroed (ablation demo)
 ): AttnResult {
   const hd = HEAD_DIM(cfg)
   const useLora = flags.lora
@@ -103,7 +104,9 @@ export function multiHeadAttention(
     const masked = addMaskConst(scores, mask)
     const attn = rowSoftmax(masked)
     const headOut = matmul(attn, vh)
-    headOuts.push(headOut)
+    // ablation: zero this head's contribution to the residual (the trace below
+    // still snapshots the real headOut, so you can see what was knocked out).
+    headOuts.push(ablated?.has(h) ? scale(headOut, 0) : headOut)
     if (collect) {
       heads.push({
         q: snapshot(qh),
