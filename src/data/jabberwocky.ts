@@ -2,8 +2,8 @@
 // human-readable — and Jabberwocky's invented words are exactly why a normal
 // subword tokenizer would be a poor teaching example here.
 
-import { SHAKESPEARE_SONNETS } from './shakespeare'
 import { JABBER_POEMS } from './jabberPoems'
+import { buildSortCorpus, buildEquationCorpus } from './tasks'
 
 export const JABBERWOCKY = `'Twas brillig, and the slithy toves
 Did gyre and gimble in the wabe:
@@ -47,16 +47,15 @@ export interface TextSample {
   text: string
 }
 
-// Three datasets that tell the core story: one poem overfits; many poems (in the
-// same invented style) generalise; a different, real-English corpus (sonnets)
-// shows the same tiny model coping with a wholly different voice.
-//   - "Jabberwocky (one poem)" — train on this alone and watch held-out
-//     validation loss turn up: the model memorises rather than generalises.
-//   - "Jabber Poems" — Jabberwocky + 49 more in the same style (JABBER_POEMS);
-//     enough variety that the tiny model learns the *style*, not one poem.
-//   - "Shakespeare (sonnets)" — a larger real-English corpus for contrast.
+// A deliberate three-task curriculum — the same tiny model, three outcomes:
+//   - "Jabber Poems"  — language: it MEMORISES a style and generates more of it.
+//   - "Sorting"       — it learns a real procedure and GENERALISES to unseen
+//                       inputs (it "groks", with a sudden jump in held-out accuracy).
+//   - "Equations"     — it memorises the format but the arithmetic never clicks:
+//                       fluent, confident, WRONG working (hallucination).
+// (Edit the box or paste your own text to train on anything.)
 export const TEXT_SAMPLES: TextSample[] = [
-  { id: 'jabberwocky', name: 'Jabberwocky (one poem)', text: JABBERWOCKY },
   { id: 'jabber', name: 'Jabber Poems', text: JABBER_POEMS },
-  { id: 'sonnets', name: 'Shakespeare (sonnets)', text: SHAKESPEARE_SONNETS },
+  { id: 'sort', name: 'Sorting', text: buildSortCorpus() },
+  { id: 'equations', name: 'Equations', text: buildEquationCorpus() },
 ]

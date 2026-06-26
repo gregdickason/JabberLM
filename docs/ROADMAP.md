@@ -4,6 +4,26 @@ Status: planning draft. This is a strategy/roadmap document, not an implementati
 product to three audiences, lays out the new "reasoning" workstream, and sets a performance and
 usability strategy. Items are sized roughly; "experiment" items need a measurement pass before build.
 
+### Build progress (Phase 1 — grokking — DONE)
+- **Validated** (measured): a tiny (~16K-param) model groks SORTING to ~95% held-out in **~1.5 min /
+  1500 steps**; the 9 digit-token embeddings arrange into an ordered **number line** (PCA), and they
+  organise *before* the accuracy jump. (Algebra still never groks — the hallucination lesson.)
+- **Built:** `src/data/tasks.ts` (deterministic sort/equation corpora + held-out set), `src/interp/pca.ts`
+  (from-scratch top-2 PCA, tested), `src/viz/Scatter.tsx`, the dataset dropdown trimmed to the
+  **Poems / Sorting / Equations** curriculum (`src/data/jabberwocky.ts`), and a **live grok view** in
+  `TrainingPanel.tsx` (held-out sort-accuracy curve + the digit number-line, recomputed every 150 steps,
+  shown when training on Sorting) with an "predict first" prompt.
+- **Still to do (later phases):** entry tiles + guided tours; performance defaults (adaptive throttle,
+  gate `largest` on mobile); business cost/latency suite; advanced curation. See the relevant sections.
+
+### Decisions locked (v2)
+- Entry: **activity tiles** (Explore / Train / Advanced) + a prominent "New to AI? 2-min overview"
+  (recommended novice default); "Walk me through" is the default for beginners.
+- Datasets: the **Poems / Sorting / Equations** curriculum (memorise / generalise-groks / hallucinate),
+  + custom. Single-Jabberwocky and Sonnets dropped from the dropdown.
+- "Reasoning" reframed honestly: **sorting = real generalisation**, **algebra = hallucination**.
+- Grokking viz: from-scratch **PCA** "number line", not UMAP.
+
 ## Vision
 
 One through-line — **a language model predicts the next token** — explored at three depths. Every

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../state/store'
 import { getTrainer, rebuildTrainer, setTrainer, type Trainer } from '../engine/trainer'
 import type { GradNorm } from '../engine/optimizer'
@@ -8,7 +8,15 @@ import type { FeatureFlags, TrainConfig } from '../engine/config'
 import { buildWalkSteps, type WalkStep } from '../engine/walkthrough'
 import { installBundledModel } from '../state/pretrained'
 import { FINETUNE_PACKS } from '../data/finetunePacks'
+import { TEXT_SAMPLES } from '../data/jabberwocky'
+import { sortHeldOut } from '../data/tasks'
+import { sortAccuracy } from '../interp/ablation'
+import { pca2 } from '../interp/pca'
+import Scatter from '../viz/Scatter'
 import type { LoraTarget } from '../engine/config'
+
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+const GROK_EVERY = 150 // recompute the grok view (held-out sort acc + digit PCA) every N steps
 import Walkthrough from './Walkthrough'
 import LineChart from '../viz/LineChart'
 import Heatmap from '../viz/Heatmap'
@@ -63,6 +71,28 @@ export default function TrainingPanel() {
   const [walk, setWalk] = useState<WalkStep[] | null>(null)
   const [restoredStep, setRestoredStep] = useState<number | null>(null)
 
+  // Grokking view (shown when training on the Sorting dataset): held-out sort
+  // accuracy over time + a PCA of the digit embeddings ("number line").
+  const sortText = useMemo(() => TEXT_SAMPLES.find((s) => s.id === 'sort')?.text ?? '', [])
+  const isSorting = trainingText === sortText
+  const heldOut = useMemo(() => sortHeldOut().slice(0, 24), [])
+  const [grok, setGrok] = useState<{ accHist: { step: number; acc: number }[]; pca: [number, number][] }>({
+    accHist: [],
+    pca: [],
+  })
+
+  function computeGrok(step: number) {
+    const trainer = getTrainer()
+    if (!trainer) return
+    const acc = sortAccuracy(trainer.model, trainer.tok, heldOut)
+    const dM = trainer.model.cfg.dModel
+    const emb = DIGITS.map((d) => trainer.tok.stoi.get(d))
+      .filter((id): id is number => id != null)
+      .map((id) => Array.from(trainer.model.tokenEmbed.data.subarray(id * dM, (id + 1) * dM)))
+    const pca = emb.length >= 2 ? pca2(emb) : []
+    setGrok((g) => ({ accHist: [...g.accHist, { step, acc }].slice(-300), pca }))
+  }
+
   // Write the current run (model + step + loss curves) to IndexedDB so it
   // survives the tab being frozen/discarded when the machine sleeps. Reads
   // everything from the store so it's stable and cheap to call.
@@ -96,6 +126,7 @@ export default function TrainingPanel() {
     useStore.getState().bumpModelVersion()
     setGradNorms([])
     setRestoredStep(null) // a new run replaces any restored checkpoint
+    setGrok({ accHist: [], pca: [] })
     void idbDelete()
     ensureBaselineVal()
   }
@@ -123,6 +154,9 @@ export default function TrainingPanel() {
       useStore.getState().setStep(nextStep)
       useStore.getState().pushLoss({ step: nextStep, loss: result.loss })
       maybeValidate(trainer, nextStep, s.trainConfig, s.featureFlags)
+      if (nextStep % GROK_EVERY === 0 && useStore.getState().trainingText === sortText) {
+        computeGrok(nextStep)
+      }
       if (nextStep % s.trainConfig.sampleEverySteps === 0) {
         const seed = trainingText.slice(0, 1)
         useStore.getState().setLivePreview(trainer.sample(s.featureFlags, s.sampleConfig, seed, 120))
@@ -485,6 +519,45 @@ export default function TrainingPanel() {
             </div>
           ))}
       </div>
+
+      {isSorting && modelBuilt && (
+        <div className="rounded border border-fuchsia-800/50 bg-fuchsia-950/15 p-2">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-fuchsia-300">
+              Grokking — will it sort lists it has never seen?
+            </span>
+            <span className="text-[11px] text-fuchsia-200">
+              held-out: {grok.accHist.at(-1)?.acc ?? 0}%
+            </span>
+          </div>
+          <div className="mb-1 text-[10px] text-slate-400">
+            Prediction first: will held-out accuracy climb steadily, or sit flat then suddenly jump? Press
+            ▶ Play and watch (~1–2 min on the tiny preset).
+          </div>
+          <LineChart
+            yLabel="held-out sort %"
+            series={[
+              {
+                label: 'held-out sort accuracy',
+                color: '#e879f9',
+                points: grok.accHist.map((p) => ({ x: p.step, y: p.acc })),
+              },
+            ]}
+          />
+          <div className="mt-2 flex flex-wrap items-start gap-3">
+            <div>
+              <div className="mb-1 text-[10px] text-slate-400">digit embeddings → "number line" (PCA)</div>
+              <Scatter points={grok.pca} labels={DIGITS} />
+            </div>
+            <p className="max-w-[15rem] text-[10px] leading-relaxed text-slate-500">
+              Held-out accuracy sits near zero, then <span className="text-fuchsia-300">suddenly jumps</span>{' '}
+              — the model <em>groks</em> the rule. Around the same time the digits 1–9 line up in order: it
+              has learned the <em>concept</em> of order, which is why it now sorts lists it never trained on.
+              (Then see <em>which heads</em> do it in the Interpretability lab.)
+            </p>
+          </div>
+        </div>
+      )}
 
       <div>
         <div className="mb-1 text-[11px] text-slate-400">
