@@ -221,7 +221,7 @@ export default function InferencePanel() {
             ))}
           </div>
         )}
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-tour="inference">
           <input
             className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-100"
             value={prompt}
@@ -322,7 +322,7 @@ export default function InferencePanel() {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1" data-tour="tabs">
             {TABS.filter((t) => t !== 'LoRA' || fineTuneActive).map((t) => (
               <button
                 key={t}

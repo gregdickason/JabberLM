@@ -436,7 +436,7 @@ export default function TrainingPanel() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-tour="play">
         {status === 'running' ? (
           <button className={btn} onClick={pause} disabled={fineTuneActive}>
             ⏸ Pause
@@ -525,7 +525,7 @@ export default function TrainingPanel() {
         </div>
       )}
 
-      <div>
+      <div data-tour="loss">
         <div className="mb-1 flex items-center gap-3 text-[11px] text-slate-400">
           <span>cross-entropy loss</span>
           <span className="flex items-center gap-1">
@@ -560,7 +560,7 @@ export default function TrainingPanel() {
       </div>
 
       {isSorting && modelBuilt && (
-        <div className="rounded border border-fuchsia-800/50 bg-fuchsia-950/15 p-2">
+        <div data-tour="grok" className="rounded border border-fuchsia-800/50 bg-fuchsia-950/15 p-2">
           <div className="mb-1 flex items-center justify-between">
             <span className="text-[11px] font-semibold text-fuchsia-300">
               Grokking — will it sort lists it has never seen?

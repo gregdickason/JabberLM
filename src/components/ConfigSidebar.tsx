@@ -67,6 +67,7 @@ export default function ConfigSidebar() {
     <div className="text-slate-200">
       <Section title="Training text">
         <select
+          data-tour="dataset"
           className={selInput + ' w-full'}
           value={selectedSampleId}
           onChange={(e) => {
@@ -92,7 +93,7 @@ export default function ConfigSidebar() {
       </Section>
 
       <Section title="Architecture (rebuild required)">
-        <div className="flex gap-1">
+        <div className="flex gap-1" data-tour="architecture">
           {PRESETS.map((p) => {
             const blocked = p.slow && isMobile
             return (
