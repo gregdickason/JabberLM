@@ -64,6 +64,8 @@ export default function Heatmap({
           ref={canvasRef}
           width={w}
           height={h}
+          role="img"
+          aria-label={`${title ? title + ': ' : ''}heatmap, ${rows} rows by ${cols} columns`}
           className="rounded border border-slate-700"
           onMouseMove={onMove}
           onMouseLeave={() => setHover(null)}

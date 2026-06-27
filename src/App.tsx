@@ -106,6 +106,7 @@ export default function App() {
   const sortText = TEXT_SAMPLES.find((s) => s.id === 'sort')?.text
   const startTour = () => {
     if (sortText) setTrainingText(sortText) // set up the grokking scenario
+    setShowConfig(true) // open the sidebar so the dataset/architecture steps point correctly on mobile
     dismissChooser()
     setTour(true)
   }

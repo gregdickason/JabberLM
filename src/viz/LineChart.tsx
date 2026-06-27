@@ -97,7 +97,16 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
 
   return (
     <div ref={wrapRef} className="w-full">
-      <canvas ref={canvasRef} width={w} height={height} className="rounded bg-slate-900/60" />
+      <canvas
+        ref={canvasRef}
+        width={w}
+        height={height}
+        role="img"
+        aria-label={`line chart${yLabel ? ' of ' + yLabel : ''}: ${series
+          .map((s) => `${s.label} latest ${s.points.at(-1)?.y.toFixed(2) ?? 'n/a'}`)
+          .join(', ')}`}
+        className="rounded bg-slate-900/60"
+      />
     </div>
   )
 }

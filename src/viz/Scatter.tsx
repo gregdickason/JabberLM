@@ -28,7 +28,13 @@ export default function Scatter({
   const color = (i: number) => `hsl(${220 - (220 * i) / Math.max(1, points.length - 1)}, 70%, 60%)`
 
   return (
-    <svg width={width} height={height} className="rounded bg-slate-900/60">
+    <svg
+      width={width}
+      height={height}
+      role="img"
+      aria-label={`2-D scatter of ${points.length} points labelled ${labels.join(', ')}`}
+      className="rounded bg-slate-900/60"
+    >
       {points.map((p, i) => (
         <g key={i}>
           <circle cx={sx(p[0])} cy={sy(p[1])} r={4} fill={color(i)} />
