@@ -69,7 +69,7 @@ export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (
   }
 
   return (
-    <div className="fixed inset-0 z-[60]">
+    <div className="pointer-events-none fixed inset-0 z-[60]">
       {/* dim everything except a hole around the target (box-shadow trick); clicks pass through */}
       <div className="pointer-events-none absolute inset-0">
         {rect && (
@@ -90,7 +90,7 @@ export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (
 
       {/* tooltip */}
       <div
-        className="absolute rounded-lg border border-fuchsia-700 bg-slate-900 p-3 text-xs text-slate-200 shadow-2xl"
+        className="pointer-events-auto absolute rounded-lg border border-fuchsia-700 bg-slate-900 p-3 text-xs text-slate-200 shadow-2xl"
         style={{ width: TOOLTIP_W, ...tip }}
       >
         <div className="mb-1 flex items-center justify-between">

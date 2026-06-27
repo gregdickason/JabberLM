@@ -1,27 +1,13 @@
-import { useEffect, useState } from 'react'
 import { useStore } from '../state/store'
 import { TEXT_SAMPLES } from '../data/jabberwocky'
 import type { ModelConfig, PositionalMode } from '../engine/config'
 
-const PRESETS: { name: string; cfg: Partial<ModelConfig>; slow?: boolean }[] = [
+// Live training stays small — bigger models are shown via the pre-baked bundled
+// model and the explain-page speed race, not trained live here.
+const PRESETS: { name: string; cfg: Partial<ModelConfig> }[] = [
   { name: 'tiny', cfg: { dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 } },
   { name: 'default', cfg: { dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 } },
-  { name: 'bigger', cfg: { dModel: 64, nHeads: 4, nLayers: 4, contextLen: 64, dFF: 256 } },
-  { name: 'largest', cfg: { dModel: 96, nHeads: 4, nLayers: 4, contextLen: 128, dFF: 384 }, slow: true },
 ]
-
-// `largest` trains slowly live and is rough on phones — gate it on small screens.
-function useIsMobile(): boolean {
-  const [mobile, setMobile] = useState(false)
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)')
-    const on = () => setMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return mobile
-}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -61,7 +47,6 @@ export default function ConfigSidebar() {
 
   const selectedSampleId =
     TEXT_SAMPLES.find((s) => s.text === trainingText)?.id ?? 'custom'
-  const isMobile = useIsMobile()
 
   return (
     <div className="text-slate-200">
@@ -95,25 +80,19 @@ export default function ConfigSidebar() {
       <Section title="Architecture (rebuild required)">
         <div className="flex gap-1" data-tour="architecture">
           {PRESETS.map((p) => {
-            const blocked = p.slow && isMobile
+            const active = Object.entries(p.cfg).every(
+              ([k, v]) => (modelConfig as unknown as Record<string, unknown>)[k] === v,
+            )
             return (
               <button
                 key={p.name}
-                disabled={blocked}
-                title={
-                  blocked
-                    ? 'large model — too slow to train live on a phone (open on desktop)'
-                    : p.slow
-                      ? 'large model — slow to train live; best on desktop'
-                      : undefined
-                }
                 className={
-                  'flex-1 rounded border px-1 py-0.5 text-[11px] disabled:opacity-40 ' +
-                  (p.slow
-                    ? 'border-amber-800/60 bg-slate-800 text-amber-200/90 hover:bg-slate-700'
+                  'flex-1 rounded border px-1 py-0.5 text-[11px] ' +
+                  (active
+                    ? 'border-sky-500 bg-sky-900/40 text-sky-100'
                     : 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700')
                 }
-                onClick={() => !blocked && setModelConfig(p.cfg)}
+                onClick={() => setModelConfig(p.cfg)}
               >
                 {p.name}
               </button>
@@ -121,8 +100,7 @@ export default function ConfigSidebar() {
           })}
         </div>
         <div className="text-[10px] text-slate-500">
-          Smaller is plenty for these demos. <span className="text-amber-200/80">largest</span> trains
-          slowly live{isMobile ? ' (disabled on mobile)' : ''}.
+          Both are tiny and train in a minute or two.
         </div>
         <Row label="d_model">
           <input
