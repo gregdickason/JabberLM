@@ -7,6 +7,7 @@ import RandomnessDemo from './RandomnessDemo'
 import ContextDemo from './ContextDemo'
 import HallucinationDemo from './HallucinationDemo'
 import CostsDemo from './CostsDemo'
+import SpeedDemo from './SpeedDemo'
 import Governance from './Governance'
 
 export default function ExplainApp() {
@@ -129,10 +130,16 @@ export default function ExplainApp() {
               often you re-run, and how capable a model you choose.
             </p>
             <CostsDemo />
+            <p className="mt-4">
+              Cost isn't the only trade-off — <strong>bigger models are also slower</strong>. Here's the
+              same work at three sizes, timed live in your browser:
+            </p>
+            <SpeedDemo />
             <Callout>
               Budget by tokens, not by "questions". Summarising or repeatedly querying large documents is
-              where spend accumulates; a more capable model can cost several times more per token. Pick
-              the smallest model that does the job.
+              where spend accumulates; a more capable model can cost several times more per token — and
+              answer more slowly. Pick the smallest model that does the job, and weigh a small,
+              self-hosted open model where control, privacy, or predictable cost matter.
             </Callout>
           </Section>
 
