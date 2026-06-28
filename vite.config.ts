@@ -9,8 +9,9 @@ export default defineConfig({
   base: '/',
   build: {
     rollupOptions: {
-      // multi-page: main app, interpretability lab, and plain-language explainer
-      input: { main: 'index.html', lab: 'lab.html', explain: 'explain.html' },
+      // multi-page: main app, interpretability lab, plain-language explainer,
+      // and the "how a transformer works" guided learn page
+      input: { main: 'index.html', lab: 'lab.html', explain: 'explain.html', learn: 'learn.html' },
     },
   },
   test: {

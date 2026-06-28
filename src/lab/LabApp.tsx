@@ -63,7 +63,10 @@ export default function LabApp() {
       <header className="flex flex-wrap items-center gap-3 border-b border-slate-800 bg-slate-900/60 px-4 py-2">
         <h1 className="text-base font-bold text-fuchsia-300">JabberLM · Interpretability lab</h1>
         <span className="text-xs text-slate-400">seeing inside a trained model</span>
-        <a className="ml-auto text-xs text-sky-400 hover:underline" href="./">
+        <a className="ml-auto text-xs text-sky-300 hover:underline" href="./learn.html">
+          How it works →
+        </a>
+        <a className="text-xs text-sky-400 hover:underline" href="./">
           ← back to JabberLM
         </a>
       </header>

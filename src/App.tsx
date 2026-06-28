@@ -146,6 +146,9 @@ export default function App() {
         <a href="./explain.html" className="text-xs text-emerald-300 hover:underline">
           New to AI? →
         </a>
+        <a href="./learn.html" className="text-xs text-sky-300 hover:underline">
+          How it works →
+        </a>
         <a
           href="./lab.html"
           target="_blank"
@@ -224,6 +227,21 @@ export default function App() {
               <div className="text-[11px] text-slate-400">
                 Plain language, no maths: how it answers, why it varies, what it costs, where it goes
                 wrong.
+              </div>
+            </a>
+
+            {/* understand-the-mechanics path */}
+            <a
+              href="./learn.html"
+              onClick={dismissChooser}
+              className={tile + ' mt-2 block border-sky-700 bg-sky-900/25 hover:bg-sky-900/45'}
+            >
+              <div className="text-sm font-semibold text-sky-200">
+                Understand how it works — a guided tour of the architecture
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Follow one example through a real model: tokens → vectors → attention → next-character
+                guess, then watch it grok.
               </div>
             </a>
 
