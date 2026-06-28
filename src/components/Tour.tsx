@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 // A tiny "walk me through" tour: spotlights an element (by data-tour attribute),
 // shows a tooltip with Next / Back / Skip, and advances through a list of steps.
@@ -16,7 +16,17 @@ const TOOLTIP_W = 300
 export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: () => void }) {
   const [i, setI] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
+  const tipRef = useRef<HTMLDivElement>(null)
+  const [tipH, setTipH] = useState(160)
   const step = steps[i]
+
+  // measure the tooltip's real height so we can keep it fully on-screen (a tall
+  // step — e.g. the grokking explainer — must never push its Next button below
+  // the viewport). Only set state when it actually changes to avoid a loop.
+  useLayoutEffect(() => {
+    const h = tipRef.current?.offsetHeight
+    if (h && Math.abs(h - tipH) > 1) setTipH(h)
+  })
 
   // (re)locate the current target and follow it on scroll / resize / layout change
   useLayoutEffect(() => {
@@ -56,16 +66,17 @@ export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (
 
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1024
   const vh = typeof window !== 'undefined' ? window.innerHeight : 768
-  // tooltip placement: below the target if there's room, else above; else centred
+  // tooltip placement: prefer below the target, else above; then clamp into the
+  // viewport (top kept >= 8 and bottom kept on-screen) so Next is always reachable.
   let tip: React.CSSProperties
   if (rect) {
-    const below = rect.bottom + 12 + 150 < vh
     const left = Math.max(8, Math.min(rect.left, vw - TOOLTIP_W - 8))
-    tip = below
-      ? { left, top: rect.bottom + 12 }
-      : { left, bottom: vh - rect.top + 12 }
+    const desired =
+      rect.bottom + 12 + tipH + 8 <= vh ? rect.bottom + 12 : rect.top - tipH - 12
+    const top = Math.max(8, Math.min(desired, vh - tipH - 8))
+    tip = { left, top }
   } else {
-    tip = { left: Math.max(8, vw / 2 - TOOLTIP_W / 2), top: Math.max(40, vh / 2 - 90) }
+    tip = { left: Math.max(8, vw / 2 - TOOLTIP_W / 2), top: Math.max(8, vh / 2 - tipH / 2) }
   }
 
   return (
@@ -90,6 +101,7 @@ export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (
 
       {/* tooltip */}
       <div
+        ref={tipRef}
         className="pointer-events-auto absolute rounded-lg border border-fuchsia-700 bg-slate-900 p-3 text-xs text-slate-200 shadow-2xl"
         style={{ width: TOOLTIP_W, ...tip }}
       >

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import ConfigSidebar from './components/ConfigSidebar'
+import ConfigSidebar, { PRESETS } from './components/ConfigSidebar'
 import TrainingPanel from './components/TrainingPanel'
 import InferencePanel from './components/InferencePanel'
 import Tour, { type TourStep } from './components/Tour'
@@ -27,8 +27,8 @@ const TRAIN_TOUR: TourStep[] = [
     title: 'Model size',
     body: (
       <>
-        How big the model is. <b>tiny</b> or <b>default</b> is plenty here and trains in a minute or
-        two — bigger is slower.
+        How big the model is. We've picked <b>tiny</b> — it converges fast and shows the grokking jump
+        cleanly. <b>default</b> works too, just a touch slower.
       </>
     ),
   },
@@ -88,6 +88,7 @@ export default function App() {
   const [showConfig, setShowConfig] = useState(false)
   const [tour, setTour] = useState(false)
   const setTrainingText = useStore((s) => s.setTrainingText)
+  const setModelConfig = useStore((s) => s.setModelConfig)
   const [chooseMode, setChooseMode] = useState(() => {
     try {
       return localStorage.getItem(MODE_KEY) !== '1'
@@ -104,8 +105,10 @@ export default function App() {
     setChooseMode(false)
   }
   const sortText = TEXT_SAMPLES.find((s) => s.id === 'sort')?.text
+  const tinyCfg = PRESETS.find((p) => p.name === 'tiny')?.cfg
   const startTour = () => {
     if (sortText) setTrainingText(sortText) // set up the grokking scenario
+    if (tinyCfg) setModelConfig(tinyCfg) // tiny converges fast and shows grokking cleanly
     setShowConfig(true) // open the sidebar so the dataset/architecture steps point correctly on mobile
     dismissChooser()
     setTour(true)

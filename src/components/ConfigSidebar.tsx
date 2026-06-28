@@ -4,7 +4,7 @@ import type { ModelConfig, PositionalMode } from '../engine/config'
 
 // Live training stays small — bigger models are shown via the pre-baked bundled
 // model and the explain-page speed race, not trained live here.
-const PRESETS: { name: string; cfg: Partial<ModelConfig> }[] = [
+export const PRESETS: { name: string; cfg: Partial<ModelConfig> }[] = [
   { name: 'tiny', cfg: { dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 } },
   { name: 'default', cfg: { dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 } },
 ]
