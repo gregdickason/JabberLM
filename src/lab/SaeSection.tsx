@@ -3,6 +3,7 @@ import type { Trainer } from '../engine/trainer'
 import { sweepActivations, type ActivationSweep } from '../interp/activations'
 import { contextAround, topKPositions } from '../interp/maxact'
 import { SAE } from '../interp/sae'
+import { buildSortCorpus } from '../data/tasks'
 import SectionIntro, { CAVEAT } from './SectionIntro'
 
 const TOTAL_STEPS = 400
@@ -26,7 +27,14 @@ export default function SaeSection({
   const [training, setTraining] = useState(false)
   const [featMatrix, setFeatMatrix] = useState<Float32Array | null>(null)
   const [feature, setFeature] = useState(0)
-  const ids = useMemo(() => trainer.tok.encode(trainer.text), [trainer])
+  // Which text to illustrate features on. The whole multitask corpus (poems +
+  // algebra + sorting) makes the top-activating snippets a muddy mix; probing on
+  // clean sorting lines makes each feature legible ("fires on the digit after =>").
+  const [probe, setProbe] = useState<'sorting' | 'corpus'>('sorting')
+  const ids = useMemo(
+    () => trainer.tok.encode(probe === 'sorting' ? buildSortCorpus(8000) : trainer.text),
+    [trainer, probe],
+  )
 
   useEffect(() => {
     setSweep(null)
@@ -121,7 +129,10 @@ export default function SaeSection({
         Because neurons are polysemantic, Anthropic decomposes activations into a larger set of cleaner
         units. A sparse autoencoder learns to rebuild a layer's activations from a few active features
         out of many — here {nFeatures} features from a {sweep?.dModel ?? '?'}-dimensional residual
-        stream. The L1 penalty forces sparsity, which pushes each feature toward a single meaning. {CAVEAT}
+        stream. The L1 penalty forces sparsity, which pushes each feature toward a single meaning. {CAVEAT}{' '}
+        The features were <em>learned</em> by a model trained on all three skills; below we simply{' '}
+        <em>probe</em> them on clean <span className="font-mono">sort … =&gt; …</span> inputs so each one
+        reads clearly.
       </SectionIntro>
 
       {!sweep ? (
@@ -129,6 +140,17 @@ export default function SaeSection({
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3 text-xs text-slate-400">
+            <label className="flex items-center gap-1">
+              features on
+              <select
+                className={num + ' w-auto'}
+                value={probe}
+                onChange={(e) => setProbe(e.target.value as 'sorting' | 'corpus')}
+              >
+                <option value="sorting">sorting</option>
+                <option value="corpus">whole corpus</option>
+              </select>
+            </label>
             <label className="flex items-center gap-1">
               residual after layer
               <select className={num} value={layer} onChange={(e) => setLayer(Number(e.target.value))}>
