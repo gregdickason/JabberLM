@@ -43,9 +43,10 @@ export interface LayerTrace {
   attnOut: Matrix // concat(heads) · Wo
   afterAttnResid: Matrix // residual after adding attnOut
   normedMLP: Matrix // after LayerNorm 2
-  mlpHidden: Matrix // MLP hidden activations (seq × dFF)
+  mlpHidden: Matrix // MLP hidden activations (seq × dFF) — for MoE, expert 0's hidden
   mlpOut: Matrix // MLP output (seq × dModel)
   afterMLPResid: Matrix // residual after adding mlpOut
+  gate?: Matrix // (seq × nExperts) MoE routing weights per token — present only for MoE models
   lora?: LoraTrace[] // present when LoRA adapters are active (collect only)
 }
 

@@ -60,7 +60,9 @@ export function residualScale(model: Model, ids: number[], layer: number): numbe
 
 /** A single MLP neuron's write direction into the residual stream (row of W2). */
 export function neuronWriteDirection(model: Model, layer: number, neuron: number): Float32Array {
-  const W2 = model.layers[layer].W2 // dFF × dModel
+  // dFF × dModel — for a MoE model (no single dense MLP) fall back to expert 0.
+  const W2 = model.layers[layer].W2 ?? model.layers[layer].experts?.[0]?.W2
+  if (!W2) throw new Error('neuronWriteDirection: layer has no MLP down-projection')
   const d = W2.cols
   const v = new Float32Array(d)
   let n = 0

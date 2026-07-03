@@ -1,6 +1,19 @@
 import { Tensor } from './tensor'
 import { RNG } from './random'
-import { add, addRow, embeddingLookup, gelu, layerNorm, matmul, loraMatmul, relu, transpose } from './ops'
+import {
+  add,
+  addRow,
+  embeddingLookup,
+  gelu,
+  layerNorm,
+  matmul,
+  loraMatmul,
+  relu,
+  rowSoftmax,
+  scaleRows,
+  sliceCols,
+  transpose,
+} from './ops'
 import {
   buildMask,
   multiHeadAttention,
@@ -9,7 +22,32 @@ import {
   type LoraAdapter,
 } from './attention'
 import type { FeatureFlags, FineTuneConfig, ModelConfig } from './config'
-import { snapshot, type LayerTrace, type LoraTrace, type Trace } from './trace'
+import { snapshot, type LayerTrace, type LoraTrace, type Matrix, type Trace } from './trace'
+
+/**
+ * Rebuild a DETACHED gate (no autograd) for inference-time sparse routing and/or
+ * expert ablation: zero ablated experts, keep only the top-k per token, then
+ * renormalise the survivors (uniform fallback if a row is fully zeroed). Never
+ * used during training — the dense softmax gate stays on the tape there.
+ */
+function sparsifyGate(gate: Tensor, topK: number | null, ablated: number[] | null): Tensor {
+  const rows = gate.rows
+  const E = gate.cols
+  const d = gate.data.slice()
+  for (let i = 0; i < rows; i++) {
+    const base = i * E
+    if (ablated) for (const e of ablated) d[base + e] = 0
+    if (topK && topK < E) {
+      const idx = Array.from({ length: E }, (_, e) => e).sort((a, b) => d[base + b] - d[base + a])
+      for (let r = topK; r < E; r++) d[base + idx[r]] = 0
+    }
+    let s = 0
+    for (let e = 0; e < E; e++) s += d[base + e]
+    if (s > 1e-9) for (let e = 0; e < E; e++) d[base + e] /= s
+    else for (let e = 0; e < E; e++) d[base + e] = 1 / E
+  }
+  return new Tensor(d, rows, E, 'gateSparse') // requiresGrad=false → detached
+}
 
 // Live (graph-attached) tensors captured during a forward pass so the
 // step-through walkthrough can read both values and gradients (after backward).
@@ -32,17 +70,29 @@ export interface WalkCapture {
   logits?: Tensor
 }
 
+/** One feed-forward expert (a standard 2-layer MLP). */
+interface ExpertParams {
+  W1: Tensor
+  b1: Tensor
+  W2: Tensor
+  b2: Tensor
+}
+
 interface LayerParams {
   ln1g: Tensor
   ln1b: Tensor
   attn: AttnParams
   ln2g: Tensor
   ln2b: Tensor
-  W1: Tensor
-  b1: Tensor
-  W2: Tensor
-  b2: Tensor
+  // Dense MLP (present when the model is NOT Mixture-of-Experts).
+  W1?: Tensor
+  b1?: Tensor
+  W2?: Tensor
+  b2?: Tensor
   loraW2?: LoraAdapter // optional MLP down-projection adapter (when 'mlp' is targeted)
+  // Mixture-of-Experts (present when cfg.nExperts > 1): E expert FFNs + a gate.
+  experts?: ExpertParams[]
+  gate?: Tensor // (dModel × nExperts) router: token → expert logits
 }
 
 export interface ForwardResult {
@@ -100,8 +150,9 @@ export class Model {
     this.tokenEmbed = param(vocabSize, dModel, std, 'tokenEmbed')
     this.posEmbed = param(contextLen, dModel, std, 'posEmbed')
 
+    const nExperts = cfg.nExperts ?? 1
     for (let l = 0; l < nLayers; l++) {
-      this.layers.push({
+      const lp: LayerParams = {
         ln1g: ones(dModel, `L${l}.ln1g`),
         ln1b: zeros(dModel, `L${l}.ln1b`),
         attn: {
@@ -112,11 +163,27 @@ export class Model {
         },
         ln2g: ones(dModel, `L${l}.ln2g`),
         ln2b: zeros(dModel, `L${l}.ln2b`),
-        W1: param(dModel, dFF, std, `L${l}.W1`),
-        b1: zeros(dFF, `L${l}.b1`),
-        W2: param(dFF, dModel, residStd, `L${l}.W2`),
-        b2: zeros(dModel, `L${l}.b2`),
-      })
+      }
+      if (nExperts > 1) {
+        // MoE: E expert FFNs + a router. The gate is small-init so routing starts
+        // near-uniform (avoids one expert dominating from step 0).
+        lp.experts = []
+        for (let e = 0; e < nExperts; e++) {
+          lp.experts.push({
+            W1: param(dModel, dFF, std, `L${l}.E${e}.W1`),
+            b1: zeros(dFF, `L${l}.E${e}.b1`),
+            W2: param(dFF, dModel, residStd, `L${l}.E${e}.W2`),
+            b2: zeros(dModel, `L${l}.E${e}.b2`),
+          })
+        }
+        lp.gate = param(dModel, nExperts, std, `L${l}.gate`)
+      } else {
+        lp.W1 = param(dModel, dFF, std, `L${l}.W1`)
+        lp.b1 = zeros(dFF, `L${l}.b1`)
+        lp.W2 = param(dFF, dModel, residStd, `L${l}.W2`)
+        lp.b2 = zeros(dModel, `L${l}.b2`)
+      }
+      this.layers.push(lp)
     }
 
     this.lnfg = ones(dModel, 'lnfg')
@@ -200,6 +267,7 @@ export class Model {
     capture?: WalkCapture,
     steer?: { layer: number; vec: Float32Array; strength: number },
     ablate?: ReadonlySet<string>, // keys "layer.head" whose attention output is zeroed
+    moeAblate?: ReadonlySet<string>, // keys "layer.expert" whose MoE expert is removed from the gate
   ): ForwardResult {
     const mask = buildMask(positions, flags)
 
@@ -242,12 +310,44 @@ export class Model {
       const afterAttn = add(preLNAttn, attnRes.out)
 
       const normedMLP = layerNorm(afterAttn, lp.ln2g, lp.ln2b)
-      const hidden = this.activate(addRow(matmul(normedMLP, lp.W1), lp.b1))
-      const w2out =
-        flags.lora && lp.loraW2
-          ? loraMatmul(hidden, lp.W2, lp.loraW2.A, lp.loraW2.B, lp.loraW2.scale)
-          : matmul(hidden, lp.W2)
-      const mlpOut = addRow(w2out, lp.b2)
+      let mlpOut: Tensor
+      let hidden: Tensor // MLP hidden for the trace/walkthrough (expert 0 under MoE)
+      let gateSnap: Matrix | undefined
+      if (lp.experts && lp.gate) {
+        // Mixture-of-Experts MLP: route each token through a softmax gate over E
+        // expert FFNs. Dense (all experts, gate-weighted) during training; the
+        // inference-only top-k / ablation rebuilds a detached gate.
+        const E = lp.experts.length
+        let gateW = rowSoftmax(matmul(normedMLP, lp.gate)) // (seq × E), differentiable
+        let ablatedExperts: number[] | null = null
+        if (moeAblate) {
+          const hit: number[] = []
+          for (let e = 0; e < E; e++) if (moeAblate.has(`${li}.${e}`)) hit.push(e)
+          if (hit.length) ablatedExperts = hit
+        }
+        const topK = flags.moeTopK ?? null
+        if ((topK && topK < E) || ablatedExperts) gateW = sparsifyGate(gateW, topK, ablatedExperts)
+        let acc: Tensor | null = null
+        let hidden0: Tensor | null = null
+        for (let e = 0; e < E; e++) {
+          const ep = lp.experts[e]
+          const h = this.activate(addRow(matmul(normedMLP, ep.W1), ep.b1))
+          if (e === 0) hidden0 = h
+          const oe = addRow(matmul(h, ep.W2), ep.b2) // (seq × dModel)
+          const contrib = scaleRows(oe, sliceCols(gateW, e, 1)) // weight by gate column e
+          acc = acc ? add(acc, contrib) : contrib
+        }
+        mlpOut = acc!
+        hidden = hidden0!
+        if (collect) gateSnap = snapshot(gateW)
+      } else {
+        hidden = this.activate(addRow(matmul(normedMLP, lp.W1!), lp.b1!))
+        const w2out =
+          flags.lora && lp.loraW2
+            ? loraMatmul(hidden, lp.W2!, lp.loraW2.A, lp.loraW2.B, lp.loraW2.scale)
+            : matmul(hidden, lp.W2!)
+        mlpOut = addRow(w2out, lp.b2!)
+      }
       let afterMLP = add(afterAttn, mlpOut)
       // feature steering: clamp a direction into the residual stream after a layer
       if (steer && steer.layer === li) {
@@ -281,6 +381,7 @@ export class Model {
           mlpHidden: snapshot(hidden),
           mlpOut: snapshot(mlpOut),
           afterMLPResid: snapshot(afterMLP),
+          gate: gateSnap,
           lora: this.loraConfig ? this.snapshotLora(lp) : undefined,
         })
       }

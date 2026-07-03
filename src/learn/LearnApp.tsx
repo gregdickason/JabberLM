@@ -332,6 +332,14 @@ export default function LearnApp() {
               .
             </p>
             <p>
+              Many of the largest models go one step further with a <strong>Mixture of Experts</strong>:
+              each layer's single MLP is replaced by several expert MLPs plus a <em>gate</em> that routes
+              every token to just a few of them. Attention (and its heads) stay exactly the same — only
+              the MLP is split — so the model can grow its total size while only running a slice of it per
+              token. The lab ships a tiny MoE you can watch route tokens and ablate experts, right beside
+              the head tools.
+            </p>
+            <p>
               Two practical consequences. First, <strong>cost</strong>: attention compares every token with
               every other, so work grows with the <em>square</em> of the length — long documents get
               expensive fast (the{' '}

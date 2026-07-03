@@ -77,8 +77,51 @@ export function buildEquationCorpus(targetChars = 40000): string {
   return lines.join('\n') + '\n'
 }
 
+// ---- extra algorithmic tasks (for the Mixture-of-Experts demo) --------------
+// Same 3-digit inputs as sorting, three different operations. All are things a
+// tiny model can actually learn, so a MoE trained on the mix has something real
+// for its experts to specialise on.
+export const maxLine = (v: SortVec): string => `max ${v.join(' ')} => ${Math.max(...v)}`
+export const reverseLine = (v: SortVec): string => `rev ${v.join(' ')} => ${[...v].reverse().join(' ')}`
+
+/** One 80/20 train/test split of the 729 vectors, shared by every op so "unseen"
+ *  means unseen for all tasks (matches `sortHeldOut`'s seed). */
+function sharedSplit(): { train: SortVec[]; test: SortVec[] } {
+  const vecs = allSortVecs(mulberry32(20250626))
+  const n = Math.floor(vecs.length * 0.2)
+  return { test: vecs.slice(0, n), train: vecs.slice(n) }
+}
+export const maxHeldOut = (): SortVec[] => sharedSplit().test
+export const reverseHeldOut = (): SortVec[] => sharedSplit().test
+
+/** The multi-task corpus for the MoE model: sort + max + reverse, interleaved so
+ *  every training window is a mix of tasks, drawn only from the shared train split. */
+export function buildMoeCorpus(targetCharsPerTask = 40000): string {
+  const rnd = mulberry32(31415926)
+  const { train } = sharedSplit()
+  const gens: ((v: SortVec) => string)[] = [sortLine, maxLine, reverseLine]
+  const pick = () => train[Math.floor(rnd() * train.length)]
+  const lines: string[] = []
+  const chars = gens.map(() => 0)
+  let done = false
+  while (!done) {
+    done = true
+    for (let g = 0; g < gens.length; g++) {
+      if (chars[g] < targetCharsPerTask) {
+        const l = gens[g](pick())
+        lines.push(l)
+        chars[g] += l.length + 1
+        done = false
+      }
+    }
+  }
+  return lines.join('\n') + '\n'
+}
+
 // ---- example prompts (for chips / demos) -----------------------------------
 export const TASK_EXAMPLES = {
   sort: 'sort 6 9 2 => ',
   algebra: '7x + 2 = 16 => ',
+  max: 'max 6 9 2 => ',
+  reverse: 'rev 6 9 2 => ',
 }

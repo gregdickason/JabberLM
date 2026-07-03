@@ -18,6 +18,7 @@ import { serialize } from '../src/engine/persist'
 import { JABBER_POEMS } from '../src/data/jabberPoems'
 import { SHAKESPEARE_SONNETS } from '../src/data/shakespeare'
 import { buildMultitaskCorpus, type SortVec } from './multitask-corpus'
+import { buildMoeCorpus, sortHeldOut } from '../src/data/tasks'
 import {
   DEFAULT_FEATURE_FLAGS,
   DEFAULT_MODEL_CONFIG,
@@ -29,6 +30,16 @@ import {
 
 const LARGEST: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 96, nHeads: 4, nLayers: 4, contextLen: 128, dFF: 384 }
 const DEFAULTP: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 }
+// Mixture-of-Experts demo model: each layer's MLP is E expert FFNs + a gate.
+const MOE: ModelConfig = {
+  ...DEFAULT_MODEL_CONFIG,
+  dModel: 48,
+  nHeads: 3,
+  nLayers: 3,
+  contextLen: 48,
+  dFF: 96,
+  nExperts: Number(process.env.EXPERTS ?? 4),
+}
 
 interface DS {
   corpus: string
@@ -47,8 +58,10 @@ function makeDS(name: string): DS {
       const m = buildMultitaskCorpus()
       return { corpus: m.corpus, file: 'multitask-model.json', seed: "'Twas ", config: DEFAULTP, sortHeldOut: m.sortHeldOut }
     }
+    case 'moe':
+      return { corpus: buildMoeCorpus(30000), file: 'moe-model.json', seed: 'sort 6 9 2 => ', config: MOE, sortHeldOut: sortHeldOut() }
     default:
-      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask)`)
+      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe)`)
   }
 }
 const DATASET = process.env.DATASET ?? 'jabber'

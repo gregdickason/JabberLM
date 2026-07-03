@@ -8,6 +8,7 @@ import {
   transpose,
   sub,
   mulElem,
+  scaleRows,
   abs,
   rowSoftmax,
   layerNorm,
@@ -119,6 +120,13 @@ describe('autograd gradient checks', () => {
   it('mulElem', () => {
     checkGrad([{ rows: 2, cols: 3, data: rand(6) }, { rows: 2, cols: 3, data: rand(6) }], (i) =>
       sum(mulElem(i[0], i[1])),
+    )
+  })
+
+  it('scaleRows (per-row scalar, MoE gate weighting)', () => {
+    // x (3×4) scaled per row by s (3×1); grads must flow into both x and s
+    checkGrad([{ rows: 3, cols: 4, data: rand(12) }, { rows: 3, cols: 1, data: rand(3) }], (i) =>
+      sum(scaleRows(i[0], i[1])),
     )
   })
 

@@ -59,6 +59,72 @@ export function poemLoss(model: Model, tok: CharTokenizer, text: string, ablate?
   return n ? s / n : 0
 }
 
+// ---- Mixture-of-Experts: task accuracy with optional EXPERT ablation --------
+export type MoeOp = 'sort' | 'max' | 'reverse'
+export type ExpertAblation = ReadonlySet<string> // keys "layer.expert"
+
+const opPrompt = (op: MoeOp, v: SortVec): string =>
+  `${op === 'reverse' ? 'rev' : op} ${v.join(' ')} => `
+const opExpected = (op: MoeOp, v: SortVec): string =>
+  op === 'sort'
+    ? [...v].sort((a, b) => a - b).join(' ')
+    : op === 'max'
+      ? String(Math.max(...v))
+      : [...v].reverse().join(' ')
+
+/** Greedy answer for one MoE-task prompt. `moeAblate` removes experts; `topK`
+ *  switches inference to sparse top-k routing (undefined/null = dense). */
+export function moeAnswer(
+  model: Model,
+  tok: CharTokenizer,
+  prompt: string,
+  maxNew: number,
+  moeAblate?: ExpertAblation,
+  topK?: number | null,
+): string {
+  const flags = { ...DEFAULT_FEATURE_FLAGS, moeTopK: topK ?? null }
+  const ctx = model.cfg.contextLen
+  const ids = tok.encode(prompt)
+  const out: number[] = []
+  const nl = tok.stoi.get('\n')
+  for (let s = 0; s < maxNew; s++) {
+    const window = ids.slice(Math.max(0, ids.length - ctx))
+    const { logits } = model.forward(window, flags, undefined, false, undefined, undefined, undefined, moeAblate)
+    const V = logits.cols
+    const base = (logits.rows - 1) * V
+    let best = 0
+    for (let j = 1; j < V; j++) if (logits.data[base + j] > logits.data[base + best]) best = j
+    if (best === nl) break
+    out.push(best)
+    ids.push(best)
+  }
+  return tok.decode(out)
+}
+
+/** Exact-match accuracy on a MoE task (sort/max/reverse) over held-out vectors,
+ *  with optional expert ablation and top-k sparse routing. */
+export function taskAccuracy(
+  model: Model,
+  tok: CharTokenizer,
+  op: MoeOp,
+  vectors: SortVec[],
+  moeAblate?: ExpertAblation,
+  topK?: number | null,
+): number {
+  let ok = 0
+  for (const v of vectors) {
+    const want = opExpected(op, v)
+    const got = moeAnswer(model, tok, opPrompt(op, v), want.length + 2, moeAblate, topK).split('\n')[0].trim()
+    if (got === want) ok++
+  }
+  return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
+}
+
+/** The prompt stem for a MoE task, e.g. sort → "sort 6 9 2 => ". */
+export function moePrompt(op: MoeOp, v: SortVec): string {
+  return opPrompt(op, v)
+}
+
 export function randomSortVectors(n: number, rng: RNG): SortVec[] {
   const v = (): SortVec => [1 + Math.floor(rng.next() * 9), 1 + Math.floor(rng.next() * 9), 1 + Math.floor(rng.next() * 9)]
   return Array.from({ length: n }, v)

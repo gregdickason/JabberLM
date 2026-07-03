@@ -16,6 +16,7 @@ export interface ModelConfig {
   dFF: number // MLP hidden width (typically 4 * dModel)
   activation: Activation
   weightTying: boolean // tie the unembedding to the token embedding matrix
+  nExperts?: number // >1 turns each layer's MLP into a Mixture-of-Experts (E expert FFNs + a gate)
 }
 
 /** Feature flags that can be toggled live (most do NOT require a rebuild). */
@@ -26,6 +27,7 @@ export interface FeatureFlags {
   kvCache: boolean // inference-only: reuse cached K/V across generation steps
   ropeBase: number // RoPE theta base (only used when positional === 'rope')
   lora: boolean // apply the LoRA overlay (the low-rank ΔW) in the forward pass
+  moeTopK?: number | null // MoE inference: keep only the top-k experts per token (null/undefined = dense, all experts)
 }
 
 export type LoraTarget = 'attn' | 'mlp'

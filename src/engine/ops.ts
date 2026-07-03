@@ -131,6 +131,36 @@ export function mulElem(a: Tensor, b: Tensor): Tensor {
   return c
 }
 
+/**
+ * Scale each row of `x` (rows×n) by a per-row scalar `s` (rows×1): out[i,j] =
+ * x[i,j]·s[i]. Used to weight each expert's output by its gate probability in a
+ * Mixture-of-Experts MLP (a column-broadcast multiply the same-shape `mulElem`
+ * can't express). Gradients flow into both x and s.
+ */
+export function scaleRows(x: Tensor, s: Tensor): Tensor {
+  if (s.rows !== x.rows || s.cols !== 1) throw new Error('scaleRows: s must be (x.rows × 1)')
+  const n = x.cols
+  const data = new Float32Array(x.size)
+  for (let i = 0; i < x.rows; i++) {
+    const si = s.data[i]
+    for (let j = 0; j < n; j++) data[i * n + j] = x.data[i * n + j] * si
+  }
+  const c = out(data, x.rows, n, [x, s], 'scaleRows')
+  c._backward = () => {
+    for (let i = 0; i < x.rows; i++) {
+      const si = s.data[i]
+      let ds = 0
+      for (let j = 0; j < n; j++) {
+        const g = c.grad[i * n + j]
+        x.grad[i * n + j] += g * si
+        ds += g * x.data[i * n + j]
+      }
+      s.grad[i] += ds
+    }
+  }
+  return c
+}
+
 /** Elementwise absolute value (subgradient: sign, with sign(0)=0). */
 export function abs(a: Tensor): Tensor {
   const data = new Float32Array(a.size)
