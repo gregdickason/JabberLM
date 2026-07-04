@@ -6,9 +6,10 @@ import SaeSection from './SaeSection'
 import SteeringSection from './SteeringSection'
 import AblationSection from './AblationSection'
 import MoeSection from './MoeSection'
+import GrokSection from './GrokSection'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'head ablation', 'dictionary (SAE)', 'steering', 'mixture of experts'] as const
+const TABS = ['neurons', 'attention heads', 'head ablation', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking'] as const
 type Tab = (typeof TABS)[number]
 
 const btn =
@@ -142,6 +143,7 @@ export default function LabApp() {
             )}
             {tab === 'steering' && <SteeringSection trainer={loaded.trainer} sae={trainedSae} />}
             {tab === 'mixture of experts' && <MoeSection />}
+            {tab === 'advanced grokking' && <GrokSection />}
           </div>
         </>
       )}
