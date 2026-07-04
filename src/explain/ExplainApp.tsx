@@ -132,6 +132,32 @@ export default function ExplainApp() {
               <strong> and</strong> what comes out. Cost scales with document length, answer length, how
               often you re-run, and how capable a model you choose.
             </p>
+            <div className="mt-3 rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-[12px] leading-relaxed">
+              <strong>Just how big is "capable"?</strong> A model's size is counted in{' '}
+              <em>parameters</em> — the adjustable numbers it learns. The scale gap is staggering:
+              <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
+                <li>
+                  <strong>JabberLM</strong> (this page's built-in model): about{' '}
+                  <strong>90 thousand</strong> parameters.
+                </li>
+                <li>
+                  <strong>GPT-2</strong> (2019): 124 million to 1.5 billion — roughly{' '}
+                  <strong>1,000–17,000×</strong> bigger.
+                </li>
+                <li>
+                  The model behind the <strong>first ChatGPT</strong> (2022): about 175 billion —{' '}
+                  roughly <strong>2 million×</strong> bigger.
+                </li>
+                <li>
+                  <strong>Today's frontier models</strong>: sizes aren't published, but estimates run
+                  from hundreds of billions to a few <strong>trillion</strong> — and many now use{' '}
+                  <a className="text-sky-300 underline" href="./lab.html">
+                    Mixture-of-Experts
+                  </a>{' '}
+                  so only a slice runs on each token.
+                </li>
+              </ul>
+            </div>
             <CostsDemo />
             <p className="mt-4">
               Cost isn't the only trade-off — <strong>bigger models are also slower</strong>. Here's the
