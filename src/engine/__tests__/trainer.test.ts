@@ -60,4 +60,30 @@ describe('Trainer (integration)', () => {
     const trainer = new Trainer('the slithy toves gyred', shortCfg, 1)
     expect(trainer.evalValidation(DEFAULT_FEATURE_FLAGS, 0.2)).toBeNull()
   })
+
+  it('held-out is sampled across the whole corpus, not just the tail', () => {
+    // three clearly-separated sections; a representative split must draw held-out
+    // from more than just the final section.
+    const section = (ch: string) => (ch + ' ').repeat(400)
+    const text = section('a') + section('b') + section('c') // ~2400 chars, 3 regions
+    const trainer = new Trainer(text, { ...cfg, contextLen: 16 }, 3)
+    const regions = trainer.heldOutRegions(0.2)
+    const len = text.length
+    expect(regions.length).toBeGreaterThanOrEqual(2) // multiple held-out blocks, not one tail
+    // spread: at least one block starts in the first half and one ends in the second half
+    expect(regions.some(([s]) => s < len * 0.4)).toBe(true)
+    expect(regions.some(([, e]) => e > len * 0.6)).toBe(true)
+    // held-out blocks are ordered and non-overlapping (no leakage between them)
+    for (let i = 1; i < regions.length; i++) expect(regions[i][0]).toBeGreaterThanOrEqual(regions[i - 1][1])
+    // total held-out is roughly the requested fraction
+    const held = regions.reduce((n, [s, e]) => n + (e - s), 0)
+    expect(held / len).toBeGreaterThan(0.1)
+    expect(held / len).toBeLessThan(0.35)
+  })
+
+  it('tiny corpora fall back to a single tail held-out block', () => {
+    const trainer = new Trainer('abcdefghij klmnopqrst uvwxyz 0123456789 the quick brown fox!', { ...cfg, contextLen: 16 }, 4)
+    const regions = trainer.heldOutRegions(0.2)
+    expect(regions.length).toBe(1) // too small to interleave → one tail block
+  })
 })

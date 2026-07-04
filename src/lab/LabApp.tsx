@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { autoLoadModel, loadModelFromText, type LoadedModel } from './loadModel'
+import { autoLoadModel, loadModelFromText, loadUserModel, type LoadedModel } from './loadModel'
 import NeuronsSection from './NeuronsSection'
 import HeadsSection from './HeadsSection'
 import SaeSection from './SaeSection'
@@ -82,7 +82,24 @@ export default function LabApp() {
             {cfg.vocabSize}
           </span>
         )}
-        <button className={btn + ' ml-auto'} onClick={() => fileRef.current?.click()}>
+        <button
+          className={btn + ' ml-auto'}
+          title="Inspect the model from your most recent training run instead of the built-in one"
+          onClick={() => {
+            void (async () => {
+              const m = await loadUserModel()
+              if (m) {
+                setLoaded(m)
+                setStatus(`loaded from ${m.source}`)
+              } else {
+                setStatus('no saved training run found — train a model in the main app first')
+              }
+            })()
+          }}
+        >
+          Inspect my last training run
+        </button>
+        <button className={btn} onClick={() => fileRef.current?.click()}>
           ⭱ Upload JSON model
         </button>
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={onUpload} />

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useStore } from '../state/store'
 import { TEXT_SAMPLES } from '../data/jabberwocky'
 import type { ModelConfig, PositionalMode } from '../engine/config'
@@ -45,8 +46,14 @@ export default function ConfigSidebar() {
     modelBuilt,
   } = useStore()
 
-  const selectedSampleId =
-    TEXT_SAMPLES.find((s) => s.text === trainingText)?.id ?? 'custom'
+  // Custom is a real, always-available option. Once chosen it stays selected (the
+  // textarea is the source of truth) even if the text happens to match a sample.
+  const [customMode, setCustomMode] = useState(false)
+  const selectedSampleId = customMode
+    ? 'custom'
+    : (TEXT_SAMPLES.find((s) => s.text === trainingText)?.id ?? 'custom')
+  const uniqueChars = new Set(trainingText).size
+  const tooSmall = customMode && uniqueChars < 3
 
   return (
     <div className="text-slate-200">
@@ -56,6 +63,11 @@ export default function ConfigSidebar() {
           className={selInput + ' w-full'}
           value={selectedSampleId}
           onChange={(e) => {
+            if (e.target.value === 'custom') {
+              setCustomMode(true) // keep the current text; let the user edit it as their own corpus
+              return
+            }
+            setCustomMode(false)
             const s = TEXT_SAMPLES.find((x) => x.id === e.target.value)
             if (s) setTrainingText(s.text)
           }}
@@ -65,15 +77,20 @@ export default function ConfigSidebar() {
               {s.name}
             </option>
           ))}
-          {selectedSampleId === 'custom' && <option value="custom">Custom</option>}
+          <option value="custom">Custom…</option>
         </select>
         <textarea
           className="h-24 w-full resize-y rounded border border-slate-700 bg-slate-800 p-1.5 text-[11px] leading-tight text-slate-100 focus:border-sky-500 focus:outline-none"
           value={trainingText}
-          onChange={(e) => setTrainingText(e.target.value)}
+          placeholder="Paste your own training text here — a few thousand characters works well. The model learns to predict the next character of whatever you give it."
+          onChange={(e) => {
+            setCustomMode(true)
+            setTrainingText(e.target.value)
+          }}
         />
         <div className="text-[11px] text-slate-500">
-          {trainingText.length} chars · {new Set(trainingText).size} unique
+          {trainingText.length} chars · {uniqueChars} unique
+          {tooSmall && <span className="text-amber-400"> · add more text before training</span>}
         </div>
       </Section>
 
