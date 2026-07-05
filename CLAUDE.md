@@ -14,20 +14,43 @@ trained offline by `scripts/gen-model.ts` `DATASET=multitask` on poems + algebra
 builder in `scripts/multitask-corpus.ts`) that auto-loads on first visit so inference/inspection works
 with no training. The teaching arc is **memorisation vs hallucination vs generalisation** in one
 model: poems (memorised style), algebra (fluent but wrong — it can't learn the arithmetic), sorting
-(genuinely learned, generalises to unseen inputs, with a grokking jump). `gen:jabber`/`gen:sonnets`
-build the older single-skill poem models. Datasets live in `src/data/` (`jabberwocky.ts` →
-`TEXT_SAMPLES`, `jabberPoems.ts`, `shakespeare.ts`); bundled-model facts in `src/data/modelStats.ts`.
+(genuinely learned, generalises to unseen inputs, with a grokking jump). A second bundled model,
+`public/moe-model.json` (`DATASET=moe`, `gen:moe`, ~145K params, 4-expert token-level MoE on
+sort+max+reverse), drives the lab's Mixture-of-Experts tab. `gen:jabber`/`gen:sonnets` build the older
+single-skill poem models. Bundled-model facts in `src/data/modelStats.ts`.
+
+The app is **four pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+"New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
+(`learn.html` → `src/learn/`), and an interpretability lab (`lab.html` → `src/lab/`); plus a generated
+long-form guide (`GUIDE.md` → `public/guide.html`).
+
+Datasets: `src/data/jabberwocky.ts` `TEXT_SAMPLES` is trimmed to **Jabber Poems / Sorting / Equations**
+plus a **Custom** option (seeds all three combined, editable). The deterministic, browser-shippable task
+corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus`, `maxLine`,
+`reverseLine`, `buildMoeCorpus`, the per-task held-outs, and `moeTrainVectors`). Poem/sonnet text is in
+`jabberPoems.ts` / `shakespeare.ts` (sonnets are offline-only via `gen:sonnets`, not in the dropdown).
 
 ## Architecture
 
 - `src/engine/` is the framework-agnostic core — **never import React here.** Everything is built on
   the custom `Tensor` (flat `Float32Array` + reverse-mode autograd tape in `tensor.ts`). Each op in
   `ops.ts` installs a `_backward` closure; `Tensor.backward()` is a topo-sorted reverse walk.
-- `Model.forward(ids, flags, positions?, collect?)` returns `{ logits, trace? }`. When `collect` is
-  true it snapshots every intermediate into a `Trace` (`trace.ts`) that the inspector renders.
-- Feature flags (positional mode, causal mask, sliding window, KV cache, RoPE base) are passed
-  **per-forward**, so they can change live without rebuilding. Structural dims (d_model, heads,
-  layers, context, d_ff) require a rebuild.
+- `Model.forward(ids, flags, positions?, collect?, capture?, steer?, ablate?, moeAblate?)` returns
+  `{ logits, trace? }`. When `collect` is true it snapshots every intermediate into a `Trace`
+  (`trace.ts`) that the inspector renders. `ablate` (keys `"layer.head"`) zeroes attention heads;
+  `moeAblate` (keys `"layer.expert"`) removes MoE experts; `steer` clamps a direction into the residual.
+- Feature flags (positional mode, causal mask, sliding window, KV cache, RoPE base, `moeTopK`) are
+  passed **per-forward**, so they can change live without rebuilding. Structural dims (d_model, heads,
+  layers, context, d_ff, `nExperts`) require a rebuild.
+- **Mixture of Experts:** when `cfg.nExperts > 1`, each layer's MLP becomes E expert FFNs + a softmax
+  gate. Training is **dense** (all experts, gate-weighted — the `scaleRows` op weights each expert's
+  output by its gate column, fully differentiable); inference can go **sparse** top-k via
+  `flags.moeTopK`. The gate is snapshotted into the `Trace`. `serialize`/`deserialize` and LoRA are
+  format-stable (the params list is generic — new labels round-trip automatically).
+- **Held-out split (`trainer.ts`):** when `validationFraction > 0`, the corpus is cut into ~20 blocks
+  and every M-th block is held out — a **representative** sample across all sections (not the tail),
+  with training windows constrained to train blocks (no leakage); a single-tail fallback covers tiny
+  corpora. `heldOutRegions()` exposes the split.
 - Training runs on the main thread via a cooperative `requestAnimationFrame` loop in
   `TrainingPanel.tsx` (a few `trainer.stepBatch()` calls per frame) so the UI stays live. The
   `Trainer` singleton (`trainer.ts`, `getTrainer`/`setTrainer`) is shared by both panels — Tensors
@@ -35,6 +58,11 @@ build the older single-skill poem models. Datasets live in `src/data/` (`jabberw
 - The bundled model loads via `state/pretrained.ts` (`fetchBundledModel`/`installBundledModel` — the
   one place that installs it into engine + store); `TrainingPanel`'s mount effect calls it once (a
   module-level latch makes that StrictMode-safe). State, not engine, owns this — it touches the store.
+- **Teaching surfaces default to the bundled model.** `explain`/`learn` use `loadDemoModel`
+  (`src/explain/loadDemoModel.ts`) and the lab uses `autoLoadModel` (`src/lab/loadModel.ts`) — both
+  **bundled-first** so a visitor's half-trained run can't shadow the demos (the lab has an opt-in
+  "Inspect my last training run"). Lab sections that train live (`MoeSection`, `GrokSection`) build
+  their **own** `Trainer` instances and never touch the `getTrainer` singleton.
 
 ## Conventions
 
@@ -48,6 +76,8 @@ build the older single-skill poem models. Datasets live in `src/data/` (`jabberw
 ```bash
 npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
 npm run test         # vitest: gradient checks + model/trainer/persist
-npm run build        # tsc -b && vite build
-npm run gen:jabber   # retrain the bundled model -> public/jabber-model.json (gen:sonnets for the variant)
+npm run build        # tsc -b && vite build (emits 5 pages: index/explain/learn/lab/guide)
+npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
+npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
+npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```

@@ -14,17 +14,30 @@ memorisation vs generalisation vs hallucination. See "The built-in model" below.
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
 transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
 
+It's a **four-page teaching site**, so different readers can start where they're comfortable:
+
+- **Playground** (`index.html`) — train live and inspect every internal (the main app).
+- **New to AI** (`explain.html`) — a no-maths explainer of how these models answer, vary, cost, and go
+  wrong, for people who *use* AI at work.
+- **How a transformer works** (`learn.html`) — a guided walk that follows one example through a real
+  model: tokens → vectors → attention → next-character guess, then watch it grok.
+- **Interpretability lab** (`lab.html`) — neurons, attention heads, head ablation, dictionary learning
+  (SAE), activation steering, **Mixture of Experts**, and a live **advanced grokking** demo.
+
+There's also a generated long-form **guide** (`GUIDE.md` → `public/guide.html`).
+
 ## Why character-level, and why many poems?
 
 Jabberwocky's invented words ("brillig", "slithy", "borogoves") would fragment badly under a normal
 subword tokenizer. Character-level keeps the vocabulary tiny (~60 tokens) and every token a single,
 human-readable character.
 
-The corpus is the lesson. Train on **one** poem and a tiny model just **memorises** it (held-out
-validation loss turns up almost immediately — overfitting). Train on **many** poems in the same style
-(*Jabber Poems*) and the same tiny model learns the *style* and **generalises** — which is what makes
-it feel like a small LLM. Both options are in the dropdown so you can see the contrast yourself; a
-real-English contrast (*Shakespeare's sonnets*) is there too.
+The corpus is the lesson. Train on **many** poems in the same style (*Jabber Poems*) and a tiny model
+learns the *style* and **generalises** — which is what makes it feel like a small LLM. The training-text
+dropdown is **Jabber Poems / Sorting / Equations / Custom** — where *Custom* seeds all three combined
+(editable) so you can train one model on a multi-section corpus and watch a representative held-out split
+(a sample from *each* section) rather than just the tail. (Single-poem and *Shakespeare's sonnets*
+corpora still exist offline via `gen:sonnets`, for the older single-skill poem models.)
 
 ## The built-in "three-skill" model
 
@@ -45,6 +58,16 @@ same engine that runs in the browser) on a MacBook Air (M4, 16 GB). Regenerate i
 `npm run gen:multitask` (or `npm run gen:jabber` / `npm run gen:sonnets` for the single-skill poem
 models). The corpus builder lives in `scripts/multitask-corpus.ts`.
 
+## The Mixture-of-Experts model
+
+A second bundled model (`public/moe-model.json`, **~145K parameters**, `npm run gen:moe`) is an
+**authentic token-level Mixture of Experts**: each layer's single MLP is replaced by **4 expert FFNs
+plus a gate** that routes every token to them (attention is unchanged). It's trained on three tasks —
+**sort / max / reverse** — and generalises to unseen inputs (95% / 100% / 100% held-out). It's trained
+*dense* (all experts, gate-weighted — differentiable and gradient-checked) with an inference-time
+top-k/sparse toggle for the efficiency story. The lab's **Mixture of Experts** tab loads it and shows
+per-token gate heatmaps, expert specialisation, and expert ablation.
+
 ## Features
 
 - **Live training panel** — play / pause / single-step, a falling loss curve, a live sample that
@@ -62,8 +85,22 @@ models). The corpus builder lives in `scripts/multitask-corpus.ts`.
   - **KV cache** — the key/value cache as a grid, with reused-vs-recomputed status and the
     (~quadratic) compute saved.
   - **Sliding window** — recompute the attention mask live and see which tokens fall out of view.
-- **Save / load** trained weights to your browser or to a JSON file, and **Load built-in model** to
-  drop the bundled pre-trained model back in at any time.
+- **Interpretability lab** (`lab.html`) — reverse-engineer what the model learned, not just its outputs:
+  - **Neurons** & **attention heads** — top-activating contexts and head roles (induction / previous-token).
+  - **Head ablation** — knock out heads and watch which *skill* breaks (sorting lives in one layer, poems
+    in another) — a hands-on look at specialisation and polysemanticity.
+  - **Dictionary learning (SAE)** — train a sparse autoencoder in-browser and browse the cleaner features
+    it finds (illustrated on clean sorting inputs).
+  - **Steering** — add a feature/neuron direction into the residual stream and watch generation shift.
+  - **Mixture of Experts** — per-token gate heatmaps, expert specialisation, expert ablation, and a
+    dense↔top-1 routing toggle (on the bundled MoE model).
+  - **Advanced grokking** — train a dense model live on sort + max + reverse at once; per-task correctness
+    panels and a **memorise → generalise** chart (train accuracy leads, held-out lags then jumps — that's
+    grokking).
+- **Plain-language pages** — `explain.html` (how AI answers / varies / costs / hallucinates, no maths) and
+  `learn.html` (a guided walk through a real forward pass, then grokking).
+- **Save / load** trained weights to your browser or a JSON file. The teaching pages default to the
+  known-good bundled model; the lab can **Upload a JSON model** or **Inspect your last training run**.
 
 ## Run it
 
@@ -71,33 +108,44 @@ models). The corpus builder lives in `scripts/multitask-corpus.ts`.
 npm install
 npm run dev          # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
 npm run test         # gradient checks + model/trainer/persistence tests
-npm run build        # static production bundle in dist/ (no network calls)
+npm run build        # static bundle in dist/ (5 pages: index/explain/learn/lab/guide, no network calls)
 npm run gen:multitask # (re)train the bundled three-skill model → public/multitask-model.json
+npm run gen:moe      # (re)train the Mixture-of-Experts model  → public/moe-model.json
 ```
 
 ## Deploy
 
-It's a fully static site (no backend), hosted on **Cloudflare Pages** at
-[`jabberlm.com`](https://jabberlm.com). The app code is ~70 KB gzipped; the bundled pre-trained model
-adds ~1 MB gzipped (`jabber-model.json`), fetched once and cached.
+It's a fully static site (no backend), five HTML pages, hosted on **Cloudflare Pages** at
+[`jabberlm.com`](https://jabberlm.com). The bundled three-skill model (`multitask-model.json`, ~281 KB
+gzipped) is fetched once on the teaching surfaces and cached; the MoE model (`moe-model.json`, ~362 KB
+gzipped) is fetched only when the lab's Mixture-of-Experts tab is opened.
 
 ## How it's built
 
 ```
 src/engine/    # framework-agnostic core (no React)
   tensor.ts        reverse-mode autograd over flat Float32Array matrices
-  ops.ts           matmul, softmax, layerNorm, gelu/relu, cross-entropy, slice/concat, loraDelta, …
+  ops.ts           matmul, softmax, layerNorm, gelu/relu, cross-entropy, slice/concat, loraDelta,
+                   scaleRows (MoE gate weighting), …
   rope.ts          rotary position embedding (differentiable)
   attention.ts     multi-head causal attention w/ RoPE / sliding-window / masking
-  model.ts         the decoder-only transformer; forward() returns logits + a full Trace
+  model.ts         the decoder-only transformer (optional token-level MoE when nExperts > 1);
+                   forward() returns logits + a full Trace
   optimizer.ts     SGD + AdamW with grad clipping and per-param norms
-  trainer.ts       cooperative mini-batch training loop
+  trainer.ts       cooperative mini-batch loop; representative block-strided held-out split
   generate.ts      autoregressive sampling (temperature / top-k / top-p)
   persist.ts       save/load model weights
-src/components/  # React UI: ConfigSidebar, TrainingPanel, InferencePanel, inspector/, features/
-src/viz/         # Canvas heatmap, line chart, bar chart, color scales
+src/data/        # datasets: jabberPoems, shakespeare, jabberwocky (TEXT_SAMPLES), tasks.ts (sort/max/
+                 # reverse/equations corpora + held-outs), modelStats
+src/interp/      # interpretability: activations, maxact, sae, heads, ablation, steering, pca
+src/components/  # main-app UI: ConfigSidebar, TrainingPanel, InferencePanel, inspector/, features/
+src/explain/     # "New to AI" page (explain.html)
+src/learn/       # "how a transformer works" page (learn.html)
+src/lab/         # interpretability lab (lab.html): Neurons/Heads/Ablation/SAE/Steering/MoE/Grok sections
+src/state/       # zustand store + bundled-model install (pretrained.ts)
+src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales
 ```
 
 The engine's correctness is pinned by **numerical gradient checks** (analytic vs finite-difference)
-for every op, plus end-to-end tests that the model overfits a short string and that the trainer
-drives loss down on Jabberwocky.
+for every op, plus end-to-end tests that the model overfits a short string, that the trainer drives
+loss down on Jabberwocky, and that the held-out split samples across sections without leakage.
