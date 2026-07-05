@@ -18,6 +18,15 @@ async function loadHarnessModel(): Promise<Trainer | null> {
 const btn = 'rounded border px-3 py-1.5 text-xs'
 const chip = 'rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-700'
 
+// Garbled outputs a flaky tiny model might produce — what the harness must cope
+// with. Each shows a different failure mode (and one that still parses despite junk).
+const FLAKY_SAMPLES: { raw: string; note: string }[] = [
+  { raw: 'max(4 1 7 = 7', note: 'dropped the closing bracket' },
+  { raw: 'mxa(4 1 7) = 7', note: 'mistyped the tool name' },
+  { raw: 'sum() = ', note: 'forgot the arguments' },
+  { raw: 'hmm, i think max(4 1 7)?', note: 'a valid call buried in chatter — the harness still finds it' },
+]
+
 // A visual "stage" in the harness pipeline.
 function Stage({ n, label, who, children }: { n: number; label: string; who: 'model' | 'harness'; children: React.ReactNode }) {
   const color = who === 'model' ? 'text-fuchsia-300' : 'text-sky-300'
@@ -40,7 +49,8 @@ export default function HarnessApp() {
   const [instruction, setInstruction] = useState('total of 6 9 2')
   const [trace, setTrace] = useState<HarnessTrace | null>(null)
   const [useHarness, setUseHarness] = useState(true)
-  const [flaky, setFlaky] = useState<ReturnType<typeof harnessDispatch> | null>(null)
+  const [flakyIdx, setFlakyIdx] = useState(0)
+  const [flaky, setFlaky] = useState<{ raw: string; note: string; res: ReturnType<typeof harnessDispatch> } | null>(null)
   const [agentInstruction, setAgentInstruction] = useState('sort 6 9 2 then reverse it')
   const [agentTrace, setAgentTrace] = useState<AgentTrace | null>(null)
 
@@ -74,11 +84,12 @@ export default function HarnessApp() {
     setAgentTrace(runAgent(trainer.model, trainer.tok, text))
   }
 
-  // "flaky model" demo: corrupt the model's call and re-dispatch through the harness
-  function corrupt() {
-    if (!trace) return
-    const broken = trace.modelRaw.replace(')', '').replace(/^([a-z])[a-z]/i, '$1x') // drop a paren + typo the tool
-    setFlaky(harnessDispatch(broken || 'srt(6 9'))
+  // "flaky model" demo: feed the harness a garbled model output (cycling through
+  // common failure modes) and show how it copes — self-contained, no prior run needed.
+  function flakyStep() {
+    const s = FLAKY_SAMPLES[flakyIdx % FLAKY_SAMPLES.length]
+    setFlaky({ raw: s.raw, note: s.note, res: harnessDispatch(s.raw) })
+    setFlakyIdx((i) => i + 1)
   }
 
   const t = trace
@@ -201,23 +212,34 @@ export default function HarnessApp() {
 
           <Section n={2} title="Why harnesses need to be robust">
             <p>
-              The model is tiny and <b>flaky</b> — sometimes it emits a malformed call. The harness can't
-              trust it blindly; it validates and recovers. Run something above, then break it:
+              The model is tiny and <b>flaky</b> — sometimes its output is a <b>malformed</b> call. The
+              harness can't trust it blindly; it validates and recovers. Click to feed the harness some
+              garbled model output and watch it cope — each click is a different failure:
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={corrupt} disabled={!t}>
-                Simulate a flaky model
+            <div className="mt-2">
+              <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={flakyStep}>
+                Simulate a flaky model →
               </button>
-              {flaky && (
-                <span className="text-[12px]">
-                  {flaky.error ? (
-                    <span className="text-red-300">✗ harness caught it: {flaky.error}</span>
-                  ) : (
-                    <span className="text-emerald-300">✓ still parsed: {flaky.parsed?.tool}([{flaky.parsed?.args.join(', ')}]) = {flaky.toolResult}</span>
-                  )}
-                </span>
-              )}
             </div>
+            {flaky && (
+              <div className={card + ' mt-3 space-y-1.5 text-[12px]'}>
+                <div>
+                  <span className="text-fuchsia-300">🧠 the model emitted</span>{' '}
+                  <span className="text-slate-500">({flaky.note}):</span>
+                  <div className="mt-0.5 font-mono text-[13px] text-fuchsia-200">{flaky.raw}</div>
+                </div>
+                <div>
+                  <span className="text-sky-300">⚙️ the harness:</span>{' '}
+                  {flaky.res.error ? (
+                    <span className="text-red-300">✗ caught it — {flaky.res.error} → it would re-prompt or fall back (no bad tool ran)</span>
+                  ) : (
+                    <span className="text-emerald-300">
+                      ✓ found a valid call anyway: {flaky.res.parsed?.tool}([{flaky.res.parsed?.args.join(', ')}]) = {flaky.res.toolResult}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
             <Callout>
               Parsing, validating, retrying, sandboxing tool calls, and managing what the model sees — that
               is <b>harness engineering</b>, and it's where most of the reliability of an "AI agent" actually
