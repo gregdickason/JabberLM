@@ -23,6 +23,9 @@ It's a **four-page teaching site**, so different readers can start where they're
   model: tokens → vectors → attention → next-character guess, then watch it grok.
 - **Interpretability lab** (`lab.html`) — neurons, attention heads, head ablation, dictionary learning
   (SAE), activation steering, **Mixture of Experts**, and a live **advanced grokking** demo.
+- **Tool use & a tiny harness** (`harness.html`) — a tiny model that doesn't compute answers but emits
+  **tool calls**, which a small JS **harness** parses and runs. The model that hallucinates arithmetic
+  elsewhere becomes always-right here, because the harness does the maths.
 
 There's also a generated long-form **guide** (`GUIDE.md` → `public/guide.html`).
 
@@ -99,6 +102,10 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
     grokking).
 - **Plain-language pages** — `explain.html` (how AI answers / varies / costs / hallucinates, no maths) and
   `learn.html` (a guided walk through a real forward pass, then grokking).
+- **Tool use / harness** (`harness.html`) — the agentic capstone: a tiny model is trained to emit
+  `tool(args)` calls; a JS harness parses → dispatches to a real function → returns the result, and
+  handles malformed calls. Completes the site's arc: **memorise → hallucinate → generalise → use tools**
+  (the model that can't add now calls a calculator and is always right).
 - **Save / load** trained weights to your browser or a JSON file. The teaching pages default to the
   known-good bundled model; the lab can **Upload a JSON model** or **Inspect your last training run**.
 
@@ -108,17 +115,18 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
 npm install
 npm run dev          # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
 npm run test         # gradient checks + model/trainer/persistence tests
-npm run build        # static bundle in dist/ (5 pages: index/explain/learn/lab/guide, no network calls)
+npm run build        # static bundle in dist/ (6 pages: index/explain/learn/lab/harness/guide)
 npm run gen:multitask # (re)train the bundled three-skill model → public/multitask-model.json
 npm run gen:moe      # (re)train the Mixture-of-Experts model  → public/moe-model.json
+npm run gen:harness  # (re)train the tool-calling model        → public/harness-model.json
 ```
 
 ## Deploy
 
-It's a fully static site (no backend), five HTML pages, hosted on **Cloudflare Pages** at
+It's a fully static site (no backend), six HTML pages, hosted on **Cloudflare Pages** at
 [`jabberlm.com`](https://jabberlm.com). The bundled three-skill model (`multitask-model.json`, ~281 KB
-gzipped) is fetched once on the teaching surfaces and cached; the MoE model (`moe-model.json`, ~362 KB
-gzipped) is fetched only when the lab's Mixture-of-Experts tab is opened.
+gzipped) is fetched once on the teaching surfaces and cached; the MoE model (`moe-model.json`) and the
+tool-calling model (`harness-model.json`) are each fetched only when their page/tab is opened.
 
 ## How it's built
 
@@ -136,12 +144,14 @@ src/engine/    # framework-agnostic core (no React)
   generate.ts      autoregressive sampling (temperature / top-k / top-p)
   persist.ts       save/load model weights
 src/data/        # datasets: jabberPoems, shakespeare, jabberwocky (TEXT_SAMPLES), tasks.ts (sort/max/
-                 # reverse/equations corpora + held-outs), modelStats
+                 # reverse/equations corpora + held-outs), harnessTasks.ts (tool-call corpus + registry),
+                 # modelStats
 src/interp/      # interpretability: activations, maxact, sae, heads, ablation, steering, pca
 src/components/  # main-app UI: ConfigSidebar, TrainingPanel, InferencePanel, inspector/, features/
 src/explain/     # "New to AI" page (explain.html)
 src/learn/       # "how a transformer works" page (learn.html)
 src/lab/         # interpretability lab (lab.html): Neurons/Heads/Ablation/SAE/Steering/MoE/Grok sections
+src/harness/     # tool use & harness page (harness.html): runHarness.ts (parse→dispatch→robustness)
 src/state/       # zustand store + bundled-model install (pretrained.ts)
 src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales
 ```

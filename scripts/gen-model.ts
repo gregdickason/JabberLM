@@ -19,6 +19,7 @@ import { JABBER_POEMS } from '../src/data/jabberPoems'
 import { SHAKESPEARE_SONNETS } from '../src/data/shakespeare'
 import { buildMultitaskCorpus, type SortVec } from './multitask-corpus'
 import { buildMoeCorpus, sortHeldOut } from '../src/data/tasks'
+import { buildHarnessCorpus } from '../src/data/harnessTasks'
 import {
   DEFAULT_FEATURE_FLAGS,
   DEFAULT_MODEL_CONFIG,
@@ -60,8 +61,10 @@ function makeDS(name: string): DS {
     }
     case 'moe':
       return { corpus: buildMoeCorpus(30000), file: 'moe-model.json', seed: 'sort 6 9 2 => ', config: MOE, sortHeldOut: sortHeldOut() }
+    case 'harness':
+      return { corpus: buildHarnessCorpus(15000), file: 'harness-model.json', seed: 'add up 6 9 2 => ', config: DEFAULTP }
     default:
-      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe)`)
+      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe, harness)`)
   }
 }
 const DATASET = process.env.DATASET ?? 'jabber'

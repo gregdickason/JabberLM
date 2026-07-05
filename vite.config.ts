@@ -10,8 +10,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // multi-page: main app, interpretability lab, plain-language explainer,
-      // and the "how a transformer works" guided learn page
-      input: { main: 'index.html', lab: 'lab.html', explain: 'explain.html', learn: 'learn.html' },
+      // the "how a transformer works" guided learn page, and the tool-use/harness demo
+      input: {
+        main: 'index.html',
+        lab: 'lab.html',
+        explain: 'explain.html',
+        learn: 'learn.html',
+        harness: 'harness.html',
+      },
     },
   },
   test: {

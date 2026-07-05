@@ -38,6 +38,9 @@ export default function ExplainApp() {
         <a className="text-xs text-sky-300 hover:underline sm:ml-auto" href="./learn.html">
           How it works →
         </a>
+        <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
+          Tool use ↗
+        </a>
         <a className="text-xs text-sky-400 hover:underline" href="./">
           Technical playground →
         </a>

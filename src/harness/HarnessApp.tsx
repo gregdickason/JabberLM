@@ -1,0 +1,239 @@
+import { useEffect, useState } from 'react'
+import { deserialize, type SavedModel } from '../engine/persist'
+import { Trainer } from '../engine/trainer'
+import { runHarness, harnessDispatch, type HarnessTrace } from './runHarness'
+import { TOOL_EXAMPLES } from '../data/harnessTasks'
+import { Section, Callout, card } from '../explain/ui'
+
+async function loadHarnessModel(): Promise<Trainer | null> {
+  try {
+    const res = await fetch(import.meta.env.BASE_URL + 'harness-model.json')
+    if (!res.ok) return null
+    return deserialize((await res.json()) as SavedModel)
+  } catch {
+    return null
+  }
+}
+
+const btn = 'rounded border px-3 py-1.5 text-xs'
+const chip = 'rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-700'
+
+// A visual "stage" in the harness pipeline.
+function Stage({ n, label, who, children }: { n: number; label: string; who: 'model' | 'harness'; children: React.ReactNode }) {
+  const color = who === 'model' ? 'text-fuchsia-300' : 'text-sky-300'
+  return (
+    <div className="flex gap-3">
+      <div className={'mt-0.5 shrink-0 font-mono text-[11px] ' + color}>{n}</div>
+      <div className="min-w-0 flex-1">
+        <div className={'text-[11px] font-semibold ' + color}>
+          {who === 'model' ? '🧠 the model' : '⚙️ the harness'} · {label}
+        </div>
+        <div className="mt-0.5">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+export default function HarnessApp() {
+  const [trainer, setTrainer] = useState<Trainer | null>(null)
+  const [status, setStatus] = useState('loading the tool-calling model…')
+  const [instruction, setInstruction] = useState('total of 6 9 2')
+  const [trace, setTrace] = useState<HarnessTrace | null>(null)
+  const [useHarness, setUseHarness] = useState(true)
+  const [flaky, setFlaky] = useState<ReturnType<typeof harnessDispatch> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const t = await loadHarnessModel()
+      if (cancelled) return
+      if (t) {
+        setTrainer(t)
+        setStatus('')
+      } else {
+        setStatus('could not load the tool-calling model (public/harness-model.json)')
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function run(text: string) {
+    if (!trainer) return
+    setInstruction(text)
+    setTrace(runHarness(trainer.model, trainer.tok, text))
+    setFlaky(null)
+  }
+
+  // "flaky model" demo: corrupt the model's call and re-dispatch through the harness
+  function corrupt() {
+    if (!trace) return
+    const broken = trace.modelRaw.replace(')', '').replace(/^([a-z])[a-z]/i, '$1x') // drop a paren + typo the tool
+    setFlaky(harnessDispatch(broken || 'srt(6 9'))
+  }
+
+  const t = trace
+  const modelRight = t?.parsed && t.modelGuess != null && t.modelGuess === t.toolResult
+  const answer = useHarness ? t?.toolResult : t?.modelGuess
+
+  return (
+    <div className="min-h-screen font-sans text-sm text-slate-200">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2 font-mono">
+        <h1 className="text-base font-bold text-sky-300">JabberLM · Tool use &amp; a tiny harness</h1>
+        <a className="text-xs text-emerald-300 hover:underline sm:ml-auto" href="./explain.html">New to AI? →</a>
+        <a className="text-xs text-sky-300 hover:underline" href="./learn.html">How it works →</a>
+        <a className="text-xs text-sky-400 hover:underline" href="./">Playground →</a>
+        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">Lab ↗</a>
+      </header>
+
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <p className="text-lg leading-relaxed text-slate-200">
+          The frontier of using AI is the <span className="text-sky-300">harness</span> — the code
+          <em> around</em> the model that lets it use <b>tools</b>. Here a tiny model doesn't try to
+          compute the answer; it learns to emit a <b>tool call</b>, and a little JavaScript harness parses
+          it, runs a real function, and hands back the result.
+        </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
+          The punchline: the same tiny model that <b>hallucinates arithmetic</b> elsewhere on this site
+          becomes <b>always right at maths here</b> — because it doesn't do the maths. It just says{' '}
+          <code className="font-mono text-slate-300">sum(6&nbsp;9&nbsp;2)</code> and the harness computes{' '}
+          <code className="font-mono text-slate-300">17</code> in plain JS.
+        </p>
+        <p className="mt-3 text-[11px] text-slate-500">{status || 'model loaded — try an instruction below'}</p>
+      </div>
+
+      {trainer && (
+        <>
+          <Section n={1} title="Ask it to do something — watch the harness work">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="min-w-[220px] flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-[13px] text-slate-100"
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && run(instruction)}
+                placeholder="e.g. add up 6 9 2"
+              />
+              <button className={btn + ' border-sky-600 bg-sky-900/40 text-sky-200'} onClick={() => run(instruction)}>
+                Run
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-slate-500">try:</span>
+              {TOOL_EXAMPLES.map((ex) => (
+                <button key={ex} className={chip} onClick={() => run(ex)}>
+                  {ex}
+                </button>
+              ))}
+            </div>
+
+            {t && (
+              <div className={card + ' mt-4 space-y-3'}>
+                <Stage n={1} label="turns your words into a tool call" who="model">
+                  <code className="font-mono text-[13px] text-fuchsia-200">{t.modelRaw || '—'}</code>
+                </Stage>
+                <Stage n={2} label="parses the call" who="harness">
+                  {t.parsed ? (
+                    <code className="font-mono text-[13px] text-emerald-200">
+                      {t.parsed.tool}([{t.parsed.args.join(', ')}])
+                    </code>
+                  ) : (
+                    <span className="text-[13px] text-red-300">✗ {t.error} — a real harness would re-prompt or fall back</span>
+                  )}
+                </Stage>
+                {t.parsed && (
+                  <Stage n={3} label="runs the real JavaScript tool (always correct)" who="harness">
+                    <code className="font-mono text-[13px] text-emerald-200">
+                      {t.parsed.tool}([{t.parsed.args.join(', ')}]) = {t.toolResult}
+                    </code>
+                  </Stage>
+                )}
+
+                {/* the answer + the harness on/off contrast */}
+                <div className="border-t border-slate-800 pt-3">
+                  <label className="mb-2 flex items-center gap-2 text-[12px] text-slate-300">
+                    <input type="checkbox" checked={useHarness} onChange={(e) => setUseHarness(e.target.checked)} />
+                    use the harness (run the tool) — untick to let the model answer alone
+                  </label>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-[12px] text-slate-400">answer:</span>
+                    <span
+                      className={
+                        'font-mono text-lg font-bold ' +
+                        (useHarness ? 'text-emerald-300' : modelRight ? 'text-emerald-300' : 'text-red-300')
+                      }
+                    >
+                      {answer ?? '—'}
+                    </span>
+                    <span className="text-[11px] text-slate-500">
+                      {useHarness
+                        ? '✓ computed by JavaScript — guaranteed correct'
+                        : modelRight
+                          ? '(the model happened to get this one right)'
+                          : "✗ the model did it itself — and got it wrong (it can't reliably do maths)"}
+                    </span>
+                  </div>
+                  {t.parsed && t.modelGuess != null && t.modelGuess !== t.toolResult && (
+                    <div className="mt-1 text-[11px] text-slate-500">
+                      model's own guess <code className="text-red-300">{t.modelGuess}</code> vs harness{' '}
+                      <code className="text-emerald-300">{t.toolResult}</code> — same model, but the tool makes it reliable.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <Callout>
+              A fluent answer from a model is a <em>guess</em>. Wrapping it in a harness — parse the intent,
+              call a real tool, use the tool's result — turns "probably right" into "provably right" for
+              anything a tool can do (maths, lookups, code, search). That's why every serious AI product is
+              mostly harness.
+            </Callout>
+          </Section>
+
+          <Section n={2} title="Why harnesses need to be robust">
+            <p>
+              The model is tiny and <b>flaky</b> — sometimes it emits a malformed call. The harness can't
+              trust it blindly; it validates and recovers. Run something above, then break it:
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={corrupt} disabled={!t}>
+                Simulate a flaky model
+              </button>
+              {flaky && (
+                <span className="text-[12px]">
+                  {flaky.error ? (
+                    <span className="text-red-300">✗ harness caught it: {flaky.error}</span>
+                  ) : (
+                    <span className="text-emerald-300">✓ still parsed: {flaky.parsed?.tool}([{flaky.parsed?.args.join(', ')}]) = {flaky.toolResult}</span>
+                  )}
+                </span>
+              )}
+            </div>
+            <Callout>
+              Parsing, validating, retrying, sandboxing tool calls, and managing what the model sees — that
+              is <b>harness engineering</b>, and it's where most of the reliability of an "AI agent" actually
+              comes from. An unreliable model + a robust harness = a reliable system.
+            </Callout>
+          </Section>
+
+          <Section n={3} title="Is this an 'agent'?">
+            <p>
+              A single tool call is <b>function calling</b> — the atom. An <b>agent</b> adds the loop:
+              the harness feeds the tool's result back to the model, which decides the next call, until the
+              task is done. This demo does one call; the same machinery, looped, is an agent. It's the same
+              idea whether the model is 88 thousand parameters (this one) or a trillion.
+            </p>
+            <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-500">
+              This tool-caller was trained in-browser's engine on ~60k characters of{' '}
+              <code>instruction =&gt; tool(args) = result</code> lines. See the{' '}
+              <a className="text-sky-400 hover:underline" href="./learn.html">how-it-works</a> page for the
+              model itself, or the <a className="text-sky-400 hover:underline" href="./">playground</a> to
+              train one.
+            </footer>
+          </Section>
+        </>
+      )}
+    </div>
+  )
+}

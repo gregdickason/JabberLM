@@ -12,7 +12,8 @@ expose and how much maths we ask of them. Nothing is a mock-up: every number is 
 
 ## Delivered
 
-The site is now **four pages**, mapping the original three "tracks" plus a new guided middle:
+The site is now **five pages**, mapping the original three "tracks" plus a guided middle and an agentic
+capstone:
 
 - **Business / no maths — `explain.html`.** Next-token, randomness, context, hallucination, a
   cost/latency suite (token calculator + a live tiny-vs-default-vs-largest tokens/sec race + real
@@ -27,6 +28,10 @@ The site is now **four pages**, mapping the original three "tracks" plus a new g
   learning (SAE, illustrated on sorting), steering, **Mixture of Experts**, and a live **advanced
   grokking** demo (dense model on sort+max+reverse, per-task correctness panels + a memorise→generalise
   chart). Plus in-browser **LoRA** in the main app.
+- **Tool use & harness — `harness.html`.** The agentic capstone: a tiny model trained to emit
+  `tool(args)` calls; a JS harness parses → dispatches to a real function → returns the result, and
+  catches malformed calls. Completes the arc memorise→hallucinate→generalise→**use tools** (the model
+  that can't add calls a calculator and is always right). *(Beyond the original roadmap.)*
 
 Other delivered items from the original plan:
 

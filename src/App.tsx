@@ -149,6 +149,9 @@ export default function App() {
         <a href="./learn.html" className="text-xs text-sky-300 hover:underline">
           How it works →
         </a>
+        <a href="./harness.html" className="text-xs text-sky-300 hover:underline">
+          Tool use ↗
+        </a>
         <a
           href="./lab.html"
           target="_blank"

@@ -19,10 +19,19 @@ model: poems (memorised style), algebra (fluent but wrong — it can't learn the
 sort+max+reverse), drives the lab's Mixture-of-Experts tab. `gen:jabber`/`gen:sonnets` build the older
 single-skill poem models. Bundled-model facts in `src/data/modelStats.ts`.
 
-The app is **four pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
-(`learn.html` → `src/learn/`), and an interpretability lab (`lab.html` → `src/lab/`); plus a generated
-long-form guide (`GUIDE.md` → `public/guide.html`).
+(`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), and a **tool use &
+harness** demo (`harness.html` → `src/harness/`); plus a generated long-form guide (`GUIDE.md` →
+`public/guide.html`).
+
+The harness page ships a third bundled model, `public/harness-model.json` (`DATASET=harness`,
+`gen:harness`, ~88K params), trained to emit `instruction => tool(args) = result` calls. Its corpus +
+JS tool registry live in **`src/data/harnessTasks.ts`** (the single source of truth for both the
+training format and the runtime parser); the framework-agnostic harness (`src/harness/runHarness.ts`)
+generates the call, `parseToolCall`s it, dispatches to the real JS `TOOLS`, and treats the tool output
+as authoritative (so it fixes the model's hallucinated arithmetic) — surfacing parse errors instead of
+throwing, for the robustness lesson.
 
 Datasets: `src/data/jabberwocky.ts` `TEXT_SAMPLES` is trimmed to **Jabber Poems / Sorting / Equations**
 plus a **Custom** option (seeds all three combined, editable). The deterministic, browser-shippable task
@@ -76,8 +85,9 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
 ```bash
 npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
 npm run test         # vitest: gradient checks + model/trainer/persist
-npm run build        # tsc -b && vite build (emits 5 pages: index/explain/learn/lab/guide)
+npm run build        # tsc -b && vite build (emits 6 pages: index/explain/learn/lab/harness/guide)
 npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
+npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
 npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```

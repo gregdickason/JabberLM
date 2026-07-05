@@ -11,6 +11,7 @@
     "gen:sonnets": "DATASET=sonnets npx --yes vite-node scripts/gen-model.ts",
     "gen:multitask": "DATASET=multitask npx --yes vite-node scripts/gen-model.ts",
     "gen:moe": "DATASET=moe npx --yes vite-node scripts/gen-model.ts",
+    "gen:harness": "DATASET=harness npx --yes vite-node scripts/gen-model.ts",
     "dev": "npm run build:guide && vite",
     "build": "npm run build:guide && tsc -b && vite build",
     "preview": "vite preview",
