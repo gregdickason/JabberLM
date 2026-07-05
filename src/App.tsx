@@ -248,6 +248,21 @@ export default function App() {
               </div>
             </a>
 
+            {/* tool use / agents path */}
+            <a
+              href="./harness.html"
+              onClick={dismissChooser}
+              className={tile + ' mt-2 block border-teal-700 bg-teal-900/25 hover:bg-teal-900/45'}
+            >
+              <div className="text-sm font-semibold text-teal-200">
+                Tool use &amp; agents — how models call real tools
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Watch a tiny model that can't add call a calculator and get it right — the harness that
+                makes AI agents work.
+              </div>
+            </a>
+
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               {/* explore */}
               <div className={tile + ' border-slate-600'}>
