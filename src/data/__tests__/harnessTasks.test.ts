@@ -3,8 +3,10 @@ import {
   TOOLS,
   TOOL_NAMES,
   buildHarnessCorpus,
+  buildHarnessCorpusFull,
   callLine,
   instructionLine,
+  twoStepLine,
   parseToolCall,
   harnessTrainVecs,
   harnessHeldOut,
@@ -38,6 +40,20 @@ describe('harnessTasks', () => {
     expect('error' in parseToolCall('sum()')).toBe(true) // no args
     expect('error' in parseToolCall('sort(6 9')).toBe(true) // no closing paren
     expect(parseToolCall('the answer is max(4 1 7) ok')).toEqual({ tool: 'max', args: [4, 1, 7] })
+  })
+
+  it('two-step lines chain: step 2 operates on step 1\'s result', () => {
+    // sort 6 9 2 => [2 6 9], then reverse that => [9 6 2]
+    const line = twoStepLine({ phrasing: 'sort {n} then reverse it', op1: 'sort', op2: 'reverse' }, [6, 9, 2])
+    expect(line).toBe('sort 6 9 2 then reverse it => sort(6 9 2) = 2 6 9 => reverse(2 6 9) = 9 6 2 => done')
+    expect(parseToolCall('reverse(2 6 9)')).toEqual({ tool: 'reverse', args: [2, 6, 9] }) // the 2nd call parses
+  })
+
+  it('the full corpus contains both single- and two-step (agent) examples', () => {
+    const c = buildHarnessCorpusFull()
+    expect(c.includes('=> sort(')).toBe(true) // single-step
+    expect(c.includes('=> done')).toBe(true) // two-step terminator
+    expect(c.split('=> done').length).toBeGreaterThan(50) // plenty of agent-loop lines
   })
 
   it('held-out numbers are disjoint from training numbers', () => {

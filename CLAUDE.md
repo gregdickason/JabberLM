@@ -26,12 +26,14 @@ harness** demo (`harness.html` → `src/harness/`); plus a generated long-form g
 `public/guide.html`).
 
 The harness page ships a third bundled model, `public/harness-model.json` (`DATASET=harness`,
-`gen:harness`, ~88K params), trained to emit `instruction => tool(args) = result` calls. Its corpus +
-JS tool registry live in **`src/data/harnessTasks.ts`** (the single source of truth for both the
-training format and the runtime parser); the framework-agnostic harness (`src/harness/runHarness.ts`)
-generates the call, `parseToolCall`s it, dispatches to the real JS `TOOLS`, and treats the tool output
-as authoritative (so it fixes the model's hallucinated arithmetic) — surfacing parse errors instead of
-throwing, for the robustness lesson.
+`gen:harness`, ~88K params), trained on `buildHarnessCorpusFull()` — single-step
+`instruction => tool(args) = result` calls **and** two-step `… => op1(a b c) = r1 => op2(r1) = r2 => done`
+chains. Its corpus + JS tool registry live in **`src/data/harnessTasks.ts`** (the single source of truth
+for both the training format and the runtime parser). The framework-agnostic harness
+(`src/harness/runHarness.ts`) has `runHarness` (one call: generate → `parseToolCall` → dispatch to the
+real JS `TOOLS`, output authoritative so it fixes the model's hallucinated arithmetic; parse errors are
+surfaced not thrown) and `runAgent` (the **loop**: run the tool, feed the `= result =>` back into the
+context, let the model read it and emit the next call, until `done`).
 
 Datasets: `src/data/jabberwocky.ts` `TEXT_SAMPLES` is trimmed to **Jabber Poems / Sorting / Equations**
 plus a **Custom** option (seeds all three combined, editable). The deterministic, browser-shippable task

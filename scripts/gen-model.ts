@@ -19,7 +19,7 @@ import { JABBER_POEMS } from '../src/data/jabberPoems'
 import { SHAKESPEARE_SONNETS } from '../src/data/shakespeare'
 import { buildMultitaskCorpus, type SortVec } from './multitask-corpus'
 import { buildMoeCorpus, sortHeldOut } from '../src/data/tasks'
-import { buildHarnessCorpus } from '../src/data/harnessTasks'
+import { buildHarnessCorpusFull } from '../src/data/harnessTasks'
 import {
   DEFAULT_FEATURE_FLAGS,
   DEFAULT_MODEL_CONFIG,
@@ -62,7 +62,7 @@ function makeDS(name: string): DS {
     case 'moe':
       return { corpus: buildMoeCorpus(30000), file: 'moe-model.json', seed: 'sort 6 9 2 => ', config: MOE, sortHeldOut: sortHeldOut() }
     case 'harness':
-      return { corpus: buildHarnessCorpus(15000), file: 'harness-model.json', seed: 'add up 6 9 2 => ', config: DEFAULTP }
+      return { corpus: buildHarnessCorpusFull(), file: 'harness-model.json', seed: 'sort 6 9 2 then reverse it => ', config: DEFAULTP }
     default:
       throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe, harness)`)
   }
@@ -106,10 +106,13 @@ function sortAccuracy(): number {
   return Math.round((100 * ok) / sample.length)
 }
 
-// Serialize, round weights to 4 dp (keeps the bundled file small), write to disk.
+// Serialize, round weights (keeps the bundled file small), write to disk. Default
+// 4 dp; raise via ROUND_DP for precision-sensitive models (e.g. the harness model,
+// whose agent loop copies fed-back results and is sensitive to weight rounding).
+const ROUND_F = 10 ** Number(process.env.ROUND_DP ?? 4)
 function writeModel(step: number, loss: number): void {
   const saved = serialize(trainer, ds.corpus)
-  for (const p of saved.params) p.data = p.data.map((x) => Math.round(x * 1e4) / 1e4)
+  for (const p of saved.params) p.data = p.data.map((x) => Math.round(x * ROUND_F) / ROUND_F)
   const json = JSON.stringify(saved)
   writeFileSync(out, json)
   let extra = `\n--- sample ---\n${trainer.sample(DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, ds.seed, 160)}`

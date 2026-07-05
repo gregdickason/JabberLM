@@ -96,6 +96,64 @@ export function buildHarnessCorpus(targetCharsPerTool = 15000): string {
   return lines.join('\n') + '\n'
 }
 
+// ---- two-step (agent loop) tasks -------------------------------------------
+// The instruction needs TWO tool calls; the second call operates on the FIRST
+// tool's result — so the model must read the observation the harness feeds back
+// and copy it into the next call. That "read the result, act again" loop is what
+// makes it an agent (vs a single function call). op1 must output a list (sort/
+// reverse) so op2 has valid 3-number arguments.
+export interface TwoStep {
+  phrasing: string
+  op1: 'sort' | 'reverse'
+  op2: ToolName
+}
+export const TWO_STEP: TwoStep[] = [
+  { phrasing: 'sort {n} then reverse it', op1: 'sort', op2: 'reverse' },
+  { phrasing: 'reverse {n} then sort it', op1: 'reverse', op2: 'sort' },
+  { phrasing: 'sort {n} then the biggest', op1: 'sort', op2: 'max' },
+  { phrasing: 'sort {n} then add it up', op1: 'sort', op2: 'sum' },
+  { phrasing: 'reverse {n} then the biggest', op1: 'reverse', op2: 'max' },
+]
+
+/** A full two-step training line:
+ *  `<instr> => op1(a b c) = r1 => op2(r1) = r2 => done` */
+export function twoStepLine(ts: TwoStep, v: Vec): string {
+  const r1 = TOOLS[ts.op1](v)
+  const r1nums = r1.split(' ').map(Number)
+  const r2 = TOOLS[ts.op2](r1nums)
+  return (
+    `${ts.phrasing.replace('{n}', v.join(' '))} => ` +
+    `${ts.op1}(${v.join(' ')}) = ${r1} => ${ts.op2}(${r1}) = ${r2} => done`
+  )
+}
+
+export const TWO_STEP_EXAMPLES: string[] = [
+  'sort 6 9 2 then reverse it',
+  'sort 4 1 7 then the biggest',
+  'reverse 3 8 5 then sort it',
+  'sort 8 2 9 then add it up',
+]
+
+/** Single-step corpus + two-step corpus combined — the bundled harness model is
+ *  trained on both, so it does function-calling AND the agent loop. */
+export function buildHarnessCorpusFull(): string {
+  const single = buildHarnessCorpus(15000)
+  const rnd = mulberry32(90210)
+  const { train } = split()
+  const pick = () => train[Math.floor(rnd() * train.length)]
+  const target = 22000 // per two-step template group; twice the single (harder task)
+  const lines: string[] = []
+  let chars = 0
+  const totalTarget = target * 2
+  while (chars < totalTarget) {
+    const ts = TWO_STEP[Math.floor(rnd() * TWO_STEP.length)]
+    const l = twoStepLine(ts, pick())
+    lines.push(l)
+    chars += l.length + 1
+  }
+  return single + lines.join('\n') + '\n'
+}
+
 /** Parse a model-emitted call `tool(a b c)` → {tool, args}. Used by the runtime
  *  harness; returns an error (not a throw) for malformed/unknown calls so the
  *  harness can show robustness. */

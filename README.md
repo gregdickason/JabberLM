@@ -105,7 +105,9 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
 - **Tool use / harness** (`harness.html`) — the agentic capstone: a tiny model is trained to emit
   `tool(args)` calls; a JS harness parses → dispatches to a real function → returns the result, and
   handles malformed calls. Completes the site's arc: **memorise → hallucinate → generalise → use tools**
-  (the model that can't add now calls a calculator and is always right).
+  (the model that can't add now calls a calculator and is always right). It also **chains two calls** —
+  the harness feeds the first tool's result back and the model issues a second call — a working
+  **agent loop** (observe → act → act → done) in ~88k parameters.
 - **Save / load** trained weights to your browser or a JSON file. The teaching pages default to the
   known-good bundled model; the lab can **Upload a JSON model** or **Inspect your last training run**.
 

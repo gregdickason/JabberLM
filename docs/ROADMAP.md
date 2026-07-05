@@ -31,7 +31,9 @@ capstone:
 - **Tool use & harness — `harness.html`.** The agentic capstone: a tiny model trained to emit
   `tool(args)` calls; a JS harness parses → dispatches to a real function → returns the result, and
   catches malformed calls. Completes the arc memorise→hallucinate→generalise→**use tools** (the model
-  that can't add calls a calculator and is always right). *(Beyond the original roadmap.)*
+  that can't add calls a calculator and is always right). Also **chains two calls** into a working
+  **agent loop** (observe→act→act→done) — validated at ~100% on held-out numbers. *(Beyond the original
+  roadmap.)*
 
 Other delivered items from the original plan:
 

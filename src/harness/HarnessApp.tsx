@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { deserialize, type SavedModel } from '../engine/persist'
 import { Trainer } from '../engine/trainer'
-import { runHarness, harnessDispatch, type HarnessTrace } from './runHarness'
-import { TOOL_EXAMPLES } from '../data/harnessTasks'
+import { runHarness, harnessDispatch, runAgent, type HarnessTrace, type AgentTrace } from './runHarness'
+import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
 import { Section, Callout, card } from '../explain/ui'
 
 async function loadHarnessModel(): Promise<Trainer | null> {
@@ -41,6 +41,8 @@ export default function HarnessApp() {
   const [trace, setTrace] = useState<HarnessTrace | null>(null)
   const [useHarness, setUseHarness] = useState(true)
   const [flaky, setFlaky] = useState<ReturnType<typeof harnessDispatch> | null>(null)
+  const [agentInstruction, setAgentInstruction] = useState('sort 6 9 2 then reverse it')
+  const [agentTrace, setAgentTrace] = useState<AgentTrace | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -64,6 +66,12 @@ export default function HarnessApp() {
     setInstruction(text)
     setTrace(runHarness(trainer.model, trainer.tok, text))
     setFlaky(null)
+  }
+
+  function runLoop(text: string) {
+    if (!trainer) return
+    setAgentInstruction(text)
+    setAgentTrace(runAgent(trainer.model, trainer.tok, text))
   }
 
   // "flaky model" demo: corrupt the model's call and re-dispatch through the harness
@@ -217,16 +225,76 @@ export default function HarnessApp() {
             </Callout>
           </Section>
 
-          <Section n={3} title="Is this an 'agent'?">
+          <Section n={3} title="Loop it — and it's an agent">
             <p>
-              A single tool call is <b>function calling</b> — the atom. An <b>agent</b> adds the loop:
-              the harness feeds the tool's result back to the model, which decides the next call, until the
-              task is done. This demo does one call; the same machinery, looped, is an agent. It's the same
-              idea whether the model is 88 thousand parameters (this one) or a trillion.
+              A single call is <b>function calling</b> — the atom. An <b>agent</b> adds the <b>loop</b>: the
+              harness runs the tool, <b>feeds the result back</b>, and the model reads it to decide the{' '}
+              <em>next</em> call — until it says <code>done</code>. Give it a two-step job and watch the loop:
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                className="min-w-[220px] flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-[13px] text-slate-100"
+                value={agentInstruction}
+                onChange={(e) => setAgentInstruction(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && runLoop(agentInstruction)}
+              />
+              <button className={btn + ' border-teal-600 bg-teal-900/40 text-teal-200'} onClick={() => runLoop(agentInstruction)}>
+                Run the loop
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] text-slate-500">try:</span>
+              {TWO_STEP_EXAMPLES.map((ex) => (
+                <button key={ex} className={chip} onClick={() => runLoop(ex)}>
+                  {ex}
+                </button>
+              ))}
+            </div>
+
+            {agentTrace && (
+              <div className={card + ' mt-4 space-y-2'}>
+                <div className="text-[11px] text-slate-400">
+                  you asked: <span className="font-mono text-slate-200">{agentTrace.instruction}</span>
+                </div>
+                {agentTrace.steps.map((s, i) => (
+                  <div key={i}>
+                    {i > 0 && (
+                      <div className="my-1 pl-6 text-[10px] text-sky-400/80">
+                        ↳ the harness feeds that result back; the model reads it and calls again
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 font-mono text-[13px]">
+                      <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500">step {i + 1}</span>
+                      {s.call ? (
+                        <>
+                          <span className="text-fuchsia-300">🧠 {s.call.tool}([{s.call.args.join(', ')}])</span>
+                          <span className="text-slate-600">→</span>
+                          <span className="text-emerald-300">⚙️ {s.result}</span>
+                        </>
+                      ) : (
+                        <span className="text-red-300">✗ {s.error}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div className="border-t border-slate-800 pt-2 text-[13px]">
+                  {agentTrace.done ? '🏁 the model said done. ' : '(stopped) '}
+                  <span className="text-slate-400">final answer: </span>
+                  <span className="font-mono text-lg font-bold text-emerald-300">{agentTrace.finalAnswer ?? '—'}</span>
+                </div>
+              </div>
+            )}
+
+            <Callout>
+              That's an agent: observe → act → observe → act → finish. Nothing here is special to a big
+              model — it's the same loop whether the "brain" is 88 thousand parameters (this one) or a
+              trillion. The scaffolding is what turns a next-token predictor into something that gets work
+              done.
+            </Callout>
+
             <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-500">
-              This tool-caller was trained in-browser's engine on ~60k characters of{' '}
-              <code>instruction =&gt; tool(args) = result</code> lines. See the{' '}
+              This tool-caller was trained in the browser's own engine on{' '}
+              <code>instruction =&gt; tool(args) = result</code> lines (single- and two-step). See the{' '}
               <a className="text-sky-400 hover:underline" href="./learn.html">how-it-works</a> page for the
               model itself, or the <a className="text-sky-400 hover:underline" href="./">playground</a> to
               train one.

@@ -62,6 +62,80 @@ export function runHarness(model: Model, tok: CharTokenizer, instruction: string
   return { instruction, modelRaw: raw, parsed: p, error: null, toolResult, modelGuess }
 }
 
+// ---- agent loop (multi-step) -----------------------------------------------
+// The harness lets the model emit a call, runs it, feeds the RESULT back into the
+// context, and lets the model emit the next call — until it emits `done`. Reading
+// the observation back and acting again is what turns tool-use into an agent.
+
+export interface AgentStep {
+  call: { tool: ToolName; args: number[] } | null
+  error: string | null
+  result: string | null
+}
+export interface AgentTrace {
+  instruction: string
+  steps: AgentStep[]
+  done: boolean
+  finalAnswer: string | null
+}
+
+/** Greedily generate until the model emits `=` (it finished a call and expects the
+ *  result) or a newline — whichever comes first. Returns the text before the stop. */
+function generateUntil(model: Model, tok: CharTokenizer, prompt: string, maxNew = 16): string {
+  const ids = tok.encode(prompt)
+  const eq = tok.stoi.get('=')
+  const nl = tok.stoi.get('\n')
+  const out: number[] = []
+  for (let s = 0; s < maxNew; s++) {
+    const window = ids.slice(Math.max(0, ids.length - model.cfg.contextLen))
+    const { logits } = model.forward(window, DEFAULT_FEATURE_FLAGS)
+    const V = logits.cols
+    const base = (logits.rows - 1) * V
+    let best = 0
+    for (let j = 1; j < V; j++) if (logits.data[base + j] > logits.data[base + best]) best = j
+    if (best === nl) break
+    if (best === eq) break // stop BEFORE the '=' — the harness supplies the result
+    out.push(best)
+    ids.push(best)
+  }
+  return tok.decode(out)
+}
+
+/**
+ * Run a (possibly multi-step) instruction as an agent loop. Each turn: the model
+ * emits a call, the harness runs the real tool and appends the authoritative
+ * `= result => ` back into the context, and the model reads it to decide the next
+ * call — until it emits `done` or we hit `maxSteps`.
+ */
+export function runAgent(model: Model, tok: CharTokenizer, instruction: string, maxSteps = 4): AgentTrace {
+  let ctx = `${instruction.trim()} => `
+  const steps: AgentStep[] = []
+  let done = false
+  for (let s = 0; s < maxSteps; s++) {
+    const seg = generateUntil(model, tok, ctx).trim()
+    if (/done/i.test(seg)) {
+      done = true
+      break
+    }
+    const p = parseToolCall(seg)
+    if ('error' in p) {
+      steps.push({ call: null, error: p.error, result: null })
+      break
+    }
+    let result: string
+    try {
+      result = TOOLS[p.tool](p.args)
+    } catch {
+      steps.push({ call: p, error: 'tool threw on those arguments', result: null })
+      break
+    }
+    steps.push({ call: p, error: null, result })
+    ctx += `${p.tool}(${p.args.join(' ')}) = ${result} => ` // authoritative observation fed back
+  }
+  const last = [...steps].reverse().find((st) => st.result != null)
+  return { instruction, steps, done, finalAnswer: last?.result ?? null }
+}
+
 /** Re-run parsing/dispatch on an arbitrary (possibly corrupted) model output — used
  *  by the "flaky model" demo to show the harness catching a malformed call. */
 export function harnessDispatch(raw: string): Pick<HarnessTrace, 'parsed' | 'error' | 'toolResult' | 'modelGuess'> {
