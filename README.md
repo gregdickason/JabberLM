@@ -149,3 +149,7 @@ src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales
 The engine's correctness is pinned by **numerical gradient checks** (analytic vs finite-difference)
 for every op, plus end-to-end tests that the model overfits a short string, that the trainer drives
 loss down on Jabberwocky, and that the held-out split samples across sections without leakage.
+
+## License
+
+[MIT](LICENSE) © Greg Dickason.

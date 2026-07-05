@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
+  "author": "Greg Dickason",
   "scripts": {
     "build:guide": "node scripts/build-guide.mjs",
     "gen:jabber": "npx --yes vite-node scripts/gen-model.ts",
