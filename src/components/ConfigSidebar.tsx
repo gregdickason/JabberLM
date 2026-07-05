@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '../state/store'
 import { TEXT_SAMPLES } from '../data/jabberwocky'
 import type { ModelConfig, PositionalMode } from '../engine/config'
@@ -54,6 +54,10 @@ export default function ConfigSidebar() {
     : (TEXT_SAMPLES.find((s) => s.text === trainingText)?.id ?? 'custom')
   const uniqueChars = new Set(trainingText).size
   const tooSmall = customMode && uniqueChars < 3
+  // The default custom corpus: all three built-in datasets combined, so held-out
+  // (which samples across sections) is meaningful and the model juggles three
+  // skills at once. Editable — the user can replace it with their own text.
+  const combinedText = useMemo(() => TEXT_SAMPLES.map((s) => s.text).join('\n\n'), [])
 
   return (
     <div className="text-slate-200">
@@ -64,7 +68,11 @@ export default function ConfigSidebar() {
           value={selectedSampleId}
           onChange={(e) => {
             if (e.target.value === 'custom') {
-              setCustomMode(true) // keep the current text; let the user edit it as their own corpus
+              setCustomMode(true)
+              // seed the combined corpus (all three) UNLESS the user already has
+              // their own edited text, which we keep
+              const isBuiltin = TEXT_SAMPLES.some((s) => s.text === trainingText)
+              if (isBuiltin || trainingText.trim() === '') setTrainingText(combinedText)
               return
             }
             setCustomMode(false)
@@ -77,7 +85,7 @@ export default function ConfigSidebar() {
               {s.name}
             </option>
           ))}
-          <option value="custom">Custom…</option>
+          <option value="custom">Custom (all three combined, editable)</option>
         </select>
         <textarea
           className="h-24 w-full resize-y rounded border border-slate-700 bg-slate-800 p-1.5 text-[11px] leading-tight text-slate-100 focus:border-sky-500 focus:outline-none"
