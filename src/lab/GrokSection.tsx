@@ -1,20 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trainer } from '../engine/trainer'
 import { DEFAULT_FEATURE_FLAGS, DEFAULT_MODEL_CONFIG, DEFAULT_TRAIN_CONFIG } from '../engine/config'
-import { moeAnswer, type MoeOp } from '../interp/ablation'
-import { buildMoeCorpus, sortHeldOut, maxHeldOut, reverseHeldOut, type SortVec } from '../data/tasks'
-import { pca2 } from '../interp/pca'
+import { moeAnswer, taskAccuracy, type MoeOp } from '../interp/ablation'
+import { buildMoeCorpus, sortHeldOut, maxHeldOut, reverseHeldOut, moeTrainVectors, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
-import NumberLine from '../viz/NumberLine'
 import SectionIntro from './SectionIntro'
 
-const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 const COLORS = { sort: '#34d399', max: '#60a5fa', reverse: '#f472b6' }
+const TRAIN_COLOR = '#f59e0b' // amber — accuracy on examples the model was TRAINED on
+const HELD_COLOR = '#38bdf8' // sky — accuracy on UNSEEN examples
 const SAMPLE = 12 // held-out examples evaluated per task each cycle (accuracy from these)
-const KEEP = 5 // how many of those to show as live "is it working?" rows
+const TRAIN_SAMPLE = 10 // training examples evaluated per task (for the memorise→generalise gap)
+const KEEP = 5 // how many held-out examples to show as live "is it working?" rows
 
 // Eval cadence: dense early (so the charts fill in seconds), then widen.
 const evalInterval = (step: number) => (step < 100 ? 20 : step < 600 ? 100 : 200)
+
+// Caption for the sort train-vs-held chart (finalised from the offline gap study:
+// sort memorises-then-generalises; max & reverse generalise directly).
+const GAP_CAPTION =
+  'Sort is the one that truly groks: accuracy on the lists it is TRAINED on (amber) climbs first — it ' +
+  'starts fitting those examples — while accuracy on UNSEEN lists (sky) lags behind. Then the held-out ' +
+  'line suddenly catches up: that jump is grokking, the model switching from memorising to the real ' +
+  'sorting rule. (Max and reverse generalise straight away — their held-out never lags, as the left chart shows.)'
 
 interface Ex {
   v: SortVec
@@ -31,55 +39,9 @@ interface Snapshot {
   sort: TaskResult
   max: TaskResult
   reverse: TaskResult
-}
-
-function pearson(a: number[], b: number[]): number {
-  const n = a.length
-  if (n === 0) return 0
-  const ma = a.reduce((x, y) => x + y, 0) / n
-  const mb = b.reduce((x, y) => x + y, 0) / n
-  let num = 0
-  let da = 0
-  let db = 0
-  for (let i = 0; i < n; i++) {
-    const x = a[i] - ma
-    const y = b[i] - mb
-    num += x * y
-    da += x * x
-    db += y * y
-  }
-  return num / (Math.sqrt(da * db) || 1)
-}
-
-// Collapse the digit vectors to the SINGLE axis (within the top-2 PCA plane) along
-// which the model best encodes magnitude — dir = (cov(x,val), cov(y,val)) — then
-// project onto it. Oriented low→high by construction. `align` is |corr| with value
-// (0..1): a real "progress measure" that climbs toward 1 as the number line forms.
-interface NumberLineData {
-  coords: number[]
-  labels: string[]
-  align: number
-}
-function computeNumberLine(emb: number[][], values: number[], labels: string[]): NumberLineData {
-  if (emb.length < 2) return { coords: [], labels: [], align: 0 }
-  const pts = pca2(emb)
-  const xs = pts.map((p) => p[0])
-  const ys = pts.map((p) => p[1])
-  const mean = (arr: number[]) => arr.reduce((a, b) => a + b, 0) / arr.length
-  const mx = mean(xs)
-  const my = mean(ys)
-  const mv = mean(values)
-  let cxv = 0
-  let cyv = 0
-  for (let i = 0; i < values.length; i++) {
-    cxv += (xs[i] - mx) * (values[i] - mv)
-    cyv += (ys[i] - my) * (values[i] - mv)
-  }
-  const norm = Math.hypot(cxv, cyv) || 1
-  const dx = cxv / norm
-  const dy = cyv / norm
-  const coords = pts.map((p) => p[0] * dx + p[1] * dy)
-  return { coords, labels, align: Math.abs(pearson(coords, values)) }
+  // TRAIN accuracy (on seen examples) per task — vs the held-out .acc above. Only
+  // sort shows a real gap (memorises first); max/reverse generalise directly.
+  train: { sort: number; max: number; reverse: number }
 }
 
 function expectedFor(op: MoeOp, v: SortVec): number[] {
@@ -112,7 +74,6 @@ export default function GrokSection() {
   const [step, setStep] = useState(0)
   const [loss, setLoss] = useState(0)
   const [hist, setHist] = useState<Snapshot[]>([])
-  const [numberLine, setNumberLine] = useState<NumberLineData>({ coords: [], labels: [], align: 0 })
 
   const trainerRef = useRef<Trainer | null>(null)
   const runningRef = useRef(false)
@@ -129,6 +90,7 @@ export default function GrokSection() {
     }),
     [],
   )
+  const trainVecs = useMemo(() => moeTrainVectors().slice(0, TRAIN_SAMPLE), [])
   const trainCfg = useMemo(() => ({ ...DEFAULT_TRAIN_CONFIG, batchSize: 24, learningRate: 0.006 }), [])
 
   function build(): Trainer {
@@ -138,18 +100,14 @@ export default function GrokSection() {
   }
 
   function evalAll(t: Trainer, s: number) {
-    const snap: Snapshot = {
-      step: s,
-      sort: evalTask(t, 'sort', held.sort),
-      max: evalTask(t, 'max', held.max),
-      reverse: evalTask(t, 'reverse', held.reverse),
-    }
-    const dM = t.model.cfg.dModel
-    const present = DIGITS.map((d) => ({ d, id: t.tok.stoi.get(d) })).filter(
-      (p): p is { d: string; id: number } => p.id != null,
-    )
-    const emb = present.map((p) => Array.from(t.model.tokenEmbed.data.subarray(p.id * dM, (p.id + 1) * dM)))
-    setNumberLine(computeNumberLine(emb, present.map((p) => Number(p.d)), present.map((p) => p.d)))
+    const sort = evalTask(t, 'sort', held.sort)
+    const max = evalTask(t, 'max', held.max)
+    const reverse = evalTask(t, 'reverse', held.reverse)
+    // train accuracy on SEEN examples (the memorise→generalise gap)
+    const trS = taskAccuracy(t.model, t.tok, 'sort', trainVecs)
+    const trM = taskAccuracy(t.model, t.tok, 'max', trainVecs)
+    const trR = taskAccuracy(t.model, t.tok, 'reverse', trainVecs)
+    const snap: Snapshot = { step: s, sort, max, reverse, train: { sort: trS, max: trM, reverse: trR } }
     setHist((h) => [...h, snap].slice(-200))
     lastEvalRef.current = s
   }
@@ -262,22 +220,27 @@ export default function GrokSection() {
         )}
       </div>
 
-      {/* accuracy overview + shared number-line */}
+      {/* per-task held-out curves + the memorise→generalise view */}
       <div className="flex flex-wrap gap-6">
         <div>
-          <div className="mb-1 text-[11px] text-slate-400">held-out accuracy — watch for the jump</div>
+          <div className="mb-1 text-[11px] text-slate-400">held-out accuracy per task — watch for the jump</div>
           <LineChart series={series} width={400} height={170} yLabel="held-out %" />
         </div>
         <div>
           <div className="mb-1 text-[11px] text-slate-400">
-            the model's number line — order alignment{' '}
-            <span className="font-mono text-slate-200">{Math.round(numberLine.align * 100)}%</span>
+            memorise → generalise <span className="text-slate-500">(sort)</span>
           </div>
-          <NumberLine coords={numberLine.coords} labels={numberLine.labels} />
+          <LineChart
+            series={[
+              { label: 'train (seen)', color: TRAIN_COLOR, points: hist.map((s) => ({ x: s.step, y: s.train.sort })) },
+              { label: 'held-out (unseen)', color: HELD_COLOR, points: hist.map((s) => ({ x: s.step, y: s.sort.acc })) },
+            ]}
+            width={400}
+            height={170}
+            yLabel="sort accuracy %"
+          />
           <div className="mt-1 max-w-[400px] text-[11px] leading-relaxed text-slate-500">
-            Each digit is a ~48-number learned vector. We collapse it to the single direction the model
-            spreads the digits along most — as the tasks grok, they slide into <em>numeric order</em> here
-            (alignment → 100%), because sort, max and reverse all need the same idea: which number is bigger.
+            {GAP_CAPTION}
           </div>
         </div>
       </div>
@@ -290,9 +253,10 @@ export default function GrokSection() {
       </div>
 
       <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500">
-        Typically <b>max</b> clicks first (it only has to find one number), then <b>sort</b> and{' '}
-        <b>reverse</b> follow once the ordering circuit forms — flat-then-sudden, the signature of
-        grokking. This is the same engine the main app uses, so nothing here is faked.
+        Typically <b>max</b> clicks first (it only has to find one number), then <b>reverse</b>, then{' '}
+        <b>sort</b>. Only <b>sort</b> shows the classic grokking gap on the right — it memorises its
+        training lists before it generalises — while max and reverse jump straight to the rule. Same
+        engine the main app uses, so nothing here is faked.
       </p>
     </div>
   )

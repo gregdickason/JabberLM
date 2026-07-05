@@ -93,6 +93,9 @@ function sharedSplit(): { train: SortVec[]; test: SortVec[] } {
 }
 export const maxHeldOut = (): SortVec[] => sharedSplit().test
 export const reverseHeldOut = (): SortVec[] => sharedSplit().test
+/** The training-split vectors (the 80% the MoE/grok corpus is built from) — used to
+ *  measure TRAIN accuracy against held-out accuracy (the memorise→generalise gap). */
+export const moeTrainVectors = (): SortVec[] => sharedSplit().train
 
 /** The multi-task corpus for the MoE model: sort + max + reverse, interleaved so
  *  every training window is a mix of tasks, drawn only from the shared train split. */
