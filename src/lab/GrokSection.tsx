@@ -8,7 +8,7 @@ import SectionIntro from './SectionIntro'
 
 const COLORS = { sort: '#34d399', max: '#60a5fa', reverse: '#f472b6' }
 const TRAIN_COLOR = '#f59e0b' // amber — accuracy on examples the model was TRAINED on
-const HELD_COLOR = '#38bdf8' // sky — accuracy on UNSEEN examples
+// (held-out on the sort chart reuses COLORS.sort so it matches the left chart's sort line)
 const SAMPLE = 12 // held-out examples evaluated per task each cycle (accuracy from these)
 const TRAIN_SAMPLE = 10 // training examples evaluated per task (for the memorise→generalise gap)
 const KEEP = 5 // how many held-out examples to show as live "is it working?" rows
@@ -20,7 +20,7 @@ const evalInterval = (step: number) => (step < 100 ? 20 : step < 600 ? 100 : 200
 // sort memorises-then-generalises; max & reverse generalise directly).
 const GAP_CAPTION =
   'Sort is the one that truly groks: accuracy on the lists it is TRAINED on (amber) climbs first — it ' +
-  'starts fitting those examples — while accuracy on UNSEEN lists (sky) lags behind. Then the held-out ' +
+  'starts fitting those examples — while accuracy on UNSEEN lists (green) lags behind. Then the held-out ' +
   'line suddenly catches up: that jump is grokking, the model switching from memorising to the real ' +
   'sorting rule. (Max and reverse generalise straight away — their held-out never lags, as the left chart shows.)'
 
@@ -223,17 +223,32 @@ export default function GrokSection() {
       {/* per-task held-out curves + the memorise→generalise view */}
       <div className="flex flex-wrap gap-6">
         <div>
-          <div className="mb-1 text-[11px] text-slate-400">held-out accuracy per task — watch for the jump</div>
+          <div className="text-[11px] text-slate-400">
+            held-out accuracy, all three tasks — watch for the jump
+          </div>
+          <Legend
+            items={[
+              { label: 'sort', color: COLORS.sort },
+              { label: 'max', color: COLORS.max },
+              { label: 'reverse', color: COLORS.reverse },
+            ]}
+          />
           <LineChart series={series} width={400} height={170} yLabel="held-out %" />
         </div>
         <div>
-          <div className="mb-1 text-[11px] text-slate-400">
-            memorise → generalise <span className="text-slate-500">(sort)</span>
+          <div className="text-[11px] text-slate-400">
+            <span className="text-emerald-300">sort</span> only: memorise → generalise
           </div>
+          <Legend
+            items={[
+              { label: 'train (lists it has seen)', color: TRAIN_COLOR },
+              { label: 'held-out (unseen lists)', color: COLORS.sort },
+            ]}
+          />
           <LineChart
             series={[
               { label: 'train (seen)', color: TRAIN_COLOR, points: hist.map((s) => ({ x: s.step, y: s.train.sort })) },
-              { label: 'held-out (unseen)', color: HELD_COLOR, points: hist.map((s) => ({ x: s.step, y: s.sort.acc })) },
+              { label: 'held-out (unseen)', color: COLORS.sort, points: hist.map((s) => ({ x: s.step, y: s.sort.acc })) },
             ]}
             width={400}
             height={170}
@@ -263,6 +278,19 @@ export default function GrokSection() {
 }
 
 // ---- little visual helpers -------------------------------------------------
+
+function Legend({ items }: { items: { label: string; color: string }[] }) {
+  return (
+    <div className="mb-1 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
+      {items.map((it) => (
+        <span key={it.label} className="flex items-center gap-1">
+          <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: it.color }} />
+          <span style={{ color: it.color }}>{it.label}</span>
+        </span>
+      ))}
+    </div>
+  )
+}
 
 function Cell({ top, val, cls }: { top?: string; val: React.ReactNode; cls: string }) {
   return (
