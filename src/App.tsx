@@ -129,8 +129,25 @@ export default function App() {
             className="text-sky-400 hover:underline"
           >
             by Greg Dickason
+          </a>{' '}
+          ·{' '}
+          <a
+            href="https://github.com/gregdickason/JabberLM"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sky-400 hover:underline"
+          >
+            GitHub
           </a>
         </span>
+        <a
+          href="https://github.com/gregdickason/JabberLM"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-sky-400 hover:underline sm:hidden"
+        >
+          GitHub ↗
+        </a>
         <button
           onClick={() => setShowConfig((v) => !v)}
           className="rounded border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:bg-slate-800 lg:hidden"
@@ -319,9 +336,9 @@ export default function App() {
 
             <button
               onClick={dismissChooser}
-              className="mt-3 text-[11px] text-slate-500 hover:text-slate-300"
+              className="mt-4 rounded border border-slate-500 px-4 py-1.5 text-sm font-medium text-slate-200 hover:bg-slate-800"
             >
-              skip
+              Skip — just let me explore →
             </button>
           </div>
         </div>
