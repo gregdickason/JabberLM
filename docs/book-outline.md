@@ -61,11 +61,24 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
      specialist reaches high sort accuracy fast and cheap; the generalist splits its capacity across
      poems + algebra + sorting, so it needs **more steps** to match the specialist *on sort* — and pays
      with breadth. Lesson: capacity is a budget you concentrate or spread; "how long to train to equal
-     sort skill" makes the trade-off concrete. **Backed by a real experiment to run:** train tiny/sort-only
-     and default/multitask; log held-out sort accuracy vs steps for both; report the **crossover** (the
-     step count at which the generalist's sort skill equals the specialist's), plus the specialist's
-     fixed skill line. Sets up MoE (Ch 10, experts = specialists under one roof) and fine-tuning (Ch 11,
-     adapting a generalist to a specialty cheaply).
+     sort skill" makes the trade-off concrete. Sets up MoE (Ch 10, experts = specialists under one roof)
+     and fine-tuning (Ch 11, adapting a generalist to a specialty cheaply).
+     - **Measured (crossover to ≥90% held-out sort; playground config — batch 16, lr 0.01, seed 1337, one
+       run each):**
+
+       | model | corpus | params | steps to ≥90% sort | training time |
+       |---|---|---|---|---|
+       | **tiny** | sorting only | ~15K | **2,200** | **~54 s** |
+       | **default** | all three combined (Custom) | ~90K | **6,300** | **~1,220 s (~20 min)** |
+
+       The generalist needs **~2.9× the steps** and **~22× the wall-clock training time** to reach the
+       same sort skill (the time gap is larger than the step gap because it's a bigger model on a much
+       longer corpus). It also groks *later and noisier*: the specialist jumped cleanly (16%→60%→84%→95%
+       across steps 1,000–2,200), while the generalist sat near 0% until ~step 2,500, then climbed
+       unevenly (bouncing through the 60–70s) before consolidating ≥90% at 6,300. Grokking step is
+       seed-dependent, so treat these as representative, not exact — they match in-browser observations
+       (specialist grokking begins ~step 1,500; generalist ~step 4,000+). *(Regenerate with the crossover
+       script; keep figures in sync via the stat pipeline.)*
 
 **Part III — Looking inside (interpretability)**
 8. *Opening the black box* — neurons, heads, specialisation. Try: `lab` neurons/heads/head-ablation. Deeper: induction heads, polysemanticity.
