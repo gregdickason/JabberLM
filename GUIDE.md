@@ -17,12 +17,12 @@ away, with no waiting. Use the **Poem / Sort / Solve** example chips in the Infe
 each skill. You can also build and train your own from scratch on the left, and flip back to the
 built-in one any time with **Load built-in model**.
 
-It is **character-level**: the vocabulary is just the distinct characters in your text (~60–80 of
+It is **character-level**: the vocabulary is just the distinct characters in your text (~20–80 of
 them), so every "token" is a single readable character. That is what makes the internals legible —
 when you look at an attention matrix, the rows and columns are actual letters.
 
 > **The built-in model does three things — and the contrast is the whole point.** It's one tiny
-> network (~90K parameters, the *default* preset) trained at once on poems, algebra, and sorting:
+> network (**~90K parameters**, the *default* preset) trained at once on poems, algebra, and sorting:
 > - **Poems** → it *memorised* a style and generates more of it.
 > - **`7x + 2 = 16 => …`** → it produces fluent, confident, **wrong** working. At this size it can't
 >   actually learn the arithmetic — a live picture of an LLM **hallucination**.
@@ -41,34 +41,60 @@ The screen has three parts:
 
 Both panels share **one** model. Train on the left, then inspect that same model on the right.
 
-> Tip: the **how to use** button in the top-right gives a 5-step quick version of this guide.
+> Tip: the **how to use** button in the top-right gives a 5-step quick version of this guide, and
+> **✨ Guide me** runs an interactive tour.
+
+### The rest of the site
+
+This guide is about the **playground** (the main page). Four more pages go wider — links are in the
+header:
+
+- **New to AI →** (`explain.html`) — a no-maths explainer of how these models answer, why they vary,
+  what they cost, and where they go wrong, for people who *use* AI at work.
+- **How it works →** (`learn.html`) — a guided walk that follows one example through a real model:
+  tokens → vectors → attention → next-character guess, then watches it grok.
+- **Tool use ↗** (`harness.html`) — a tiny model that can't do arithmetic learns to **call a
+  calculator** (and other tools), and chains two calls into a working **agent loop**. The capstone of
+  the site's arc: memorise → hallucinate → generalise → use tools → agents.
+- **Lab ↗** (`lab.html`) — the interpretability lab: neurons, attention heads, **head ablation**
+  (switch off the head that does the sorting and watch the skill die), dictionary learning (SAE),
+  steering, **Mixture of Experts**, and a live **advanced grokking** demo.
 
 ---
 
 ## 2. A standard training run
 
 1. **Pick a text.** In the sidebar's *Training text* section, choose a sample (or paste your own):
-   - **Jabberwocky (one poem)** — the single poem; great for *seeing overfitting*.
-   - **Jabber Poems** — Jabberwocky + ~100 more in the same style; enough variety to *generalise*.
-   - **Shakespeare (sonnets)** — a larger, real-English corpus for contrast.
+   - **Jabber Poems** — Jabberwocky + ~100 more in the same style; the model learns the *style* and
+     generalises (this is the "language model" flavour).
+   - **Sorting** — examples like `sort 6 9 2 => 2 6 9`. The model learns a real, generalising
+     procedure, with a visible **grokking** jump.
+   - **Equations** — worked single-variable algebra (`7x + 2 = 16 => …`). A tiny model learns the
+     *format* but never the arithmetic — the **hallucination** lesson.
+   - **Custom (all three combined, editable)** — seeds the box with poems + sorting + equations so you
+     can train one model on a multi-section corpus (or replace it with your own text).
 
    The line under the box shows the character count and how many unique characters there are — that
    unique count becomes the vocabulary size.
 
-2. **Pick a size.** In *Architecture*, click a preset: **tiny** (fast, a bit dim), **default** (a good
-   balance), **bigger** (slower, smarter), or **largest** (the ~0.46M-param size the built-in model
-   uses — best with the bigger corpora). Presets just set the architecture numbers for you.
+2. **Pick a size.** In *Architecture*, click a preset: **tiny** (fast, a bit dim) or **default** (a
+   good balance — the size the built-in model uses). Both are small enough to train live in a minute or
+   two; the active preset is highlighted. (Presets just set the architecture numbers for you — you can
+   still edit them by hand. Big models are shown via the pre-baked bundled models, not live training.)
 
 3. **Press ▶ Play.** The first press *builds* a fresh model for your text + architecture and starts
    training. Watch four things:
    - **Loss curve** — cross-entropy loss. Lower = better next-character predictions. It should fall
      steeply at first, then flatten. This is the single best "is it learning?" signal.
-   - **Live sample** — every 25 steps the model writes a short sample from scratch. Early on it's
-     random noise; within a minute it drifts toward Jabberwocky-ish text (real words, line breaks).
+   - **Live sample** — every so often the model writes a short sample from scratch. Early on it's
+     random noise; within a minute it drifts toward text like your corpus.
    - **Per-parameter gradient norm** — amber bars showing which weights are changing most this step.
      Big early, shrinking as training settles.
    - **Weights** heatmap — pick any weight matrix from the dropdown and watch its values shift as it
      learns (red = positive, blue = negative; hover any cell for the exact number).
+   - **Grokking view** (Sorting only) — when the dataset is *Sorting*, a second chart appears: accuracy
+     on held-out lists the model never trained on, plus the 9 digit embeddings projected to 2-D. Watch
+     the accuracy sit low, then **jump** — that's grokking.
 
 4. **Steer it live.** While it runs, change the **learning rate** or **batch size** in the sidebar and
    watch the loss react immediately — no restart needed.
@@ -78,34 +104,23 @@ Both panels share **one** model. Train on the left, then inspect that same model
 ### Held-out validation & overfitting (optional)
 
 By default the loss is measured on the same text the model trains on, so it always keeps falling — the
-model can simply **memorise** the poem. To see whether it's actually *generalising*, turn on a
-held-out split: in the sidebar set **held-out %** (e.g. `20`). That reserves the last 20% of the text
-as **validation** data the model never trains on, and every **validate every** steps the app measures
+model can simply **memorise** the text. To see whether it's actually *generalising*, turn on a
+held-out split: in the sidebar set **held-out %** (e.g. `20`). That reserves part of the text as
+**validation** data the model never trains on, and every **validate every** steps the app measures
 loss on it (forward only — it never affects the weights).
+
+The split is **representative**: instead of holding out one tail chunk, the app cuts the corpus into
+~20 blocks and reserves every M-th block, so the held-out sample is spread across *all* sections of a
+multi-section corpus (poems *and* sorting *and* equations), not just the end. Training windows are
+kept strictly inside the training blocks, so there's no leakage.
 
 Now the loss chart shows **two lines**: **train** (emerald) and **val** (amber). Both start from the
 same point — validation is measured once at **step 0** (before any training), so the lines share a
-baseline (~`ln(vocab)`, the loss of random guessing) and you watch them *diverge* from a common
-origin. Watch for the classic **overfitting** signature: train loss keeps falling while validation
-loss flattens out and then starts to **rise**. That gap is the model memorising training-specific
-detail that doesn't transfer. It's the single most important thing a held-out set reveals, and real
-training pipelines stop (early stopping) right around where the val curve bottoms out.
-
-**Which text shows the dip-then-rise?** The classic U needs enough *generalizable* structure for the
-model to learn before it starts memorising — which needs more than one short poem. This is exactly the
-contrast the datasets are built around:
-
-- **Jabberwocky (one poem)** → val loss usually rises *immediately*, with no dip. That's not a bug,
-  it's the lesson: a tiny model on a tiny text skips straight to **memorising** and never generalises.
-- **Jabber Poems** (or **Shakespeare sonnets**) with the **largest** preset → there's enough shared
-  structure (a recurring invented vocabulary, consistent grammar and rhythm) that the val line can
-  **fall for a while before it bottoms out and creeps up** — the model is genuinely *generalising*
-  before it starts overfitting.
-
-(Per-step training speed is unaffected by text length, so the bigger corpus costs nothing per step.)
-
-> Quirk: *Jabberwocky*'s last stanza is a copy of its first, so a tail split isn't truly "unseen" —
-> another reason the single poem makes a poor generalisation test and a good *overfitting* one.
+baseline (~`ln(vocab)`, the loss of random guessing) and you watch them *diverge*. Watch for the
+classic **overfitting** signature: train loss keeps falling while validation loss flattens and then
+starts to **rise**. That gap is the model memorising training-specific detail that doesn't transfer —
+the single most important thing a held-out set reveals; real pipelines stop (early stopping) right
+around where the val curve bottoms out.
 
 6. **Save it.** In the *model* row: **Save** keeps it in your browser; **JSON Save** downloads a file
    you can reload later with **JSON Load**. (Use single-**Step** for one batch at a time;
@@ -135,10 +150,10 @@ see the whole pass end-to-end.
 
 Now use the trained model (right panel).
 
-1. **Type a prompt** (e.g. `'Twas brillig`) and press **Run**. This feeds the prompt through the model,
-   fills the inspector, and writes **the first predicted character** — so the output already grows past
-   what you typed. The first time, the **Step** and **Generate ×20** buttons pulse to show you what to
-   do next.
+1. **Type a prompt** (e.g. `'Twas brillig`, or `sort 6 9 2 => `) and press **Run**. This feeds the
+   prompt through the model, fills the inspector, and writes **the first predicted character** — so the
+   output already grows past what you typed. The first time, the **Step** and **Generate ×20** buttons
+   pulse to show you what to do next.
 
 2. **Press ⏭ Step (1 token)** to generate one more character. The model samples the next character and
    appends it; the inspector updates to show exactly how it decided. Step again and again to watch it
@@ -184,6 +199,8 @@ Now use the trained model (right panel).
 - **sliding window** — drag the window width and watch the attention mask become a **band**: each
   character can only see the most recent *W* characters; older context (struck-through) drops out.
 
+*(The **LoRA** tab appears only while fine-tuning — see §6.)*
+
 ---
 
 ## 4. Every parameter, and what it does
@@ -193,11 +210,10 @@ Now use the trained model (right panel).
   vocabulary. Changing it requires a **Rebuild** (the model's input/output sizes change).
 
 ### Architecture *(changing any of these needs a Rebuild + retrain)*
-- **presets: tiny / default / bigger / largest** — quick size shortcuts.
-  - tiny = d_model 24, 2 heads, 2 layers, context 32, d_ff 96
-  - default = d_model 48, 3 heads, 3 layers, context 48, d_ff 192
-  - bigger = d_model 64, 4 heads, 4 layers, context 64, d_ff 256
-  - largest = d_model 96, 4 heads, 4 layers, context 128, d_ff 384 (~0.46M params — the built-in model)
+- **presets: tiny / default** — quick size shortcuts (the active one is highlighted). Live training
+  stays small; both train in a minute or two.
+  - tiny = d_model 24, 2 heads, 2 layers, context 32, d_ff 96 (~20K params)
+  - default = d_model 48, 3 heads, 3 layers, context 48, d_ff 192 (~90K params — the built-in model)
 - **d_model** — the width of every token's vector (the residual stream). Bigger = more capacity, more
   compute. *(default 48)*
 - **heads** — how many independent attention heads per layer. Each can learn a different relationship.
@@ -233,10 +249,11 @@ Now use the trained model (right panel).
   *(default 16)*
 - **grad clip** — caps the gradient size to keep training stable; blank = off. *(default 1.0)*
 - **held-out %** — fraction of the text reserved for validation (never trained on); `0` = off. Turns
-  on the second (val) loss line so you can watch for overfitting. *(default 0)*
-- **validate every** — how often (in steps) to measure validation loss. *(default 50)*
-- **steps/frame** (Training panel) — how many training steps run per animation frame. Higher = faster
-  training but a less responsive UI.
+  on the second (val) loss line so you can watch for overfitting. Spread representatively across the
+  corpus (see §2). *(default 0)*
+- **validate every** — how often (in steps) to measure validation loss. *(default 25)*
+- **steps/frame** (Training panel) — how many training steps run per animation frame. Leave **auto
+  speed** on and it self-throttles to keep the UI smooth.
 
 ### Sampling *(live, Inference panel)*
 - **temp** (temperature) — randomness. `0` = always pick the most likely character (repetitive,
@@ -247,14 +264,26 @@ Now use the trained model (right panel).
 
 ### Save / Load
 - **Save / Load** — store/restore the model in your browser (localStorage).
-- **JSON Save / JSON Load** — download/upload the model as a file (use this for big models or to share).
-- **Load built-in model** — drop the bundled pre-trained *Jabber Poems* model back in at any time
-  (this is also what loads automatically on first visit).
+- **JSON Save / JSON Load** — download/upload the model as a file (use this to share, or to keep a
+  fine-tuned model).
+- **Load built-in model** — drop the bundled pre-trained **three-skill** model (poems + sorting +
+  equations) back in at any time (this is also what loads automatically on first visit).
 
 ---
 
 ## 5. Experiments to try
 
+- **Watch it grok.** Pick **Sorting** + **tiny** (or **default**) and Play. The grokking chart's
+  held-out accuracy sits near zero for a while, then suddenly leaps — the model stops guessing and
+  learns the *rule*. The 9 digits also slide into a "number line." (Or hit **✨ Guide me** for the
+  guided version.)
+- **Watch it hallucinate.** Pick **Equations** and Play, or just ask the built-in model
+  `7x + 2 = 16 => ` in Inference. It writes confident, fluent, wrong working — it learned the *shape*
+  of algebra, not the arithmetic. Size doesn't fix this at these scales.
+- **Specialist vs generalist.** Train **tiny** on **Sorting** only, and separately **default** on
+  **Custom** (all three combined), both with *held-out % = 20*. The specialist reaches high sort
+  accuracy fast; the generalist splits its capacity across three skills, so it takes noticeably longer
+  to match it *on sorting*. Capacity is a budget you either concentrate or spread.
 - **See positions matter.** Train, then set *positional = none* and Generate. The text gets less
   coherent — order information is gone.
 - **Break causality.** In the attention tab, toggle *causal mask* off and watch the mask's blue upper
@@ -264,15 +293,8 @@ Now use the trained model (right panel).
 - **Temperature sweep.** Generate with *temp = 0* (repetitive), `0.8` (balanced), and `1.5` (chaotic).
 - **Overcook the learning rate.** Set *learning rate* to `0.5` and Play — the loss curve spikes and
   the sample turns to garbage. Lower it back down and it recovers.
-- **Small vs large.** Train *tiny* vs *largest* on **Jabber Poems** and compare how Jabberwocky-like
-  the live sample gets and how low the loss goes.
-- **Overfit vs generalise (the headline experiment).** Set *held-out %* = 20, then:
-  - Pick **Jabberwocky (one poem)** + the *default* preset and Play — the amber **val** line rises
-    almost immediately while train keeps falling. The model is **memorising** one poem.
-  - Now pick **Jabber Poems** + the *largest* preset and Play — val falls for a good while before it
-    bottoms out and slowly creeps up. The model is **generalising** first, overfitting only later.
-  - That gap *is* the lesson behind the whole app: variety in the data is what turns memorisation into
-    something that behaves like a real (if tiny) language model.
+- **Find the sorting circuit.** In the **Lab** (head ablation), switch off attention heads one at a
+  time and watch which one breaks *sorting* while poems carry on — a hands-on look at specialisation.
 
 ---
 
@@ -294,7 +316,7 @@ exactly as it was — then fine-tuning grows the overlay.
    nautical** (drifts toward sea-words) — or paste your own short text.
 2. Optionally set **rank** (size of the overlay), **alpha** (its strength), and which weights to adapt
    (**attn** and/or **mlp**). Press **✦ Start fine-tuning**. The card shows how few weights are now
-   trainable (e.g. *training ~12,000 of ~464,000 weights*) — the whole point of LoRA.
+   trainable (a few thousand out of the model's ~90,000) — the whole point of LoRA.
 3. Press **▶ Play**. Only the adapters move; the base is frozen. Watch the loss fall.
 4. In the Inference panel, type a prompt and **Run**. Toggle the **LoRA overlay** checkbox:
    - **On** → the model uses base + adapter (after a little training on *Summon the Snark*, it keeps
