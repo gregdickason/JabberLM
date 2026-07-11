@@ -59,12 +59,19 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
     if (all.length < 2) return
 
     const pad = 26
-    const xs = all.map((p) => p.x)
-    const ys = all.map((p) => p.y)
-    const minX = Math.min(...xs)
-    const maxX = Math.max(...xs)
-    const minY = Math.min(...ys)
-    const maxY = Math.max(...ys)
+    // Single-pass min/max — NOT Math.min(...xs): spreading a large points array
+    // (a long training run accumulates thousands of points) as function arguments
+    // overflows the call stack -> "RangeError: Maximum call stack size exceeded".
+    let minX = Infinity
+    let maxX = -Infinity
+    let minY = Infinity
+    let maxY = -Infinity
+    for (const p of all) {
+      if (p.x < minX) minX = p.x
+      if (p.x > maxX) maxX = p.x
+      if (p.y < minY) minY = p.y
+      if (p.y > maxY) maxY = p.y
+    }
     const sx = (x: number) => pad + ((x - minX) / (maxX - minX || 1)) * (w - pad - 6)
     const sy = (y: number) => height - pad - ((y - minY) / (maxY - minY || 1)) * (height - pad - 6)
 

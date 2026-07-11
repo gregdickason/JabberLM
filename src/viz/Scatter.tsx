@@ -14,12 +14,17 @@ export default function Scatter({
   height?: number
 }) {
   if (!points.length) return null
-  const xs = points.map((p) => p[0])
-  const ys = points.map((p) => p[1])
-  const minX = Math.min(...xs)
-  const maxX = Math.max(...xs)
-  const minY = Math.min(...ys)
-  const maxY = Math.max(...ys)
+  // single-pass min/max (avoid Math.min(...spread), which overflows on large arrays)
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const [x, y] of points) {
+    if (x < minX) minX = x
+    if (x > maxX) maxX = x
+    if (y < minY) minY = y
+    if (y > maxY) maxY = y
+  }
   const pad = 16
   const sx = (x: number) => pad + (maxX > minX ? (x - minX) / (maxX - minX) : 0.5) * (width - 2 * pad)
   const sy = (y: number) =>
