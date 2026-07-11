@@ -222,7 +222,7 @@ export default function GrokSection() {
 
       {/* per-task held-out curves + the memorise→generalise view */}
       <div className="flex flex-wrap gap-6">
-        <div>
+        <div className="min-w-0">
           <div className="text-[11px] text-slate-400">
             held-out accuracy, all three tasks — watch for the jump
           </div>
@@ -235,7 +235,7 @@ export default function GrokSection() {
           />
           <LineChart series={series} width={400} height={170} yLabel="held-out %" />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="text-[11px] text-slate-400">
             <span className="text-emerald-300">sort</span> only: memorise → generalise
           </div>

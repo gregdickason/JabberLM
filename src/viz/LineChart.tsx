@@ -21,15 +21,31 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [w, setW] = useState(width)
 
-  // track the container width
+  // Track the container width. Hardened against a ResizeObserver feedback loop:
+  // the canvas's pixel width could otherwise feed back into the container width
+  // (percentage-width wrapper in a shrink-to-fit/flex-wrap parent) and thrash
+  // forever, pegging the main thread — which showed up as a black screen on some
+  // browsers/zoom levels. Fixes: (1) rAF-throttle so we measure once per frame
+  // after layout; (2) round + bail out of no-op/sub-pixel changes via a functional
+  // update, so our own width change can't re-trigger the observer.
   useLayoutEffect(() => {
     const el = wrapRef.current
     if (!el) return
-    const measure = () => setW(Math.max(220, Math.min(width, el.clientWidth)))
+    let raf = 0
+    const measure = () => {
+      const next = Math.max(220, Math.min(width, Math.round(el.clientWidth)))
+      setW((prev) => (Math.abs(next - prev) > 1 ? next : prev))
+    }
     measure()
-    const ro = new ResizeObserver(measure)
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(measure)
+    })
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(raf)
+    }
   }, [width])
 
   useEffect(() => {
@@ -105,7 +121,7 @@ export default function LineChart({ series, width = 360, height = 140, yLabel }:
         aria-label={`line chart${yLabel ? ' of ' + yLabel : ''}: ${series
           .map((s) => `${s.label} latest ${s.points.at(-1)?.y.toFixed(2) ?? 'n/a'}`)
           .join(', ')}`}
-        className="rounded bg-slate-900/60"
+        className="block max-w-full rounded bg-slate-900/60"
       />
     </div>
   )
