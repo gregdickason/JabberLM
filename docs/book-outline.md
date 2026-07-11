@@ -91,20 +91,41 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
 10. *Many brains in one* — Mixture of Experts. Try: `lab` MoE. Deeper: gating, sparse top-k, dense-train.
 
 **Part IV — From model to product**
-11. *New tricks* — fine-tuning & LoRA; and (prose) instruction-tuning/RLHF. Try: playground LoRA. Deeper: low-rank ΔW; pretraining→SFT→RLHF *(site gap)*.
-12. *Talking to it well* — prompting & context engineering *(new; site gap)*. Try: context/attention demos. Deeper: few-shot, system prompts.
-13. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
-14. *Agents — and their risks* — the loop; prompt injection. Try: `harness` agent loop. Deeper: multi-step planning, injection/guardrails *(site gap)*.
-15. *What you can't see, and what to ask* — governance, evaluation, safety, cost. Try: `explain` governance + cost suite. Deeper: evals, alignment.
+11. *How a model is made — training vs fine-tuning.* The two things people conflate. **Training (from
+    scratch / pretraining):** a *base model* is grown by next-token prediction over a huge corpus — exactly
+    what the playground does, scaled up by a factor of billions; it produces a fluent autocomplete that
+    knows a lot but isn't yet an assistant. **Fine-tuning:** nobody retrains a giant from scratch for a new
+    task — you *adapt a frozen base* cheaply on a little data. **LoRA** is the dominant method (a tiny
+    low-rank overlay). Try: playground (train a base from scratch) **and** the LoRA card (adapt the built-in
+    model), and feel the difference in data/compute. Deeper: low-rank ΔW; the compute/data gulf between
+    pretraining and fine-tuning; the specialist-vs-generalist economics (callback to Sidebar 7A — why you
+    adapt a generalist rather than train a specialist each time).
+12. *Teaching it to behave — SFT, RLHF, and RLAIF.* How a raw next-token predictor becomes a *helpful
+    assistant* — the step most people don't know exists. **Supervised fine-tuning (SFT / instruction
+    tuning):** fine-tune the base on curated *instruction → good-response* demonstrations, so it learns to
+    follow requests rather than just continue text. **Preference optimization:** then shape *which* good
+    answer it prefers — **RLHF** (humans rank competing outputs; a reward model + reinforcement learning
+    nudge the model toward the preferred ones) and **RLAIF** (an AI gives the preference labels instead of
+    humans, guided by a written constitution/rubric — cheaper, more scalable, and how "constitutional"
+    models are aligned). This is where "helpful, harmless, honest," the model's tone, and its refusals come
+    from — they're *trained in*, not emergent. Honest caveat: alignment shapes *behaviour and preferences*,
+    not *truth* — RLHF doesn't cure the hallucination of Chapter 7, it just makes the model nicer about it.
+    **Site gap — prose** (the tiny in-browser model can't demo RL; anchor to the LoRA fine-tune experience
+    as the nearest hands-on analogue — "SFT is LoRA-with-better-data at scale"). Deeper: reward models,
+    PPO vs DPO, the KL penalty / "alignment tax," Constitutional AI.
+13. *Talking to it well* — prompting & context engineering *(new; site gap)*. Try: context/attention demos. Deeper: few-shot, system prompts.
+14. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
+15. *Agents — and their risks* — the loop; prompt injection. Try: `harness` agent loop. Deeper: multi-step planning, injection/guardrails *(site gap)*.
+16. *What you can't see, and what to ask* — governance, evaluation, safety, cost. Try: `explain` governance + cost suite. Deeper: evals, alignment.
 **Capstone (end of Part IV):** *Build your own* — train a mini-model, then a 2-tool agent, on the site.
 
 **Part V — Intelligence (the strange loop)** — the finale; philosophy *earned* by everything above.
 Prose-led but anchored to mechanisms the reader has *seen* (grokking/number-line = emergence; the agent
 loop = a literal feedback loop; steering/ablation = reaching into a representation).
-16. *Emergence* — from the number line and the grokking jump to scaling and emergent abilities. Try: revisit `lab` grokking with new eyes. Deeper: phase changes, why prediction pressure builds world-structure.
-17. *The strange loop* — self-reference and feedback; the agent loop pointed back at itself; **Hofstadter, *I Am a Strange Loop***. Try: `harness` agent loop as feedback; steering as intervening on a self-representation. Deeper: level-crossing feedback, Gödelian self-reference.
-18. *Prediction or understanding?* — "it's just autocomplete" vs "so, arguably, are you"; Chinese Room, symbol grounding, argued with mechanisms in view. Deeper: representation vs computation.
-19. *What we can — and can't — claim* — consciousness, the self as a pattern, the honest open questions; a reflective close that hands the reader judgement, not answers.
+17. *Emergence* — from the number line and the grokking jump to scaling and emergent abilities. Try: revisit `lab` grokking with new eyes. Deeper: phase changes, why prediction pressure builds world-structure.
+18. *The strange loop* — self-reference and feedback; the agent loop pointed back at itself; **Hofstadter, *I Am a Strange Loop***. Try: `harness` agent loop as feedback; steering as intervening on a self-representation. Deeper: level-crossing feedback, Gödelian self-reference.
+19. *Prediction or understanding?* — "it's just autocomplete" vs "so, arguably, are you"; Chinese Room, symbol grounding, argued with mechanisms in view. Deeper: representation vs computation.
+20. *What we can — and can't — claim* — consciousness, the self as a pattern, the honest open questions; a reflective close that hands the reader judgement, not answers.
 
 **Key risk for Part V:** overclaiming. Do philosophy *with the mechanism in view* — every big claim traces
 back to something the reader saw (a grok, a feature, the loop). Refuse both "it's conscious" and "it's
@@ -118,7 +139,8 @@ the interpretability literature) · Index.
 - Site enablers: **deep-link support** (reuse `data-tour` anchors + example-chip machinery; read
   `location.hash`/`?params` on mount in App/LabApp/HarnessApp/ExplainApp) + optional read-along landing.
 - Figures: repeatable capture per chapter; stats from `src/data/modelStats.ts`.
-- **Voice test first** (below): Ch 1 full + Ch 17 sketch, to prove one voice carries both registers.
+- **Voice test first** (below): Ch 1 full + Ch 18 (the strange loop) sketch, to prove one voice carries
+  both registers.
 
 ---
 
@@ -188,7 +210,7 @@ The lean toward the next word is where it all begins. In the next three chapters
 piece of text as it falls through the machine — becoming numbers, gathering context, being *thought
 about* — until, at the far end, out rolls a prediction. In glass, the whole way down.
 
-## Chapter 17 — The strange loop *(sketch)*
+## Chapter 18 — The strange loop *(sketch)*
 
 By now you have done something most people who *talk* about AI have never done: you have looked inside one.
 You watched nine digits, nudged only by the pressure to predict, quietly arrange themselves into a number
