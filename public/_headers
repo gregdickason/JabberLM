@@ -1,0 +1,24 @@
+# Cloudflare Pages cache policy. Vite copies this file to the deploy root (dist/_headers).
+#
+# The point: HTML must never be long-cached, so a deploy (e.g. a bug fix) reaches
+# users on their next load without a hard-refresh. HTML references content-hashed
+# JS/CSS, so those are safe to cache forever (a new build = a new filename).
+
+# Content-hashed build assets — new build = new filename, so cache for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML entry points — always revalidate (cheap 304 when unchanged) so fixes ship immediately.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Bundled models (unhashed, ~1MB, change only when regenerated) — revalidate so a
+# new model propagates; a 304 keeps repeat visits from re-downloading it.
+/multitask-model.json
+  Cache-Control: public, max-age=0, must-revalidate
+/moe-model.json
+  Cache-Control: public, max-age=0, must-revalidate
+/harness-model.json
+  Cache-Control: public, max-age=0, must-revalidate
