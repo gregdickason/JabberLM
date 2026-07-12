@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { deserialize, type SavedModel } from '../engine/persist'
 import { Trainer } from '../engine/trainer'
 import { DEFAULT_FEATURE_FLAGS, DEFAULT_TRAIN_CONFIG } from '../engine/config'
-import { sortAccuracy } from '../interp/ablation'
-import { sortHeldOut } from '../data/tasks'
+import { sortAccuracy, genLine } from '../interp/ablation'
+import { sortHeldOut, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
 
@@ -38,6 +38,7 @@ export default function RecoverySection() {
   const [step, setStep] = useState(0)
   const [running, setRunning] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [examples, setExamples] = useState<{ v: SortVec; out: string; ok: boolean }[]>([])
 
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
@@ -46,8 +47,21 @@ export default function RecoverySection() {
   const lastEvalRef = useRef(0)
 
   const held = useMemo(() => sortHeldOut().slice(0, 30), [])
+  // a few fixed UNSEEN lists to watch the model actually sort (die, then heal)
+  const demoVecs = useMemo(() => sortHeldOut().slice(40, 45), [])
   const trainCfg = useMemo(() => ({ ...DEFAULT_TRAIN_CONFIG, batchSize: 16, learningRate: 0.01 }), [])
   const ablSet = useMemo(() => (dead ? new Set([dead]) : undefined), [dead])
+
+  // run the demo prompts through the model with the current ablation → live output + ✓/✗
+  function runExamples(t: Trainer, abl: ReadonlySet<string> | undefined) {
+    setExamples(
+      demoVecs.map((v) => {
+        const want = [...v].sort((a, b) => a - b).join(' ')
+        const out = (genLine(t.model, t.tok, `sort ${v.join(' ')} => `, 8, abl).match(/\d(?: \d)*/) || [''])[0].trim()
+        return { v, out, ok: out === want }
+      }),
+    )
+  }
 
   // sweep every single-head ablation → per-head "accuracy if ablated" (async, chunked)
   async function sweep(t: Trainer): Promise<Importance[]> {
@@ -74,6 +88,7 @@ export default function RecoverySection() {
       setTrainer(t)
       setStatus('')
       setBaseline(sortAccuracy(t.model, t.tok, held))
+      runExamples(t, undefined) // healthy: it sorts
       setBefore(await sweep(t))
     })()
     return () => {
@@ -102,8 +117,10 @@ export default function RecoverySection() {
     lastEvalRef.current = 0
     setStep(0)
     // seed the recovery chart: healthy baseline point, then the injured drop
-    const injured = trainer ? sortAccuracy(trainer.model, trainer.tok, held, new Set([head])) : 0
+    const abl = new Set([head])
+    const injured = trainer ? sortAccuracy(trainer.model, trainer.tok, held, abl) : 0
     setCurve([{ step: 0, acc: injured }])
+    if (trainer) runExamples(trainer, abl) // watch the sorting die
   }
 
   function loop() {
@@ -118,6 +135,7 @@ export default function RecoverySection() {
       if (stepCountRef.current - lastEvalRef.current >= EVAL_EVERY) {
         const acc = sortAccuracy(trainer.model, trainer.tok, held, ablSet)
         setCurve((c) => [...c, { step: stepCountRef.current, acc }].slice(-300))
+        runExamples(trainer, ablSet) // watch the live examples heal
         lastEvalRef.current = stepCountRef.current
       }
     }
@@ -168,6 +186,7 @@ export default function RecoverySection() {
     stepCountRef.current = 0
     lastEvalRef.current = 0
     setBaseline(sortAccuracy(t.model, t.tok, held))
+    runExamples(t, undefined)
     setBefore(await sweep(t))
   }
 
@@ -325,20 +344,50 @@ export default function RecoverySection() {
         </div>
       </div>
 
-      {/* recovery chart */}
-      {dead && (
-        <div>
-          <div className="mb-1 text-[11px] text-slate-400">
-            recovery — held-out sort accuracy while retraining with {dead} ablated
+      <div className="flex flex-wrap gap-6">
+        {/* recovery chart */}
+        {dead && (
+          <div className="min-w-0">
+            <div className="mb-1 text-[11px] text-slate-400">
+              recovery — held-out sort accuracy while retraining with {dead} ablated
+            </div>
+            <LineChart series={series} width={440} height={180} yLabel="sort %" />
+            <div className="mt-1 max-w-[440px] text-[11px] leading-relaxed text-slate-500">
+              The dashed grey line is the pre-injury level. Accuracy drops to near zero the moment the head
+              is ablated, then climbs back as the remaining heads relearn the job — <b>with the injured
+              head still switched off</b>. That's the model routing the function around the damage.
+            </div>
           </div>
-          <LineChart series={series} width={440} height={180} yLabel="sort %" />
-          <div className="mt-1 max-w-[440px] text-[11px] leading-relaxed text-slate-500">
-            The dashed grey line is the pre-injury level. Accuracy drops to near zero the moment the head is
-            ablated, then climbs back as the remaining heads relearn the job — <b>with the injured head
-            still switched off</b>. That's the model routing the function around the damage.
+        )}
+
+        {/* live inference — watch actual lists get sorted, die, and heal */}
+        {examples.length > 0 && (
+          <div className="min-w-0">
+            <div className="mb-1 text-[11px] text-slate-400">
+              live inference on unseen lists{' '}
+              {dead ? (phase === 'injured' ? '(head just ablated)' : '(retraining…)') : '(healthy)'}
+            </div>
+            <div className="space-y-1">
+              {examples.map((ex, i) => (
+                <div key={i} className="flex items-center gap-1 font-mono text-[12px]">
+                  <span className="text-slate-500">sort {ex.v.join(' ')} =&gt;</span>
+                  <span className={ex.ok ? 'text-emerald-300' : 'text-red-300'}>{ex.out || '—'}</span>
+                  <span className={'ml-1 ' + (ex.ok ? 'text-emerald-400' : 'text-red-400')}>
+                    {ex.ok ? '✓' : '✗'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 max-w-[280px] text-[11px] leading-relaxed text-slate-500">
+              {!dead
+                ? 'The healthy model sorts these correctly.'
+                : phase === 'injured'
+                  ? 'With the head ablated the sort is broken — press Retrain and watch these lines turn green again.'
+                  : 'Same lists, same ablation — recovering live as the model reroutes.'}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
