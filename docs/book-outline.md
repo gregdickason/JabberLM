@@ -81,7 +81,12 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
        script; keep figures in sync via the stat pipeline.)*
 
 **Part III — Looking inside (interpretability)**
-8. *Opening the black box* — neurons, heads, specialisation. Try: `lab` neurons/heads/head-ablation. Deeper: induction heads, polysemanticity.
+8. *Opening the black box* — neurons, heads, specialisation; **and recovery**: ablate the head a skill
+   depends on, then retrain with it off and watch the skill reroute to other heads (the critical head
+   *moves*) — redundancy, plasticity, recovery-of-function; the concrete backing for the Part V "it
+   functionally rhymes with the brain" argument (lesion + relearning). Try: `lab` neurons/heads/head-ablation
+   + **injury & recovery**. Deeper: induction heads, polysemanticity, distributed vs localized coding,
+   the lesion-inference caveat (necessity ≠ localization).
 9. *Cleaner concepts* — dictionary learning (SAE) & steering. Try: `lab` SAE + steering. Deeper: superposition, sparse autoencoders.
 10. *Many brains in one* — Mixture of Experts. Try: `lab` MoE. Deeper: gating, sparse top-k, dense-train.
 

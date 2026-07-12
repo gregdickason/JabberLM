@@ -16,7 +16,12 @@ with no training. The teaching arc is **memorisation vs hallucination vs general
 model: poems (memorised style), algebra (fluent but wrong — it can't learn the arithmetic), sorting
 (genuinely learned, generalises to unseen inputs, with a grokking jump). A second bundled model,
 `public/moe-model.json` (`DATASET=moe`, `gen:moe`, ~145K params, 4-expert token-level MoE on
-sort+max+reverse), drives the lab's Mixture-of-Experts tab. `gen:jabber`/`gen:sonnets` build the older
+sort+max+reverse), drives the lab's Mixture-of-Experts tab. A third, `public/sort-model.json`
+(`DATASET=sort`, `gen:sort`, default preset, sort-only), drives the lab's **Injury & recovery** tab:
+ablate the critical head → retrain with it locked off (`stepBatch(trainCfg, flags, ablate?)`, keys
+"layer.head") → the skill recovers as other heads take over → re-scan shows the critical head moved.
+The ablation zeroing (`attention.ts`, `scale(headOut, 0)`) is differentiable, so the ablated head gets
+~zero gradient and the rest reroutes. `gen:jabber`/`gen:sonnets` build the older
 single-skill poem models. Bundled-model facts in `src/data/modelStats.ts`.
 
 The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
@@ -91,5 +96,6 @@ npm run build        # tsc -b && vite build (emits 6 pages: index/explain/learn/
 npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
+npm run gen:sort      # retrain the sort-only model (recovery)-> public/sort-model.json
 npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```

@@ -28,6 +28,11 @@ capstone:
   learning (SAE, illustrated on sorting), steering, **Mixture of Experts**, and a live **advanced
   grokking** demo (dense model on sort+max+reverse, per-task correctness panels + a memorise→generalise
   chart). Plus in-browser **LoRA** in the main app.
+- **Injury & recovery (lab).** Ablate the head sorting depends on (accuracy collapses), retrain with it
+  permanently off → the skill recovers as the model reroutes it through other heads; a re-scan shows the
+  critical head has moved. The mechanistic analogue of neuroplasticity / recovery-of-function. Backed by
+  a feasibility experiment (injure 68→0%, recover to 75% in ~500 steps, critical head 0.0→0.1).
+  *(Beyond the original roadmap.)*
 - **Tool use & harness — `harness.html`.** The agentic capstone: a tiny model trained to emit
   `tool(args)` calls; a JS harness parses → dispatches to a real function → returns the result, and
   catches malformed calls. Completes the arc memorise→hallucinate→generalise→**use tools** (the model

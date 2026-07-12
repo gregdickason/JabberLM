@@ -18,7 +18,7 @@ import { serialize } from '../src/engine/persist'
 import { JABBER_POEMS } from '../src/data/jabberPoems'
 import { SHAKESPEARE_SONNETS } from '../src/data/shakespeare'
 import { buildMultitaskCorpus, type SortVec } from './multitask-corpus'
-import { buildMoeCorpus, sortHeldOut } from '../src/data/tasks'
+import { buildMoeCorpus, buildSortCorpus, sortHeldOut } from '../src/data/tasks'
 import { buildHarnessCorpusFull } from '../src/data/harnessTasks'
 import {
   DEFAULT_FEATURE_FLAGS,
@@ -63,6 +63,8 @@ function makeDS(name: string): DS {
       return { corpus: buildMoeCorpus(30000), file: 'moe-model.json', seed: 'sort 6 9 2 => ', config: MOE, sortHeldOut: sortHeldOut() }
     case 'harness':
       return { corpus: buildHarnessCorpusFull(), file: 'harness-model.json', seed: 'sort 6 9 2 then reverse it => ', config: DEFAULTP }
+    case 'sort':
+      return { corpus: buildSortCorpus(), file: 'sort-model.json', seed: 'sort 6 9 2 => ', config: DEFAULTP, sortHeldOut: sortHeldOut() }
     default:
       throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe, harness)`)
   }

@@ -86,4 +86,26 @@ describe('Trainer (integration)', () => {
     const regions = trainer.heldOutRegions(0.2)
     expect(regions.length).toBe(1) // too small to interleave → one tail block
   })
+
+  it('stepBatch trains with a head ablated (loss still falls — recovery routes around it)', () => {
+    // knock out layer 0, head 0; the network must learn through the other components
+    const trainer = new Trainer(JABBERWOCKY, cfg, 5)
+    const ablate = new Set(['0.0'])
+    const tcfg = { ...DEFAULT_TRAIN_CONFIG, batchSize: 8 }
+    const first = trainer.stepBatch(tcfg, DEFAULT_FEATURE_FLAGS, ablate).loss
+    let last = first
+    for (let i = 0; i < 60; i++) last = trainer.stepBatch(tcfg, DEFAULT_FEATURE_FLAGS, ablate).loss
+    expect(Number.isFinite(last)).toBe(true)
+    expect(last).toBeLessThan(first) // it still learns, with the head permanently off
+  }, 30000)
+
+  it('ablating a head changes the forward pass', () => {
+    const trainer = new Trainer(JABBERWOCKY, cfg, 3)
+    const ids = trainer.tok.encode("'Twas bri")
+    const plain = trainer.model.forward(ids, DEFAULT_FEATURE_FLAGS).logits.data
+    const abl = trainer.model.forward(ids, DEFAULT_FEATURE_FLAGS, undefined, false, undefined, undefined, new Set(['0.0'])).logits.data
+    let diff = 0
+    for (let i = 0; i < plain.length; i++) diff += Math.abs(plain[i] - abl[i])
+    expect(diff).toBeGreaterThan(0) // zeroing a head's output changes the logits
+  })
 })

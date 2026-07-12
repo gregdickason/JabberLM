@@ -7,22 +7,41 @@ import SteeringSection from './SteeringSection'
 import AblationSection from './AblationSection'
 import MoeSection from './MoeSection'
 import GrokSection from './GrokSection'
+import RecoverySection from './RecoverySection'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'head ablation', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking'] as const
+const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking'] as const
 type Tab = (typeof TABS)[number]
 
 const btn =
   'rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-40'
 
+// URL-addressable tabs: e.g. lab.html#injury-recovery opens the recovery tab.
+const slug = (t: string) => t.replace(/[()]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+const tabFromHash = (): Tab => {
+  const h = typeof location !== 'undefined' ? location.hash.replace(/^#/, '').toLowerCase() : ''
+  return TABS.find((t) => slug(t) === h) ?? 'neurons'
+}
+
 export default function LabApp() {
   const [loaded, setLoaded] = useState<LoadedModel | null>(null)
   const [status, setStatus] = useState('looking for a model…')
-  const [tab, setTab] = useState<Tab>('neurons')
+  const [tab, setTabState] = useState<Tab>(tabFromHash)
+  const setTab = (t: Tab) => {
+    setTabState(t)
+    if (typeof history !== 'undefined') history.replaceState(null, '', `#${slug(t)}`)
+  }
   const [trainedSae, setTrainedSae] = useState<{ sae: SAE; layer: number; topFeature: number } | null>(
     null,
   )
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // follow the URL hash (deep links, back/forward)
+  useEffect(() => {
+    const onHash = () => setTabState(tabFromHash())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -138,6 +157,7 @@ export default function LabApp() {
             {tab === 'neurons' && <NeuronsSection trainer={loaded.trainer} />}
             {tab === 'attention heads' && <HeadsSection trainer={loaded.trainer} />}
             {tab === 'head ablation' && <AblationSection trainer={loaded.trainer} />}
+            {tab === 'injury & recovery' && <RecoverySection />}
             {tab === 'dictionary (SAE)' && (
               <SaeSection
                 trainer={loaded.trainer}

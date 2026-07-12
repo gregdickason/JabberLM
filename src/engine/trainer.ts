@@ -153,7 +153,7 @@ export class Trainer {
   /** Train on one mini-batch of random windows; returns loss + grad norms. When
    *  fine-tuning, samples the fine-tune text, forces the LoRA overlay on, and steps
    *  only the adapter optimizer (the frozen base never moves). */
-  stepBatch(trainCfg: TrainConfig, flags: FeatureFlags): StepResult {
+  stepBatch(trainCfg: TrainConfig, flags: FeatureFlags, ablate?: ReadonlySet<string>): StepResult {
     const ft = this.fineTuning
     const ids = this.activeIds()
     const useFlags = ft ? { ...flags, lora: true } : flags
@@ -185,7 +185,10 @@ export class Trainer {
       const window = ids.slice(start, start + L + 1)
       const input = window.slice(0, L)
       const target = window.slice(1, L + 1)
-      const { logits } = this.model.forward(input, useFlags)
+      // `ablate` (keys "layer.head") zeroes those heads' output during training too —
+      // the ablated head gets ~zero gradient (stays dead) so the rest of the network
+      // must reroute the function (the "recovery after injury" demo).
+      const { logits } = this.model.forward(input, useFlags, undefined, false, undefined, undefined, ablate)
       const { loss } = crossEntropy(logits, target)
       total = total ? add(total, loss) : loss
     }

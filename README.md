@@ -92,6 +92,9 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
   - **Neurons** & **attention heads** — top-activating contexts and head roles (induction / previous-token).
   - **Head ablation** — knock out heads and watch which *skill* breaks (sorting lives in one layer, poems
     in another) — a hands-on look at specialisation and polysemanticity.
+  - **Injury & recovery** — ablate the head sorting depends on (accuracy collapses), then **keep training
+    with it off** and watch the skill recover as the model reroutes it through other heads; re-scan to see
+    the critical head has *moved*. The mechanistic echo of neuroplasticity / recovery-of-function.
   - **Dictionary learning (SAE)** — train a sparse autoencoder in-browser and browse the cleaner features
     it finds (illustrated on clean sorting inputs).
   - **Steering** — add a feature/neuron direction into the residual stream and watch generation shift.
@@ -121,6 +124,7 @@ npm run build        # static bundle in dist/ (6 pages: index/explain/learn/lab/
 npm run gen:multitask # (re)train the bundled three-skill model → public/multitask-model.json
 npm run gen:moe      # (re)train the Mixture-of-Experts model  → public/moe-model.json
 npm run gen:harness  # (re)train the tool-calling model        → public/harness-model.json
+npm run gen:sort     # (re)train the sort-only model (recovery) → public/sort-model.json
 ```
 
 ## Deploy
@@ -152,7 +156,7 @@ src/interp/      # interpretability: activations, maxact, sae, heads, ablation, 
 src/components/  # main-app UI: ConfigSidebar, TrainingPanel, InferencePanel, inspector/, features/
 src/explain/     # "New to AI" page (explain.html)
 src/learn/       # "how a transformer works" page (learn.html)
-src/lab/         # interpretability lab (lab.html): Neurons/Heads/Ablation/SAE/Steering/MoE/Grok sections
+src/lab/         # interpretability lab (lab.html): Neurons/Heads/Ablation/Recovery/SAE/Steering/MoE/Grok
 src/harness/     # tool use & harness page (harness.html): runHarness.ts (parse→dispatch→robustness)
 src/state/       # zustand store + bundled-model install (pretrained.ts)
 src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales
