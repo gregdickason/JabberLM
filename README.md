@@ -103,6 +103,9 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
   - **Advanced grokking** — train a dense model live on sort + max + reverse at once; per-task correctness
     panels and a **memorise → generalise** chart (train accuracy leads, held-out lags then jumps — that's
     grokking).
+  - **Distillation** — train a tiny **student** to copy a bigger **teacher**'s whole output distribution
+    ("dark knowledge"); the ~6× smaller student reaches the teacher's accuracy, and learns faster than an
+    identical student trained on plain labels. The compression lever behind cheap inference.
 - **Plain-language pages** — `explain.html` (how AI answers / varies / costs / hallucinates, no maths) and
   `learn.html` (a guided walk through a real forward pass, then grokking).
 - **Tool use / harness** (`harness.html`) — the agentic capstone: a tiny model is trained to emit
@@ -156,7 +159,7 @@ src/interp/      # interpretability: activations, maxact, sae, heads, ablation, 
 src/components/  # main-app UI: ConfigSidebar, TrainingPanel, InferencePanel, inspector/, features/
 src/explain/     # "New to AI" page (explain.html)
 src/learn/       # "how a transformer works" page (learn.html)
-src/lab/         # interpretability lab (lab.html): Neurons/Heads/Ablation/Recovery/SAE/Steering/MoE/Grok
+src/lab/         # interpretability lab: Neurons/Heads/Ablation/Recovery/SAE/Steering/MoE/Grok/Distill
 src/harness/     # tool use & harness page (harness.html): runHarness.ts (parse→dispatch→robustness)
 src/state/       # zustand store + bundled-model install (pretrained.ts)
 src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales

@@ -413,3 +413,44 @@ export function crossEntropy(logits: Tensor, targets: number[]): CrossEntropyRes
   }
   return { loss: c, probs }
 }
+
+/**
+ * Soft (distillation) cross-entropy: like `crossEntropy` but the target is a full
+ * probability distribution per position (the teacher's softmax) instead of one
+ * correct token. Loss = mean_i −Σ_j q[i,j]·log softmax(logits)[i,j]. The gradient
+ * has the same clean form as hard cross-entropy — (studentProbs − teacherProbs)/seq
+ * — so a small student can be trained to mimic a big teacher's whole answer
+ * distribution ("dark knowledge"), not just its top pick. `teacherProbs` is a
+ * constant (seq×vocab), so no gradient flows into it.
+ */
+export function softCrossEntropy(logits: Tensor, teacherProbs: Float32Array): Tensor {
+  const seq = logits.rows
+  const vocab = logits.cols
+  if (teacherProbs.length !== seq * vocab) throw new Error('softCrossEntropy: teacherProbs shape != seq×vocab')
+  const probs = new Float32Array(seq * vocab)
+  let loss = 0
+  for (let i = 0; i < seq; i++) {
+    let max = -Infinity
+    for (let j = 0; j < vocab; j++) max = Math.max(max, logits.data[i * vocab + j])
+    let sumE = 0
+    for (let j = 0; j < vocab; j++) {
+      const e = Math.exp(logits.data[i * vocab + j] - max)
+      probs[i * vocab + j] = e
+      sumE += e
+    }
+    for (let j = 0; j < vocab; j++) {
+      const p = probs[i * vocab + j] / sumE
+      probs[i * vocab + j] = p
+      loss += -teacherProbs[i * vocab + j] * Math.log(p + 1e-12)
+    }
+  }
+  loss /= seq
+  const c = out(Float32Array.from([loss]), 1, 1, [logits], 'softCrossEntropy')
+  c._backward = () => {
+    const g = c.grad[0] / seq
+    for (let i = 0; i < seq; i++)
+      for (let j = 0; j < vocab; j++)
+        logits.grad[i * vocab + j] += g * (probs[i * vocab + j] - teacherProbs[i * vocab + j])
+  }
+  return c
+}

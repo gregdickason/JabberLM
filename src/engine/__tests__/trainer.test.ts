@@ -99,6 +99,19 @@ describe('Trainer (integration)', () => {
     expect(last).toBeLessThan(first) // it still learns, with the head permanently off
   }, 30000)
 
+  it('distillStep trains a student toward a teacher (loss falls; needs shared vocab)', () => {
+    // teacher and student share a corpus → shared vocabulary → aligned logit columns
+    const teacher = new Trainer(JABBERWOCKY, cfg, 9)
+    const tcfg = { ...DEFAULT_TRAIN_CONFIG, batchSize: 8 }
+    for (let i = 0; i < 40; i++) teacher.stepBatch(tcfg, DEFAULT_FEATURE_FLAGS) // give the teacher some signal
+    const student = new Trainer(JABBERWOCKY, { ...cfg, dModel: 16, dFF: 32 }, 2) // smaller student
+    const first = student.distillStep(tcfg, DEFAULT_FEATURE_FLAGS, teacher.model, 2).loss
+    let last = first
+    for (let i = 0; i < 60; i++) last = student.distillStep(tcfg, DEFAULT_FEATURE_FLAGS, teacher.model, 2).loss
+    expect(Number.isFinite(last)).toBe(true)
+    expect(last).toBeLessThan(first) // the student learns to match the teacher
+  }, 30000)
+
   it('ablating a head changes the forward pass', () => {
     const trainer = new Trainer(JABBERWOCKY, cfg, 3)
     const ids = trainer.tok.encode("'Twas bri")

@@ -2,7 +2,7 @@ import { Model } from './model'
 import { Optimizer, type GradNorm } from './optimizer'
 import { CharTokenizer } from './tokenizer'
 import { RNG } from './random'
-import { add, crossEntropy, scale } from './ops'
+import { add, crossEntropy, scale, softCrossEntropy } from './ops'
 import { generate } from './generate'
 import type { FeatureFlags, FineTuneConfig, ModelConfig, SampleConfig, TrainConfig } from './config'
 
@@ -202,6 +202,53 @@ export class Trainer {
     const gradNorm = opt.step(trainCfg)
 
     return { loss: meanLoss.data[0], gradNorm, gradNorms: opt.gradNorms() }
+  }
+
+  /**
+   * Knowledge-distillation step: train THIS model (the student) to match a bigger
+   * `teacher`'s output distribution instead of the hard next-token labels. For each
+   * window we run the teacher forward (no grad) → soft targets = softmax(teacherLogits/T)
+   * → student loss = T²·softCrossEntropy(studentLogits/T, teacher). Temperature T>1
+   * softens the teacher so the student also learns from the runner-up structure ("dark
+   * knowledge"). Teacher and student must share a vocabulary (build the student on the
+   * teacher's corpus). Not compatible with fine-tuning mode.
+   */
+  distillStep(trainCfg: TrainConfig, flags: FeatureFlags, teacher: Model, temperature = 2): StepResult {
+    const ids = this.ids
+    const L = this.windowLen()
+    if (L < 1) throw new Error('training text too short for the context length')
+    const T = Math.max(1, temperature)
+    const vocab = this.cfg.vocabSize
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    const batch = Math.max(1, trainCfg.batchSize)
+    for (let b = 0; b < batch; b++) {
+      const maxStart = ids.length - 1 - L
+      const start = maxStart <= 0 ? 0 : Math.floor(this.rng.next() * (maxStart + 1))
+      const input = ids.slice(start, start + L)
+      // teacher forward (no grad): soften with temperature into per-position targets
+      const teacherLogits = teacher.forward(input, flags).logits
+      const q = new Float32Array(L * vocab)
+      for (let i = 0; i < L; i++) {
+        let max = -Infinity
+        for (let j = 0; j < vocab; j++) max = Math.max(max, teacherLogits.data[i * vocab + j] / T)
+        let sumE = 0
+        for (let j = 0; j < vocab; j++) {
+          const e = Math.exp(teacherLogits.data[i * vocab + j] / T - max)
+          q[i * vocab + j] = e
+          sumE += e
+        }
+        for (let j = 0; j < vocab; j++) q[i * vocab + j] /= sumE
+      }
+      // student loss: T² · softCE(studentLogits/T, teacherProbs)
+      const { logits } = this.model.forward(input, flags)
+      const loss = scale(softCrossEntropy(scale(logits, 1 / T), q), T * T)
+      total = total ? add(total, loss) : loss
+    }
+    const meanLoss = scale(total!, 1 / batch)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
   }
 
   /**

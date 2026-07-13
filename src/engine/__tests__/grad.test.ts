@@ -16,6 +16,7 @@ import {
   relu,
   embeddingLookup,
   crossEntropy,
+  softCrossEntropy,
   sum,
   loraDelta,
 } from '../ops'
@@ -184,6 +185,14 @@ describe('autograd gradient checks', () => {
 
   it('crossEntropy', () => {
     checkGrad([{ rows: 3, cols: 5, data: rand(15) }], (i) => crossEntropy(i[0], [1, 4, 0]).loss)
+  })
+
+  it('softCrossEntropy (distillation — soft teacher targets)', () => {
+    // a fixed teacher distribution per row (rows sum to 1); grad flows into logits only
+    const teacher = Float32Array.from([
+      0.1, 0.2, 0.3, 0.4, 0.6, 0.1, 0.1, 0.2, 0.25, 0.25, 0.25, 0.25,
+    ])
+    checkGrad([{ rows: 3, cols: 4, data: rand(12) }], (i) => softCrossEntropy(i[0], teacher))
   })
 
   it('applyRope', () => {

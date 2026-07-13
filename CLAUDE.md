@@ -21,7 +21,12 @@ sort+max+reverse), drives the lab's Mixture-of-Experts tab. A third, `public/sor
 ablate the critical head → retrain with it locked off (`stepBatch(trainCfg, flags, ablate?)`, keys
 "layer.head") → the skill recovers as other heads take over → re-scan shows the critical head moved.
 The ablation zeroing (`attention.ts`, `scale(headOut, 0)`) is differentiable, so the ablated head gets
-~zero gradient and the rest reroutes. `gen:jabber`/`gen:sonnets` build the older
+~zero gradient and the rest reroutes. The lab's **Distillation** tab reuses `sort-model.json` as a
+**teacher** and trains a live tiny **student** via `Trainer.distillStep(cfg, flags, teacher, T)` — student
+loss = `T²·softCrossEntropy(studentLogits/T, softmax(teacherLogits/T))` (new `softCrossEntropy` op in
+`ops.ts`, grad `(studentProbs − teacherProbs)/seq`); teacher & student must share a vocab (build the
+student on the teacher's corpus). Offline: the ~6× smaller student reaches the teacher's ~95% and groks
+~2–3× faster than an identical hard-label student. `gen:jabber`/`gen:sonnets` build the older
 single-skill poem models. Bundled-model facts in `src/data/modelStats.ts`.
 
 The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths

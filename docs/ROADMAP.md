@@ -28,6 +28,10 @@ capstone:
   learning (SAE, illustrated on sorting), steering, **Mixture of Experts**, and a live **advanced
   grokking** demo (dense model on sort+max+reverse, per-task correctness panels + a memorise→generalise
   chart). Plus in-browser **LoRA** in the main app.
+- **Distillation (lab).** Train a tiny student to copy a big teacher's output distribution
+  (`softCrossEntropy` op + `Trainer.distillStep`); the ~6× smaller student reaches the teacher's ~95% and
+  groks ~2–3× faster than the same student on hard labels. The compression lever behind cheap inference —
+  completes the inference-economics arc. *(Beyond the original roadmap.)*
 - **Injury & recovery (lab).** Ablate the head sorting depends on (accuracy collapses), retrain with it
   permanently off → the skill recovers as the model reroutes it through other heads; a re-scan shows the
   critical head has moved. The mechanistic analogue of neuroplasticity / recovery-of-function. Backed by
