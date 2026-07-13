@@ -79,6 +79,14 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
        seed-dependent, so treat these as representative, not exact — they match in-browser observations
        (specialist grokking begins ~step 1,500; generalist ~step 4,000+). *(Regenerate with the crossover
        script; keep figures in sync via the stat pipeline.)*
+     - **Inference cost (the half that matters at scale).** Training is a one-off; *inference* is the bill
+       you pay forever. At equal sort quality (~95% both), the tiny specialist has ~6× fewer parameters →
+       ~6× less compute per token, and runs measurably faster. So even though the generalist was more
+       expensive to train, the *specialist* is the one you'd deploy for a high-volume sort task. This is
+       the economic engine behind how model usage is evolving as token cost bites: **route** easy requests
+       to small models, **fine-tune small specialists** for high-volume tasks, **distill** a big model's
+       skill into a small one, and **MoE** (run only a slice of a huge model per token) — "use the smallest
+       model that clears the bar." Try: `explain §6` (specialist-vs-generalist inference demo).
 
 **Part III — Looking inside (interpretability)**
 8. *Opening the black box* — neurons, heads, specialisation; **and recovery**: ablate the head a skill
@@ -117,6 +125,18 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
 14. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
 15. *Agents — and their risks* — the loop; prompt injection. Try: `harness` agent loop. Deeper: multi-step planning, injection/guardrails *(site gap)*.
 16. *What you can't see, and what to ask* — governance, evaluation, safety, cost. Try: `explain` governance + cost suite. Deeper: evals, alignment.
+    - **Inference economics (a proper treatment — this is where the money is).** Beyond price-per-token:
+      (a) **which model** — specialist-vs-generalist at inference (callback to Sidebar 7A: same answer,
+      a fraction of the cost); (b) the **KV cache** — a model generates one token at a time and each
+      attends to everything before it, so naively the work grows with the *square* of the length; the
+      cache stores earlier keys/values and reuses them, making it linear. Split it into **prefill** (read
+      the prompt to build the cache — once, parallel, cheap per token) vs **decode** (generate the answer
+      — one step at a time, can't be parallelised) — *that asymmetry is why output tokens are priced higher
+      than input tokens*. (c) **Prompt caching** — reuse the same big prompt across calls and pay the
+      prefill once (a real discount for repeated queries); the catch is the cache lives in **memory** and
+      grows with context, so long contexts are limited by memory, not just compute. (d) Batching / GPU
+      utilisation as the other big lever. Try: `explain §6` (KV-cache cost slider). Ch 4's Q/K/V is exactly
+      what gets cached here — a one-line forward pointer there.
 **Capstone (end of Part IV):** *Build your own* — train a mini-model, then a 2-tool agent, on the site.
 
 **Part V — Intelligence (the strange loop)** — the finale; philosophy *earned* by everything above.
