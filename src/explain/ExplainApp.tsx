@@ -10,6 +10,8 @@ import CostsDemo from './CostsDemo'
 import SpeedDemo from './SpeedDemo'
 import SpecialistCostDemo from './SpecialistCostDemo'
 import KVCostDemo from './KVCostDemo'
+import EmbeddingsDemo from './EmbeddingsDemo'
+import RagDemo from './RagDemo'
 import Governance from './Governance'
 
 export default function ExplainApp() {
@@ -131,7 +133,38 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={5} title="What it costs to run">
+          <Section n={5} title="Words as coordinates — how meaning becomes maths">
+            <p>
+              Before any of the above, every word is turned into a list of numbers — an{' '}
+              <em>embedding</em> — positioned so that words with similar meaning sit close together. The
+              model isn't told what "king" means; it places the word from the company it keeps. Search,
+              recommendations, and the retrieval below all run on this one idea.
+            </p>
+            <EmbeddingsDemo />
+            <Callout>
+              This is why an AI search can find the right document even when it shares <em>no words</em> with
+              your query — it matches meaning, not spelling. It's also why bias in the training text becomes
+              bias in the geometry: the associations are learned, not designed.
+            </Callout>
+          </Section>
+
+          <Section n={6} title="Giving it real facts — retrieval (RAG)">
+            <p>
+              A model only knows what was in its training text, and it will confidently fill gaps by making
+              things up (§4). The standard fix isn't a bigger model — it's <strong>retrieval</strong>: find
+              the relevant text and paste it into the context, so the answer is grounded in a real source you
+              can point to. This is "RAG", and it's how most business chatbots answer from <em>your</em>{' '}
+              documents.
+            </p>
+            <RagDemo />
+            <Callout>
+              For anything private or current — your policies, this quarter's numbers, a specific contract —
+              a retrieval system that quotes the source beats a bigger model guessing from memory. Ask any
+              vendor: <em>where does the answer come from, and can it show me the passage?</em>
+            </Callout>
+          </Section>
+
+          <Section n={7} title="What it costs to run">
             <p>
               You pay by the <em>token</em> — roughly a few characters of text — for what goes in
               <strong> and</strong> what comes out. Cost scales with document length, answer length, how
@@ -177,7 +210,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={6} title="Inference economics — the same answer can cost very different amounts">
+          <Section n={8} title="Inference economics — the same answer can cost very different amounts">
             <p>
               Two levers move the bill far more than the price-per-token headline: <strong>which model</strong>{' '}
               you run for a task, and <strong>how you handle the context</strong> (the KV cache). Both are
@@ -195,7 +228,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={7} title="What you can't see, and questions to ask">
+          <Section n={9} title="What you can't see, and questions to ask">
             <Governance />
           </Section>
 

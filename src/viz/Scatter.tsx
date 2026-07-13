@@ -7,11 +7,15 @@ export default function Scatter({
   labels,
   width = 280,
   height = 130,
+  colors,
 }: {
   points: [number, number][]
   labels: string[]
   width?: number
   height?: number
+  // optional per-point colour override (e.g. highlight a query word); when absent,
+  // points fall back to the index→hue ramp used by the number-line view.
+  colors?: (string | undefined)[]
 }) {
   if (!points.length) return null
   // single-pass min/max (avoid Math.min(...spread), which overflows on large arrays)
@@ -30,7 +34,8 @@ export default function Scatter({
   const sy = (y: number) =>
     height - pad - (maxY > minY ? (y - minY) / (maxY - minY) : 0.5) * (height - 2 * pad)
   // index → hue (blue → red) so the 1..9 order is visible as a colour ramp
-  const color = (i: number) => `hsl(${220 - (220 * i) / Math.max(1, points.length - 1)}, 70%, 60%)`
+  const color = (i: number) =>
+    colors?.[i] ?? `hsl(${220 - (220 * i) / Math.max(1, points.length - 1)}, 70%, 60%)`
 
   return (
     <svg
