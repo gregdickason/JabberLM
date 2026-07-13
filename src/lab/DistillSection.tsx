@@ -8,7 +8,8 @@ import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
 
 const TINY: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 }
-const EVAL_EVERY = 150
+// dense-early eval so the chart fills in within seconds (matches the grokking view)
+const evalInterval = (step: number) => (step < 100 ? 20 : step < 600 ? 100 : 200)
 const TEMPERATURE = 2
 const DISTILL = '#34d399' // emerald
 const LABELS = '#f59e0b' // amber
@@ -50,6 +51,16 @@ export default function DistillSection() {
     studentB.current = new Trainer(t.text, TINY, 1337)
   }
 
+  // eval both students at the current step and append to the two curves
+  function evalBoth(s: number) {
+    const A = studentA.current
+    const B = studentB.current
+    if (!A || !B) return
+    setCurveA((c) => [...c, { x: s, y: sortAccuracy(A.model, A.tok, held) }].slice(-300))
+    setCurveB((c) => [...c, { x: s, y: sortAccuracy(B.model, B.tok, held) }].slice(-300))
+    lastEvalRef.current = s
+  }
+
   useEffect(() => {
     let cancelled = false
     void (async () => {
@@ -63,6 +74,7 @@ export default function DistillSection() {
       setStatus('')
       setTeacherAcc(sortAccuracy(t.model, t.tok, held))
       buildStudents(t)
+      evalBoth(0) // seed a step-0 baseline so the chart isn't empty
     })()
     return () => {
       cancelled = true
@@ -84,11 +96,8 @@ export default function DistillSection() {
       B.stepBatch(trainCfg, DEFAULT_FEATURE_FLAGS)
       ms += performance.now() - a
       stepCountRef.current += 1
-      if (stepCountRef.current - lastEvalRef.current >= EVAL_EVERY) {
-        const s = stepCountRef.current
-        setCurveA((c) => [...c, { x: s, y: sortAccuracy(A.model, A.tok, held) }].slice(-300))
-        setCurveB((c) => [...c, { x: s, y: sortAccuracy(B.model, B.tok, held) }].slice(-300))
-        lastEvalRef.current = s
+      if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) {
+        evalBoth(stepCountRef.current)
       }
     }
     const perStep = ms / n
@@ -115,6 +124,7 @@ export default function DistillSection() {
     setStep(0)
     setCurveA([])
     setCurveB([])
+    evalBoth(0) // step-0 baseline
   }
 
   if (!teacher) return <div className="text-xs text-slate-500">{status}</div>
