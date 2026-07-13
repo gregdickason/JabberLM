@@ -87,6 +87,13 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
        to small models, **fine-tune small specialists** for high-volume tasks, **distill** a big model's
        skill into a small one, and **MoE** (run only a slice of a huge model per token) — "use the smallest
        model that clears the bar." Try: `explain §6` (specialist-vs-generalist inference demo).
+     - **Distillation (measured; lab demo).** The most direct "big → small" lever: train a small *student*
+       to copy a big *teacher*'s **whole output distribution** (soft targets), not just the right token —
+       the extra "dark knowledge" makes it learn faster. Offline, a ~15K student distilled from the ~87K
+       sort teacher reached the teacher's ~96% **and grokked ~2–3× faster** than an identical student
+       trained on plain labels (distilled 24/42/60% vs labels 8/12/32% at steps 750/1000/1250; both
+       converge by ~2,500 on this clean task — the gap is larger at real scale). Engine: `softCrossEntropy`
+       + `Trainer.distillStep`. Try: `lab` → distillation.
 
 **Part III — Looking inside (interpretability)**
 8. *Opening the black box* — neurons, heads, specialisation; **and recovery**: ablate the head a skill
