@@ -14,14 +14,17 @@ const SIZES: { name: string; cfg: Partial<ModelConfig> }[] = [
   { name: 'large', cfg: { dModel: 96, nHeads: 4, nLayers: 4, contextLen: 128, dFF: 384 } },
 ]
 
-interface Result {
+export interface SpeedResult {
   name: string
   params: number
   tps: number // tokens/sec (throughput)
   ttftMs: number // time to first token
 }
+type Result = SpeedResult
 
-function measure(cfg: Partial<ModelConfig>): Result {
+// Real in-browser generation-speed measurement for a model config (exported so
+// other cost demos can reuse the same honest, live number).
+export function measure(cfg: Partial<ModelConfig>): Result {
   const full: ModelConfig = { ...DEFAULT_MODEL_CONFIG, ...cfg, vocabSize: 64 }
   const m = new Model(full, 1)
   const flags = DEFAULT_FEATURE_FLAGS

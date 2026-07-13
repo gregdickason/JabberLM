@@ -8,6 +8,8 @@ import ContextDemo from './ContextDemo'
 import HallucinationDemo from './HallucinationDemo'
 import CostsDemo from './CostsDemo'
 import SpeedDemo from './SpeedDemo'
+import SpecialistCostDemo from './SpecialistCostDemo'
+import KVCostDemo from './KVCostDemo'
 import Governance from './Governance'
 
 export default function ExplainApp() {
@@ -175,7 +177,25 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={6} title="What you can't see, and questions to ask">
+          <Section n={6} title="Inference economics — the same answer can cost very different amounts">
+            <p>
+              Two levers move the bill far more than the price-per-token headline: <strong>which model</strong>{' '}
+              you run for a task, and <strong>how you handle the context</strong> (the KV cache). Both are
+              becoming the main reason products are designed the way they are.
+            </p>
+            <p className="mt-3 font-semibold text-slate-200">1. Run the smallest model that does the job.</p>
+            <SpecialistCostDemo />
+            <p className="mt-4 font-semibold text-slate-200">2. Don't pay to re-read the context every step.</p>
+            <KVCostDemo />
+            <Callout>
+              The cheapest token is the one you don't recompute. For high-volume tasks, weigh a small
+              fine-tuned or distilled model over a big generalist, cache long prompts you reuse, and remember
+              output tokens cost more than input — so terse, well-structured answers are cheaper than rambling
+              ones.
+            </Callout>
+          </Section>
+
+          <Section n={7} title="What you can't see, and questions to ask">
             <Governance />
           </Section>
 
