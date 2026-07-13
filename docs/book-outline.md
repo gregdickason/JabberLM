@@ -35,8 +35,9 @@ works": it ends by asking, with earned clarity, what it *means* (Hofstadter's st
 - **Build item (only real code):** deep-linkable URLs/anchors so **Try it →** lands on the exact
   tab/demo/example (`lab.html#head-ablation`, `harness.html?ex=total+of+6+9+2`, `index.html?dataset=sort`).
 - **Prose chapters (site doesn't demo these):** real-world tokenization (BPE), the pretraining→SFT→RLHF
-  pipeline, prompting/context engineering, embeddings/RAG, evaluation of generative models, prompt
-  injection & jailbreaks, scaling laws/emergence. Multimodality = out of scope for v1.
+  pipeline, prompting/context engineering, evaluation of generative models, prompt injection & jailbreaks,
+  scaling laws/emergence. Multimodality = out of scope for v1. *(Embeddings & RAG now have live demos —
+  `explain §5–§6` — so they're off this list.)*
 - **Apparatus gaps:** glossary artifact, exercises/solutions, guided capstone, a figure/stat pipeline
   (numbers sourced from `src/data/modelStats.ts` so book and site never disagree).
 
@@ -48,7 +49,12 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
 
 **Part I — What a language model is**
 1. *The autocomplete that ate the world* — next-token prediction. Try: `explain §1`. Deeper: softmax/probability.
-2. *Words into numbers* — tokens & embeddings; char vs BPE. Try: playground tokenize/embed, `learn` Act 1. Deeper: embedding vectors, the number line.
+2. *Words into numbers* — tokens & embeddings as **meaning-as-geometry**: every word becomes coordinates,
+   placed by the company it keeps, so similar meanings sit close and directions carry meaning
+   (king − man + woman ≈ queen). This is the engine of semantic **search**, recommendations, clustering —
+   and the retrieval in Sidebar 7B. Char vs BPE. Try: `explain §5` (real GloVe subset — nearest-neighbour
+   search, live analogies, a 2-D word map), playground tokenize/embed, `learn` Act 1. Deeper: embedding
+   vectors, cosine similarity, JabberLM's own digit **number line** (the same idea in miniature).
 3. *Paying attention* — attention & the context window. Try: attention tab, `explain` context demo. Deeper: Q/K/V, QKᵀ/√d, masking.
 4. *The rest of the block* — MLP, residual stream, layers → a guess. Try: mlp/residual/logits tabs, step-through. Deeper: full forward pass, LayerNorm.
 
@@ -94,6 +100,20 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
        trained on plain labels (distilled 24/42/60% vs labels 8/12/32% at steps 750/1000/1250; both
        converge by ~2,500 on this clean task — the gap is larger at real scale). Engine: `softCrossEntropy`
        + `Trainer.distillStep`. Try: `lab` → distillation.
+   - **Sidebar 7B — Retrieval (RAG): knowledge you retrieve, skill you distil.** Hallucination is the model
+     confidently filling a gap in its weights. The standard fix isn't a bigger model — it's **retrieval**:
+     find the relevant text and paste it into the context, so the answer is grounded in a real, citable
+     source. This is the natural counterpart to distillation, and the split is the chapter's headline:
+     **skill** (how to sort, how to write) you bake into the weights — distil it into a small model;
+     **knowledge** (this contract, this quarter's numbers, a private handbook) you *retrieve* at query time
+     rather than trying to cram it in. Two ways to find the passage, both shown live (`explain §6`, reusing
+     the §5 word vectors — no new model): **exact lookup** when you know the document's name, and
+     **semantic search** when you only know the meaning (embed the query → cosine vs each document → inject
+     the nearest). **Honest scale caveat:** JabberLM's own 48-char context and char-level embeddings are too
+     small to *read* a retrieved document and generate from it — so the demo shows the mechanism (retrieve →
+     ground) with real GloVe vectors, not end-to-end generation. The *pattern* is the lesson, and it's the
+     modern framing of "RAG = giving the model a retrieval tool" (ties forward to Ch 13, tools/harness:
+     a `lookup`/`search` the agent calls). Try: `explain §6` (lookup + semantic retrieval).
 
 **Part III — Looking inside (interpretability)**
 8. *Opening the black box* — neurons, heads, specialisation; **and recovery**: ablate the head a skill
