@@ -34,10 +34,10 @@ works": it ends by asking, with earned clarity, what it *means* (Hofstadter's st
 ## Site gaps the book must handle
 - **Build item (only real code):** deep-linkable URLs/anchors so **Try it →** lands on the exact
   tab/demo/example (`lab.html#head-ablation`, `harness.html?ex=total+of+6+9+2`, `index.html?dataset=sort`).
-- **Prose chapters (site doesn't demo these):** real-world tokenization (BPE), the pretraining→SFT→RLHF
-  pipeline, prompting/context engineering, evaluation of generative models, prompt injection & jailbreaks,
-  scaling laws/emergence. Multimodality = out of scope for v1. *(Embeddings & RAG now have live demos —
-  `explain §5–§6` — so they're off this list.)*
+- **Prose chapters (site doesn't demo these):** the pretraining→SFT→RLHF pipeline, prompting/context
+  engineering, evaluation of generative models, jailbreaks, scaling laws/emergence. Multimodality = out of
+  scope for v1. *(Tokenization/BPE, prompt injection, quantisation, embeddings & RAG now have live demos —
+  `explain §5–§9` and `harness §4` — so they're off this list.)*
 - **Apparatus gaps:** glossary artifact, exercises/solutions, guided capstone, a figure/stat pipeline
   (numbers sourced from `src/data/modelStats.ts` so book and site never disagree).
 
@@ -49,11 +49,15 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
 
 **Part I — What a language model is**
 1. *The autocomplete that ate the world* — next-token prediction. Try: `explain §1`. Deeper: softmax/probability.
-2. *Words into numbers* — tokens & embeddings as **meaning-as-geometry**: every word becomes coordinates,
-   placed by the company it keeps, so similar meanings sit close and directions carry meaning
-   (king − man + woman ≈ queen). This is the engine of semantic **search**, recommendations, clustering —
-   and the retrieval in Sidebar 7B. Char vs BPE. Try: `explain §5` (real GloVe subset — nearest-neighbour
-   search, live analogies, a 2-D word map), playground tokenize/embed, `learn` Act 1. Deeper: embedding
+2. *Words into numbers* — first **tokens** (text → pieces), then **embeddings as meaning-as-geometry**:
+   every token becomes coordinates, placed by the company it keeps, so similar meanings sit close and
+   directions carry meaning (king − man + woman ≈ queen) — the engine of semantic **search**,
+   recommendations, clustering, and the retrieval in Sidebar 7B. **Real models use subword (BPE) tokens,
+   not characters** — which is *why* they miss "how many r's in strawberry?", multi-digit arithmetic and
+   string-reversal: the model sees chunks like `[str][aw][berry]`, never the letters (JabberLM is
+   char-level, so it's the honest counter-example — it *can* count and reverse). Try: `explain §5` (real
+   GPT-4 tiktoken splits vs char-level), `explain §6` (real GloVe subset — nearest-neighbour search, live
+   analogies, a 2-D word map), playground tokenize/embed, `learn` Act 1. Deeper: BPE merges, embedding
    vectors, cosine similarity, JabberLM's own digit **number line** (the same idea in miniature).
 3. *Paying attention* — attention & the context window. Try: attention tab, `explain` context demo. Deeper: Q/K/V, QKᵀ/√d, masking.
 4. *The rest of the block* — MLP, residual stream, layers → a guess. Try: mlp/residual/logits tabs, step-through. Deeper: full forward pass, LayerNorm.
@@ -106,14 +110,23 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
      source. This is the natural counterpart to distillation, and the split is the chapter's headline:
      **skill** (how to sort, how to write) you bake into the weights — distil it into a small model;
      **knowledge** (this contract, this quarter's numbers, a private handbook) you *retrieve* at query time
-     rather than trying to cram it in. Two ways to find the passage, both shown live (`explain §6`, reusing
-     the §5 word vectors — no new model): **exact lookup** when you know the document's name, and
+     rather than trying to cram it in. Two ways to find the passage, both shown live (`explain §7`, reusing
+     the §6 word vectors — no new model): **exact lookup** when you know the document's name, and
      **semantic search** when you only know the meaning (embed the query → cosine vs each document → inject
      the nearest). **Honest scale caveat:** JabberLM's own 48-char context and char-level embeddings are too
      small to *read* a retrieved document and generate from it — so the demo shows the mechanism (retrieve →
      ground) with real GloVe vectors, not end-to-end generation. The *pattern* is the lesson, and it's the
      modern framing of "RAG = giving the model a retrieval tool" (ties forward to Ch 13, tools/harness:
-     a `lookup`/`search` the agent calls). Try: `explain §6` (lookup + semantic retrieval).
+     a `lookup`/`search` the agent calls). Try: `explain §7` (lookup + semantic retrieval).
+   - **Sidebar 7C — Quantisation: the same model at lower precision.** The 4th "cheaper inference" lever,
+     alongside distillation, Mixture-of-Experts, and KV-caching. A model is a pile of numbers, normally 32
+     bits each; **quantisation** stores them with far fewer bits (int8, int4), shrinking memory and the
+     bandwidth that dominates inference. The teaching shape is a curve that **holds, then falls off a cliff**.
+     **Measured** on the bundled sort model (round every weight matrix, keep LayerNorm/biases in fp32,
+     re-test held-out sort): 32-bit **99%** → 8-bit **99%** (3.8× smaller — free) → 4-bit **91%** (7.2×
+     smaller) → 3-bit **3%** → 2-bit **0%** (collapse). Lesson: you can shrink a model *a lot* before it
+     degrades, then it breaks suddenly — which is why capable models run on a laptop or phone. Engine-free
+     (`src/interp/quantization.ts` quantise→dequantise on a throwaway copy). Try: `explain §9`.
 
 **Part III — Looking inside (interpretability)**
 8. *Opening the black box* — neurons, heads, specialisation; **and recovery**: ablate the head a skill
@@ -150,7 +163,16 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
     PPO vs DPO, the KL penalty / "alignment tax," Constitutional AI.
 13. *Talking to it well* — prompting & context engineering *(new; site gap)*. Try: context/attention demos. Deeper: few-shot, system prompts.
 14. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
-15. *Agents — and their risks* — the loop; prompt injection. Try: `harness` agent loop. Deeper: multi-step planning, injection/guardrails *(site gap)*.
+15. *Agents — and their risks* — the loop, and its blind spot: **prompt injection**. The loop feeds a
+    tool's *output* back into context with no boundary between **data** and **instructions**, so whoever
+    controls what a tool returns (a fetched web page, a looked-up document) can plant the model's next
+    command. Shown live and reproducibly on the tiny harness model: an attacker-controlled tool result
+    (`max 1 1 1`) hijacks the agent into calling `max` instead of the planned `reverse`. Mitigation:
+    treat tool output as untrusted, **typed data** (keep only the declared result type) — this defeats the
+    planted-instruction/tool-switch, but *can't* make a poisoned **value** trustworthy, so consequential
+    actions still need explicit authorisation. Try: `harness §4` (inject + mitigation), `harness` agent
+    loop. Deeper: multi-step planning, the data-vs-instruction confusion, guardrails/allow-lists; honest
+    note that a large NL-trained model is *far* easier to hijack than this grammar-rigid toy.
 16. *What you can't see, and what to ask* — governance, evaluation, safety, cost. Try: `explain` governance + cost suite. Deeper: evals, alignment.
     - **Inference economics (a proper treatment — this is where the money is).** Beyond price-per-token:
       (a) **which model** — specialist-vs-generalist at inference (callback to Sidebar 7A: same answer,
