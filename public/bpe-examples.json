@@ -1,0 +1,90 @@
+{
+"encoding": "cl100k_base",
+"model": "GPT-3.5 / GPT-4",
+"source": "OpenAI tiktoken 0.11.0",
+"examples": {
+"strawberry": [
+"str",
+"aw",
+"berry"
+],
+"blueberry": [
+"blue",
+"berry"
+],
+"basketball": [
+"basket",
+"ball"
+],
+"cheeseburger": [
+"che",
+"ese",
+"burger"
+],
+"lighthouse": [
+"l",
+"ighthouse"
+],
+"unhappiness": [
+"un",
+"h",
+"appiness"
+],
+"reversing": [
+"re",
+"vers",
+"ing"
+],
+"tokenization": [
+"token",
+"ization"
+],
+"transformer": [
+"transform",
+"er"
+],
+"superintelligence": [
+"super",
+"intelligence"
+],
+"Jabberwocky": [
+"J",
+"ab",
+"ber",
+"wo",
+"ck",
+"y"
+],
+"borogoves": [
+"bor",
+"og",
+"oves"
+],
+"hello": [
+"hello"
+],
+"don't": [
+"don",
+"'t"
+],
+"1234567890": [
+"123",
+"456",
+"789",
+"0"
+],
+"3.14159": [
+"3",
+".",
+"141",
+"59"
+],
+"2026": [
+"202",
+"6"
+],
+" hello": [
+" hello"
+]
+}
+}

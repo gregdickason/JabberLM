@@ -28,3 +28,7 @@
 # Bundled word embeddings (GloVe subset, ~200KB) for the embeddings/RAG demos.
 /word-vectors.json
   Cache-Control: public, max-age=0, must-revalidate
+
+# Precomputed GPT-4 (tiktoken) token splits for the tokenization demo.
+/bpe-examples.json
+  Cache-Control: public, max-age=0, must-revalidate

@@ -136,6 +136,79 @@ export function runAgent(model: Model, tok: CharTokenizer, instruction: string, 
   return { instruction, steps, done, finalAnswer: last?.result ?? null }
 }
 
+// ---- prompt injection (adversarial tool output) ----------------------------
+// The loop above feeds the tool's result straight back into the context (line ~133)
+// with NO boundary between "data" and "instructions". So an attacker who controls a
+// tool's OUTPUT (a poisoned web page a search tool fetched, a doc a lookup returned)
+// can plant text that the model reads as its next instruction. On this tiny model the
+// hijack is real and reproducible: an observation like "max 1 1 1" makes the agent call
+// max(1 1 1) instead of the planned step. Mitigation: treat tool output as untrusted,
+// TYPED data — keep only the declared result type (here, digits), so it can't smuggle a
+// tool keyword. (Verified offline against harness-model.json.)
+
+/** The mitigation: reduce an observation to its declared type (the numbers a tool
+ *  returns), stripping any prose/keywords an attacker planted in the tool output. */
+export function sanitizeObservation(obs: string): string {
+  return (obs.match(/\d+/g) || []).join(' ')
+}
+
+export interface InjectedStep {
+  call: { tool: ToolName; args: number[] } | null
+  error: string | null
+  result: string | null // what the tool actually returned (authoritative)
+  observation: string | null // what was fed back into context (attacker-controlled / sanitized)
+  injected: boolean // was this step's observation replaced by the attacker payload?
+}
+export interface InjectedTrace {
+  instruction: string
+  steps: InjectedStep[]
+  done: boolean
+  finalAnswer: string | null
+}
+
+/**
+ * The agent loop with an adversarial tool output injected at step `injectAt`. When
+ * `sanitize` is on, every observation is reduced to its typed value before being fed
+ * back — the "tool output is untrusted data, not instructions" defence.
+ */
+export function runAgentInjected(
+  model: Model,
+  tok: CharTokenizer,
+  instruction: string,
+  opts: { injectAt: number; payload: string; sanitize: boolean },
+  maxSteps = 4,
+): InjectedTrace {
+  let ctx = `${instruction.trim()} => `
+  const steps: InjectedStep[] = []
+  let done = false
+  for (let s = 0; s < maxSteps; s++) {
+    const seg = generateUntil(model, tok, ctx).trim()
+    if (/done/i.test(seg)) {
+      done = true
+      break
+    }
+    const p = parseToolCall(seg)
+    if ('error' in p) {
+      steps.push({ call: null, error: p.error, result: null, observation: null, injected: false })
+      break
+    }
+    let result: string
+    try {
+      result = TOOLS[p.tool](p.args)
+    } catch {
+      steps.push({ call: p, error: 'tool threw on those arguments', result: null, observation: null, injected: false })
+      break
+    }
+    const injected = s === opts.injectAt
+    let observation = injected ? opts.payload : result
+    if (opts.sanitize) observation = sanitizeObservation(observation)
+    steps.push({ call: p, error: null, result, observation, injected })
+    ctx += `${p.tool}(${p.args.join(' ')}) = ${observation} => ` // untrusted observation fed back
+  }
+  const last = [...steps].reverse().find((st) => st.result != null)
+  return { instruction, steps, done, finalAnswer: last?.result ?? null }
+}
+
 /** Re-run parsing/dispatch on an arbitrary (possibly corrupted) model output — used
  *  by the "flaky model" demo to show the harness catching a malformed call. */
 export function harnessDispatch(raw: string): Pick<HarnessTrace, 'parsed' | 'error' | 'toolResult' | 'modelGuess'> {

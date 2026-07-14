@@ -10,8 +10,10 @@ import CostsDemo from './CostsDemo'
 import SpeedDemo from './SpeedDemo'
 import SpecialistCostDemo from './SpecialistCostDemo'
 import KVCostDemo from './KVCostDemo'
+import TokenizationDemo from './TokenizationDemo'
 import EmbeddingsDemo from './EmbeddingsDemo'
 import RagDemo from './RagDemo'
+import QuantizationDemo from './QuantizationDemo'
 import Governance from './Governance'
 
 export default function ExplainApp() {
@@ -133,7 +135,22 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={5} title="Words as coordinates — how meaning becomes maths">
+          <Section n={5} title="How it reads text — tokens, and why letters trip it up">
+            <p>
+              A model doesn't read letters. Text is first chopped into <em>tokens</em> — and real models
+              use <strong>subword chunks</strong>, not single characters. That one design choice explains a
+              whole class of famous failures: counting letters, spelling, and digit-by-digit arithmetic.
+            </p>
+            <TokenizationDemo />
+            <Callout>
+              When a model miscounts letters, botches a spelling, or fumbles a long number, it's often not
+              "dumb" — it literally never saw the characters, only the chunks. For letter- or digit-exact
+              work (codes, IDs, string edits), give it tools or verify the output; don't trust it to see
+              inside a word.
+            </Callout>
+          </Section>
+
+          <Section n={6} title="Words as coordinates — how meaning becomes maths">
             <p>
               Before any of the above, every word is turned into a list of numbers — an{' '}
               <em>embedding</em> — positioned so that words with similar meaning sit close together. The
@@ -148,7 +165,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={6} title="Giving it real facts — retrieval (RAG)">
+          <Section n={7} title="Giving it real facts — retrieval (RAG)">
             <p>
               A model only knows what was in its training text, and it will confidently fill gaps by making
               things up (§4). The standard fix isn't a bigger model — it's <strong>retrieval</strong>: find
@@ -164,7 +181,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={7} title="What it costs to run">
+          <Section n={8} title="What it costs to run">
             <p>
               You pay by the <em>token</em> — roughly a few characters of text — for what goes in
               <strong> and</strong> what comes out. Cost scales with document length, answer length, how
@@ -210,7 +227,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={8} title="Inference economics — the same answer can cost very different amounts">
+          <Section n={9} title="Inference economics — the same answer can cost very different amounts">
             <p>
               Two levers move the bill far more than the price-per-token headline: <strong>which model</strong>{' '}
               you run for a task, and <strong>how you handle the context</strong> (the KV cache). Both are
@@ -220,6 +237,8 @@ export default function ExplainApp() {
             <SpecialistCostDemo />
             <p className="mt-4 font-semibold text-slate-200">2. Don't pay to re-read the context every step.</p>
             <KVCostDemo />
+            <p className="mt-4 font-semibold text-slate-200">3. Shrink the weights themselves.</p>
+            <QuantizationDemo />
             <Callout>
               The cheapest token is the one you don't recompute. For high-volume tasks, weigh a small
               fine-tuned or distilled model over a big generalist, cache long prompts you reuse, and remember
@@ -228,7 +247,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={9} title="What you can't see, and questions to ask">
+          <Section n={10} title="What you can't see, and questions to ask">
             <Governance />
           </Section>
 
