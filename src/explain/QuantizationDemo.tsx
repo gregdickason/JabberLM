@@ -15,8 +15,9 @@ type Row = { bits: number; acc: number; bytes: number }
 
 export default function QuantizationDemo() {
   const [rows, setRows] = useState<Row[]>([])
-  const [status, setStatus] = useState('load & measure to see the trade-off')
+  const [status, setStatus] = useState('loading the model…')
   const [busy, setBusy] = useState(false)
+  const [ready, setReady] = useState(false) // a ref change wouldn't re-render the button
   const savedRef = useRef<SavedModel | null>(null)
 
   useEffect(() => {
@@ -25,7 +26,11 @@ export default function QuantizationDemo() {
       try {
         const res = await fetch(import.meta.env.BASE_URL + 'sort-model.json')
         if (!res.ok) throw new Error('fetch failed')
-        if (!cancelled) savedRef.current = (await res.json()) as SavedModel
+        const saved = (await res.json()) as SavedModel
+        if (cancelled) return
+        savedRef.current = saved
+        setReady(true)
+        setStatus('load & measure to see the trade-off')
       } catch {
         if (!cancelled) setStatus('could not load the model (public/sort-model.json)')
       }
@@ -76,7 +81,7 @@ export default function QuantizationDemo() {
       </div>
       <button
         onClick={() => void run()}
-        disabled={busy || !savedRef.current}
+        disabled={busy || !ready}
         className="rounded border border-violet-700 bg-violet-900/40 px-3 py-1 text-xs text-violet-200 hover:bg-violet-900/70 disabled:opacity-50"
       >
         {busy ? 'measuring…' : rows.length ? 'Measure again' : '▶ Quantise & measure'}
