@@ -112,7 +112,8 @@ export default function QuantizationDemo() {
             })}
           </div>
           <div>
-            <LineChart series={series} width={280} height={170} yLabel="sort %" />
+            <div className="mb-1 text-[10px] text-slate-400">held-out sort accuracy (%)</div>
+            <LineChart series={series} width={280} height={170} />
             <p className="mt-1 text-[10px] text-slate-500">
               left = full precision, right = fewest bits. Accuracy holds, then <b>falls off a cliff</b>.
             </p>
