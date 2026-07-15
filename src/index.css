@@ -17,3 +17,12 @@ body {
   background: #0b0f17;
   color: #e6edf3;
 }
+
+/* Visible keyboard-focus indicator on every interactive element (many custom
+   Tailwind buttons/links otherwise show no focus ring). Only shows for keyboard
+   users (:focus-visible), so it doesn't add chrome for mouse/touch. */
+:focus-visible {
+  outline: 2px solid #e879f9;
+  outline-offset: 2px;
+  border-radius: 3px;
+}

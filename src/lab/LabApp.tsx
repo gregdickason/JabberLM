@@ -145,9 +145,12 @@ export default function LabApp() {
               <button
                 key={t}
                 onClick={() => setTab(t)}
+                aria-pressed={tab === t}
                 className={
                   'rounded px-2 py-0.5 text-[11px] ' +
-                  (tab === t ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')
+                  (tab === t
+                    ? 'bg-fuchsia-700 font-semibold text-white ring-1 ring-fuchsia-300'
+                    : 'bg-slate-800 text-slate-300')
                 }
               >
                 {t}

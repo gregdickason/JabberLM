@@ -26,6 +26,13 @@ export default function Heatmap({
   const [hover, setHover] = useState<{ r: number; c: number; v: number } | null>(null)
 
   const { rows, cols, data } = matrix
+  // value range for the text summary (screen-reader equivalent of the colour field)
+  let vMin = Infinity
+  let vMax = -Infinity
+  for (let i = 0; i < data.length; i++) {
+    if (data[i] < vMin) vMin = data[i]
+    if (data[i] > vMax) vMax = data[i]
+  }
   const cell = Math.max(3, Math.min(maxCell, Math.floor(360 / Math.max(rows, cols, 1))))
   const w = cols * cell
   const h = rows * cell
@@ -65,7 +72,9 @@ export default function Heatmap({
           width={w}
           height={h}
           role="img"
-          aria-label={`${title ? title + ': ' : ''}heatmap, ${rows} rows by ${cols} columns`}
+          aria-label={`${title ? title + ': ' : ''}heatmap, ${rows} rows by ${cols} columns, values ${
+            Number.isFinite(vMin) ? vMin.toFixed(2) : '0'
+          } to ${Number.isFinite(vMax) ? vMax.toFixed(2) : '0'}`}
           className="rounded border border-slate-700"
           onMouseMove={onMove}
           onMouseLeave={() => setHover(null)}

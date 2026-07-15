@@ -15,7 +15,7 @@ export function Section({
         <span className="text-xs font-bold text-fuchsia-400">{n}</span>
         <h2 className="text-lg font-bold text-slate-100">{title}</h2>
       </div>
-      <div className="space-y-3 text-[13px] leading-relaxed text-slate-300">{children}</div>
+      <div className="space-y-3 text-sm leading-relaxed text-slate-300">{children}</div>
     </section>
   )
 }
@@ -23,7 +23,7 @@ export function Section({
 // "What this means if you work in…" callout.
 export function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-4 rounded-lg border border-sky-900 bg-sky-950/40 p-3 text-[12px] leading-relaxed text-sky-100">
+    <div className="mt-4 rounded-lg border border-sky-900 bg-sky-950/40 p-3 text-[13px] leading-relaxed text-sky-100">
       <div className="mb-1 font-semibold text-sky-300">What this means for your work</div>
       {children}
     </div>
