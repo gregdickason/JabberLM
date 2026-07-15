@@ -32,3 +32,16 @@
 # Precomputed GPT-4 (tiktoken) token splits for the tokenization demo.
 /bpe-examples.json
   Cache-Control: public, max-age=0, must-revalidate
+
+# Static site metadata / icons. Icons + OG image can cache a day; robots/sitemap/
+# manifest revalidate so edits propagate.
+/favicon.svg
+  Cache-Control: public, max-age=86400
+/og-image.svg
+  Cache-Control: public, max-age=86400
+/robots.txt
+  Cache-Control: public, max-age=0, must-revalidate
+/sitemap.xml
+  Cache-Control: public, max-age=0, must-revalidate
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate
