@@ -18,12 +18,22 @@ export const MODEL_STATS = {
   paramsLabel: '~0.09M',
   steps: 6_000,
   sortAccuracy: 89, // % held-out sort exact-match (generalises to unseen vectors)
+  sortHeldOut: 145, // # unseen 3-number lists the accuracy is measured on (20% of 729, disjoint from training)
+  seed: 1337, // training seed (a single run — figures are representative, not averaged)
+  model: 'multitask-model.json', // the exact bundled artifact these numbers describe
   minutes: 30, // wall-clock
   chars: 226_442,
   vocab: 77,
   machine: 'MacBook Air (M4, 10-core CPU, 16 GB)',
   runtime: 'single-threaded JavaScript (no GPU)',
 } as const
+
+// How the headline accuracy was measured — surfaced next to the number so the claim
+// is reproducible rather than asserted. (Regenerate with `npm run gen:multitask`.)
+export const MODEL_METHOD =
+  `Measured: exact-match on ${MODEL_STATS.sortHeldOut} unseen sort lists (a deterministic held-out ` +
+  `split, none seen in training), one run, seed ${MODEL_STATS.seed}, ${MODEL_STATS.model}. ` +
+  `A single run — representative, not averaged.`
 
 // Example prompts for the three skills, surfaced as one-click chips when the
 // bundled model is loaded.
