@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import ConfigSidebar, { PRESETS } from './components/ConfigSidebar'
 import TrainingPanel from './components/TrainingPanel'
 import InferencePanel from './components/InferencePanel'
@@ -105,6 +105,47 @@ export default function App() {
     }
     setChooseMode(false)
   }
+
+  // Accessible modal: trap focus inside the welcome dialog, close on Escape, and
+  // restore focus to wherever it was when the dialog opened.
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!chooseMode) return
+    const node = dialogRef.current
+    if (!node) return
+    const prevFocused = document.activeElement as HTMLElement | null
+    const focusables = () =>
+      Array.from(
+        node.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      ).filter((el) => el.offsetParent !== null)
+    focusables()[0]?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        dismissChooser()
+        return
+      }
+      if (e.key !== 'Tab') return
+      const items = focusables()
+      if (items.length === 0) return
+      const first = items[0]
+      const last = items[items.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      prevFocused?.focus?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chooseMode])
+
   const sortText = TEXT_SAMPLES.find((s) => s.id === 'sort')?.text
   const tinyCfg = PRESETS.find((p) => p.name === 'tiny')?.cfg
   const startTour = () => {
@@ -234,8 +275,16 @@ export default function App() {
 
       {chooseMode && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-lg rounded-lg border border-slate-700 bg-slate-900 p-5 shadow-2xl">
-            <h2 className="text-base font-bold text-sky-300">Welcome to JabberLM</h2>
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="welcome-title"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-5 shadow-2xl"
+          >
+            <h2 id="welcome-title" className="text-base font-bold text-sky-300">
+              Welcome to JabberLM
+            </h2>
             <p className="mt-1 text-xs text-slate-400">
               A real, tiny language model you can see inside — running entirely in your browser. Where
               would you like to start?
