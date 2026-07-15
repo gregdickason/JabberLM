@@ -175,7 +175,7 @@ export default function HarnessApp() {
         <a className="text-xs text-emerald-300 hover:underline sm:ml-auto" href="./explain.html">New to AI? →</a>
         <a className="text-xs text-sky-300 hover:underline" href="./learn.html">How it works →</a>
         <a className="text-xs text-sky-400 hover:underline" href="./">Playground →</a>
-        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">Lab ↗</a>
+        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">Lab →</a>
       </header>
 
       <div className="mx-auto max-w-2xl px-4 py-8">

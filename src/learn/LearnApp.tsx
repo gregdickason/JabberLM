@@ -112,10 +112,10 @@ export default function LearnApp() {
           Playground →
         </a>
         <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
-          Tool use ↗
+          Tool use →
         </a>
         <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">
-          Lab ↗
+          Lab →
         </a>
       </header>
 

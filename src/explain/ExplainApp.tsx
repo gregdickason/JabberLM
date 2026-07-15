@@ -45,13 +45,13 @@ export default function ExplainApp() {
           How it works →
         </a>
         <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
-          Tool use ↗
+          Tool use →
         </a>
         <a className="text-xs text-sky-400 hover:underline" href="./">
-          Technical playground →
+          Playground →
         </a>
         <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">
-          Interpretability lab ↗
+          Interpretability lab →
         </a>
       </header>
 
@@ -64,8 +64,9 @@ export default function ExplainApp() {
         <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
           Everything below is driven by a tiny model that predicts the next <em>character</em> of text.
           The large models you use at work do the very same thing with whole words, trained on a huge
-          slice of the internet — but the mechanics, and the catches, are identical. You can poke every
-          demo yourself.
+          slice of the internet — running on <strong>the same core prediction mechanism</strong>, at
+          vastly larger scale. The mechanics you can see here, and the catches they cause, carry over. You
+          can poke every demo yourself.
         </p>
         <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
         {loaded?.source.includes('three-skill') && (

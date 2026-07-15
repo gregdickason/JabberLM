@@ -167,15 +167,10 @@ export default function App() {
           How it works →
         </a>
         <a href="./harness.html" className="text-xs text-sky-300 hover:underline">
-          Tool use ↗
+          Tool use →
         </a>
-        <a
-          href="./lab.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-fuchsia-300 hover:underline"
-        >
-          Lab ↗
+        <a href="./lab.html" className="text-xs text-fuchsia-300 hover:underline">
+          Lab →
         </a>
         <details className="relative text-xs text-slate-400">
           <summary className="cursor-pointer select-none rounded border border-slate-700 px-2 py-0.5 hover:bg-slate-800">
@@ -242,7 +237,7 @@ export default function App() {
               className={tile + ' mt-4 block border-emerald-700 bg-emerald-900/25 hover:bg-emerald-900/45'}
             >
               <div className="text-sm font-semibold text-emerald-200">
-                New to AI? — a 2-minute overview ★
+                New to AI? — a visual introduction ★
               </div>
               <div className="text-[11px] text-slate-400">
                 Plain language, no maths: how it answers, why it varies, what it costs, where it goes
@@ -329,7 +324,7 @@ export default function App() {
                   onClick={dismissChooser}
                   className="mt-2 block rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-center text-[11px] text-slate-200 hover:bg-slate-700"
                 >
-                  Open the lab ↗
+                  Open the lab →
                 </a>
               </div>
             </div>

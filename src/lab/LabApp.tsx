@@ -89,10 +89,10 @@ export default function LabApp() {
           How it works →
         </a>
         <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
-          Tool use ↗
+          Tool use →
         </a>
         <a className="text-xs text-sky-400 hover:underline" href="./">
-          ← back to JabberLM
+          ← Playground
         </a>
       </header>
 
