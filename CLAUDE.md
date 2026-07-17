@@ -33,7 +33,20 @@ The app is **five pages** (each its own `main.tsx`): the live playground (`index
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
 (`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), and a **tool use &
 harness** demo (`harness.html` → `src/harness/`); plus a generated long-form guide (`GUIDE.md` →
-`public/guide.html`).
+`public/guide.html`). All five share one nav component, `src/components/SiteNav.tsx` (same
+destinations/order/labels, current page marked; each page passes its `current` key + a subtitle child).
+
+The **explain page** is a sequence of no-maths sections, several driven by **real precomputed data**
+(shipped as JSON, fetched at runtime — mirror the model-fetch pattern) rather than the live model:
+a **tokenization** demo (real GPT-4/tiktoken subword splits vs char-level — `public/bpe-examples.json`
++ `TokenizationDemo.tsx`, the "why big models miss the r's in *strawberry*" lesson); a **word-embeddings**
+demo (a curated GloVe subset — `public/word-vectors.json` + `src/explain/embeddings.ts`'s
+`cosine`/`nearest`/`analogy`/`embedText`, unit-tested) with nearest-neighbour search, live analogies
+(king−man+woman≈queen) and a 2-D PCA map (`pca2` + `Scatter`); a **RAG** demo (`RagDemo.tsx`) doing exact
+lookup + semantic retrieval over a tiny doc store, reusing those vectors; and a **quantisation** demo
+(`src/interp/quantization.ts` — `quantiseModel` quantise→dequantises a throwaway `deserialize` copy,
+weight matrices only, LayerNorm/biases stay fp32; `modelBytes` for the size axis) that sweeps 32→2 bits
+and re-measures `sortAccuracy` (the curve holds, then falls off a cliff).
 
 The harness page ships a third bundled model, `public/harness-model.json` (`DATASET=harness`,
 `gen:harness`, ~88K params), trained on `buildHarnessCorpusFull()` — single-step
@@ -43,7 +56,11 @@ for both the training format and the runtime parser). The framework-agnostic har
 (`src/harness/runHarness.ts`) has `runHarness` (one call: generate → `parseToolCall` → dispatch to the
 real JS `TOOLS`, output authoritative so it fixes the model's hallucinated arithmetic; parse errors are
 surfaced not thrown) and `runAgent` (the **loop**: run the tool, feed the `= result =>` back into the
-context, let the model read it and emit the next call, until `done`).
+context, let the model read it and emit the next call, until `done`). `runAgentInjected` +
+`sanitizeObservation` drive the **prompt-injection** demo (harness §4): an attacker-controlled tool
+result is fed back into the loop and hijacks the model's next call (the loop can't tell data from
+instructions); the mitigation treats tool output as untrusted **typed data** (digits only), which defeats
+the tool-switch but not value-poisoning — so consequential actions still need authorisation.
 
 Datasets: `src/data/jabberwocky.ts` `TEXT_SAMPLES` is trimmed to **Jabber Poems / Sorting / Equations**
 plus a **Custom** option (seeds all three combined, editable). The deterministic, browser-shippable task

@@ -14,26 +14,28 @@ memorisation vs generalisation vs hallucination. See "The built-in model" below.
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
 transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
 
-It's a **four-page teaching site**, so different readers can start where they're comfortable:
+It's a **five-page teaching site**, so different readers can start where they're comfortable:
 
 - **Playground** (`index.html`) — train live and inspect every internal (the main app).
 - **New to AI** (`explain.html`) — a no-maths explainer of how these models answer, vary, cost, and go
-  wrong, for people who *use* AI at work.
+  wrong, for people who *use* AI at work — with live demos of tokenization (real GPT-4 subword splits),
+  word embeddings, retrieval (RAG), and quantisation.
 - **How a transformer works** (`learn.html`) — a guided walk that follows one example through a real
   model: tokens → vectors → attention → next-character guess, then watch it grok.
 - **Interpretability lab** (`lab.html`) — neurons, attention heads, head ablation, dictionary learning
   (SAE), activation steering, **Mixture of Experts**, and a live **advanced grokking** demo.
 - **Tool use & a tiny harness** (`harness.html`) — a tiny model that doesn't compute answers but emits
   **tool calls**, which a small JS **harness** parses and runs. The model that hallucinates arithmetic
-  elsewhere becomes always-right here, because the harness does the maths.
+  elsewhere becomes always-right here, because the harness does the maths. It also demonstrates **prompt
+  injection** — an attacker-controlled tool result hijacking the agent loop — and the mitigation.
 
 There's also a generated long-form **guide** (`GUIDE.md` → `public/guide.html`).
 
 ## Why character-level, and why many poems?
 
 Jabberwocky's invented words ("brillig", "slithy", "borogoves") would fragment badly under a normal
-subword tokenizer. Character-level keeps the vocabulary tiny (~60 tokens) and every token a single,
-human-readable character.
+subword tokenizer. Character-level keeps the vocabulary tiny (a small vocabulary — 77 tokens for the
+bundled model) and every token a single, human-readable character.
 
 The corpus is the lesson. Train on **many** poems in the same style (*Jabber Poems*) and a tiny model
 learns the *style* and **generalises** — which is what makes it feel like a small LLM. The training-text
