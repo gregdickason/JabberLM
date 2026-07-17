@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { deserialize, type SavedModel } from '../engine/persist'
 import { Trainer } from '../engine/trainer'
-import { DEFAULT_FEATURE_FLAGS, DEFAULT_TRAIN_CONFIG } from '../engine/config'
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, DEFAULT_TRAIN_CONFIG } from '../engine/config'
+import { generate } from '../engine/generate'
+import { RNG } from '../engine/random'
 import { sortAccuracyDir, genSortLine } from '../interp/ablation'
 import { sortHeldOut, buildDescendingSortCorpus, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
@@ -49,6 +51,10 @@ export default function LoraSection() {
   const [curveAsc, setCurveAsc] = useState<{ x: number; y: number }[]>([])
   const [rows, setRows] = useState<Row[]>([])
   const [counts, setCounts] = useState({ trainable: 0, total: 0 })
+  // interactive "try your own" box
+  const [prompt, setPrompt] = useState('sort 4 6 1 => ')
+  const [overlay, setOverlay] = useState(true)
+  const [output, setOutput] = useState('')
 
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
@@ -148,6 +154,15 @@ export default function LoraSection() {
     if (trainer) evalNow(trainer, 0)
   }
 
+  // Run the user's prompt to completion (the whole 3-number answer), overlay on or off.
+  function runPrompt() {
+    const t = trainer
+    if (!t) return
+    const flags = { ...DEFAULT_FEATURE_FLAGS, lora: overlay }
+    const out = generate(t.model, flags, t.tok, prompt, { ...DEFAULT_SAMPLE_CONFIG, temperature: 0, maxNewTokens: 8 }, new RNG(1))
+    setOutput(out.split('\n')[0])
+  }
+
   if (!trainer) return <div className="text-xs text-slate-500">{status}</div>
 
   const base = counts.total - counts.trainable
@@ -224,6 +239,46 @@ export default function LoraSection() {
             few-MB adapter per specialty, instead of a full fine-tuned copy each time.
           </p>
         </div>
+      </div>
+
+      {/* try-your-own: run any prompt with the overlay on or off */}
+      <div className="rounded border border-slate-700 bg-slate-900/40 p-3">
+        <div className="mb-1.5 text-[11px] text-slate-400">
+          Try your own — type a prompt and run the whole answer with the overlay on or off
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="min-w-[180px] flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 font-mono text-[12px] text-slate-100 focus:border-fuchsia-500 focus:outline-none"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && runPrompt()}
+            spellCheck={false}
+          />
+          <label
+            className="flex items-center gap-1 text-[11px] text-slate-300"
+            title="On = apply the LoRA adapter (descending). Off = the frozen base (ascending)."
+          >
+            <input type="checkbox" checked={overlay} onChange={(e) => setOverlay(e.target.checked)} />
+            overlay {overlay ? 'on' : 'off'}
+          </label>
+          <button
+            className="rounded border border-emerald-600 bg-emerald-900/40 px-3 py-1 text-xs text-emerald-200 hover:bg-emerald-900/70"
+            onClick={runPrompt}
+          >
+            ▶ Run
+          </button>
+        </div>
+        {output !== '' && (
+          <div className="mt-2 font-mono text-[13px]">
+            <span className="text-slate-400">{prompt}</span>
+            <span style={{ color: overlay ? DESC : ASC }}>{output}</span>
+          </div>
+        )}
+        <p className="mt-1.5 text-[10px] text-slate-500">
+          Same prompt, your choice of overlay: <span style={{ color: ASC }}>off</span> = the frozen base
+          sorts ascending; <span style={{ color: DESC }}>on</span> = the adapter sorts descending. Toggle and
+          re-run to compare.
+        </p>
       </div>
     </div>
   )
