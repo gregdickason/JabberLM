@@ -7,13 +7,11 @@ import { idbDelete, idbGet, idbPut, makeCheckpoint, restoreCheckpoint } from '..
 import type { FeatureFlags, TrainConfig } from '../engine/config'
 import { buildWalkSteps, type WalkStep } from '../engine/walkthrough'
 import { installBundledModel } from '../state/pretrained'
-import { FINETUNE_PACKS } from '../data/finetunePacks'
 import { TEXT_SAMPLES } from '../data/jabberwocky'
 import { sortHeldOut } from '../data/tasks'
 import { sortAccuracy } from '../interp/ablation'
 import { pca2 } from '../interp/pca'
 import Scatter from '../viz/Scatter'
-import type { LoraTarget } from '../engine/config'
 
 const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 const GROK_EVERY = 150 // recompute the grok view (held-out sort acc + digit PCA) every N steps
@@ -59,7 +57,6 @@ export default function TrainingPanel() {
     modelBuilt,
     trainingText,
     modelConfig,
-    fineTuneActive,
   } = store
 
   const rafRef = useRef<number | null>(null)
@@ -130,8 +127,6 @@ export default function TrainingPanel() {
     useStore.getState().resetRun()
     useStore.getState().setModelBuilt(true)
     useStore.getState().setPretrainedActive(false) // a freshly built model isn't the bundled one
-    useStore.getState().setFineTuneActive(false) // a fresh base model has no adapters
-    useStore.getState().setFeatureFlags({ lora: false })
     useStore.getState().bumpModelVersion()
     setGradNorms([])
     setRestoredStep(null) // a new run replaces any restored checkpoint
@@ -266,12 +261,6 @@ export default function TrainingPanel() {
     s.resetRun()
     s.setModelBuilt(true)
     s.setPretrainedActive(false) // a user-loaded model isn't the bundled one
-    // a loaded model may carry LoRA adapters — reflect that (and show the overlay)
-    const ft = t.model.loraConfig != null
-    s.setFineTuneActive(ft)
-    s.setFeatureFlags({ lora: ft })
-    if (ft) s.setFineTune({ rank: t.model.loraConfig!.rank, alpha: t.model.loraConfig!.alpha, targets: t.model.loraConfig!.targets })
-    if (t.fineTuneText) s.setFineTuneText(t.fineTuneText)
     s.bumpModelVersion()
     setGradNorms([])
     setSaveMsg('loaded ✓')
@@ -438,20 +427,15 @@ export default function TrainingPanel() {
 
       <div className="flex flex-wrap items-center gap-2" data-tour="play">
         {status === 'running' ? (
-          <button className={btn} onClick={pause} disabled={fineTuneActive}>
+          <button className={btn} onClick={pause}>
             ⏸ Pause
           </button>
         ) : (
-          <button
-            className={btn}
-            onClick={play}
-            disabled={fineTuneActive}
-            title={fineTuneActive ? 'Fine-tuning — use the LoRA card to pause/resume' : undefined}
-          >
+          <button className={btn} onClick={play}>
             ▶ Play
           </button>
         )}
-        <button className={btn} onClick={singleStep} disabled={status === 'running' || fineTuneActive}>
+        <button className={btn} onClick={singleStep} disabled={status === 'running'}>
           ⏭ Step
         </button>
         <button
@@ -515,8 +499,6 @@ export default function TrainingPanel() {
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={loadFromFile} />
         {saveMsg && <span className="text-slate-400">{saveMsg}</span>}
       </div>
-
-      {modelBuilt && <FineTuneCard playLoop={play} pauseLoop={pause} />}
 
       {!modelBuilt && (
         <div className="rounded border border-dashed border-slate-700 p-3 text-center text-[11px] text-slate-500">
@@ -673,208 +655,6 @@ function WeightHeatmap({
         </select>
       </div>
       <Heatmap matrix={matrix} scale="diverging" maxCell={10} />
-    </div>
-  )
-}
-
-// LoRA fine-tuning card (collapsed "advanced" by default): adapt the *loaded*
-// model by training a tiny low-rank overlay on top of frozen base weights.
-// "Start fine-tuning" attaches the adapter AND starts training it (it's the Play
-// for fine-tuning); Pause/Resume control that training; the adapter stays attached
-// (and live in Inference) until you explicitly "Remove adapter". Compare base vs
-// adapted with the "LoRA overlay" toggle in the Inference panel.
-function FineTuneCard({ playLoop, pauseLoop }: { playLoop: () => void; pauseLoop: () => void }) {
-  const { fineTune, fineTuneText, fineTuneActive, status, setFineTune, setFineTuneText } = useStore()
-  const [packId, setPackId] = useState('refrain')
-  const [msg, setMsg] = useState('')
-  const [open, setOpen] = useState(false)
-  const counts = getTrainer()?.paramCounts()
-  // keep it open whenever a fine-tune is active (e.g. after loading an adapted model)
-  const expanded = open || fineTuneActive
-
-  function toggleTarget(t: LoraTarget) {
-    const targets = fineTune.targets.includes(t)
-      ? fineTune.targets.filter((x) => x !== t)
-      : [...fineTune.targets, t]
-    setFineTune({ targets })
-  }
-
-  // Start fine-tuning = attach the adapter and begin training it immediately.
-  function start() {
-    const trainer = getTrainer()
-    if (!trainer) return
-    if (fineTune.targets.length === 0) {
-      setMsg('pick at least one target (attn / mlp)')
-      return
-    }
-    pauseLoop()
-    try {
-      trainer.startFineTune({
-        rank: fineTune.rank,
-        alpha: fineTune.alpha,
-        targets: fineTune.targets,
-        text: fineTuneText,
-      })
-    } catch (e) {
-      setMsg((e as Error).message)
-      return
-    }
-    const s = useStore.getState()
-    s.resetRun()
-    s.setModelBuilt(true)
-    s.setFineTuneActive(true)
-    s.setFeatureFlags({ lora: true })
-    s.bumpModelVersion()
-    setMsg('')
-    playLoop() // Start IS the play for fine-tuning
-  }
-
-  // Remove the adapter entirely and return to the plain base model.
-  function removeAdapter() {
-    const trainer = getTrainer()
-    if (!trainer) return
-    pauseLoop()
-    trainer.stopFineTune()
-    const s = useStore.getState()
-    s.resetRun()
-    s.setModelBuilt(true)
-    s.setFineTuneActive(false)
-    s.setFeatureFlags({ lora: false })
-    s.bumpModelVersion()
-    setMsg('')
-  }
-
-  const sel =
-    'rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-100 disabled:opacity-40'
-  const running = status === 'running'
-
-  return (
-    <div className="rounded border border-fuchsia-800/60 bg-fuchsia-950/20 p-2">
-      <button
-        className="flex w-full items-center justify-between text-left"
-        onClick={() => setOpen((v) => !v)}
-        disabled={fineTuneActive}
-      >
-        <span className="text-[11px] font-bold uppercase tracking-wider text-fuchsia-300">
-          {expanded ? '▾' : '▸'} Fine-tune with LoRA{' '}
-          <span className="font-normal normal-case text-fuchsia-300/60">(advanced)</span>
-        </span>
-        {fineTuneActive && counts && (
-          <span className="text-[10px] text-fuchsia-200/80">
-            training {counts.trainable.toLocaleString()} of {counts.total.toLocaleString()} weights
-          </span>
-        )}
-      </button>
-
-      {expanded && !fineTuneActive && (
-        <div className="mt-2 space-y-1.5">
-          <p className="text-[10px] text-slate-400">
-            Adapt the loaded model by training a tiny low-rank overlay (ΔW = A·B) on top of its frozen
-            weights. Pick a target, then Start.
-          </p>
-          <select
-            className={sel + ' w-full'}
-            value={packId}
-            onChange={(e) => {
-              setPackId(e.target.value)
-              const p = FINETUNE_PACKS.find((x) => x.id === e.target.value)
-              if (p) setFineTuneText(p.text)
-            }}
-          >
-            {FINETUNE_PACKS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-            <option value="custom">Custom text…</option>
-          </select>
-          {packId !== 'custom' && (
-            <p className="text-[10px] text-slate-400">
-              {FINETUNE_PACKS.find((p) => p.id === packId)?.description}
-            </p>
-          )}
-          <textarea
-            className="h-16 w-full resize-y rounded border border-slate-700 bg-slate-800 p-1.5 text-[11px] leading-tight text-slate-100"
-            placeholder="paste a short text to fine-tune toward…"
-            value={fineTuneText}
-            onChange={(e) => {
-              setFineTuneText(e.target.value)
-              setPackId('custom')
-            }}
-          />
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
-            <label className="flex items-center gap-1">
-              rank
-              <input
-                type="number"
-                min={1}
-                max={32}
-                className={sel + ' w-12 text-right'}
-                value={fineTune.rank}
-                onChange={(e) => setFineTune({ rank: Math.max(1, Number(e.target.value)) })}
-              />
-            </label>
-            <label className="flex items-center gap-1">
-              alpha
-              <input
-                type="number"
-                min={1}
-                className={sel + ' w-12 text-right'}
-                value={fineTune.alpha}
-                onChange={(e) => setFineTune({ alpha: Math.max(1, Number(e.target.value)) })}
-              />
-            </label>
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={fineTune.targets.includes('attn')}
-                onChange={() => toggleTarget('attn')}
-              />
-              attn
-            </label>
-            <label className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={fineTune.targets.includes('mlp')}
-                onChange={() => toggleTarget('mlp')}
-              />
-              mlp
-            </label>
-          </div>
-          <button className={btn} onClick={start} disabled={!fineTuneText.trim()}>
-            ✦ Start fine-tuning
-          </button>
-          {msg && <span className="ml-2 text-[10px] text-amber-400">{msg}</span>}
-        </div>
-      )}
-
-      {fineTuneActive && (
-        <div className="mt-2 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            {running ? (
-              <button className={btn} onClick={pauseLoop}>
-                ⏸ Pause fine-tuning
-              </button>
-            ) : (
-              <button className={btn} onClick={playLoop}>
-                ▶ Resume fine-tuning
-              </button>
-            )}
-            <button className={btn} onClick={removeAdapter}>
-              ✕ Remove adapter
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-300">
-            {running ? 'Training the adapter…' : 'Paused.'} Only the overlay moves — the base is frozen
-            (rank {fineTune.rank}, α {fineTune.alpha}, {fineTune.targets.join('+') || 'none'}).{' '}
-            <span className="text-emerald-300">✓ Your fine-tuned model is live in Inference</span> right
-            now — type a prompt there and toggle <span className="text-fuchsia-300">LoRA overlay</span>{' '}
-            to compare with the base. <span className="text-slate-100">JSON Save</span> keeps it
-            (auto-save is paused while fine-tuning); <span className="text-slate-100">Remove adapter</span>{' '}
-            reverts to the plain base.
-          </p>
-        </div>
-      )}
     </div>
   )
 }
