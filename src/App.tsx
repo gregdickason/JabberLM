@@ -157,6 +157,27 @@ export default function App() {
     setTour(true)
   }
 
+  // Deep links for blog "Try it →" CTAs: ?tour=1 drops the reader straight into the
+  // sorting dataset + guided grokking tour; ?dataset=sort|jabber|equations just loads a
+  // dataset. Either arrival skips the welcome splash.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const wantTour = params.get('tour') === '1'
+    const ds = params.get('dataset')
+    if (!wantTour && !ds) return
+    if (wantTour) {
+      startTour()
+      return
+    }
+    const sample = TEXT_SAMPLES.find((s) => s.id === ds)
+    if (sample) {
+      setTrainingText(sample.text)
+      setShowConfig(true)
+    }
+    dismissChooser()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const tile = 'rounded-lg border bg-slate-900 p-3 text-left'
 
   return (

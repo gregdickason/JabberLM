@@ -1,16 +1,25 @@
 // Small shared building blocks for the plain-language explainer.
 
+// Turn a title into a short URL anchor, e.g. "Why it makes things up" -> "why-it-makes-things-up".
+const slug = (s: string) =>
+  s.replace(/[()'"]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+
 export function Section({
   n,
   title,
+  id,
   children,
 }: {
   n: number
   title: string
+  id?: string // short, stable anchor for deep-linking (defaults to a slug of the title)
   children: React.ReactNode
 }) {
   return (
-    <section className="mx-auto max-w-2xl border-t border-slate-800 px-4 py-8">
+    <section
+      id={id ?? slug(title)}
+      className="mx-auto max-w-2xl scroll-mt-6 border-t border-slate-800 px-4 py-8"
+    >
       <div className="mb-2 flex items-baseline gap-2">
         <span className="text-xs font-bold text-fuchsia-400">{n}</span>
         <h2 className="text-lg font-bold text-slate-100">{title}</h2>

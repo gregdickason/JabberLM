@@ -75,7 +75,7 @@ export default function ExplainApp() {
         <div className="px-4 pb-16 text-center text-xs text-slate-500">{status}</div>
       ) : (
         <>
-          <Section n={1} title="It predicts the next piece of text">
+          <Section n={1} id="prediction" title="It predicts the next piece of text">
             <p>
               At heart, a language model is very advanced autocomplete. Given the text so far, it
               estimates how likely <em>every</em> possible next piece of text is, then picks one. It
@@ -89,7 +89,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={2} title="Why the same question gives different answers">
+          <Section n={2} id="randomness" title="Why the same question gives different answers">
             <p>
               Models usually add a little randomness when choosing the next piece, controlled by a
               setting called <em>temperature</em>. Turn it down for consistency; turn it up for variety.
@@ -102,7 +102,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={3} title="What it can 'see' — and why it forgets">
+          <Section n={3} id="context" title="What it can 'see' — and why it forgets">
             <p>
               A model only reads a limited amount of text at once: its <em>context window</em>. When it
               chooses the next piece it leans more on some earlier parts than others (its "attention").
@@ -115,7 +115,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={4} title="Why it sometimes makes things up">
+          <Section n={4} id="hallucination" title="Why it sometimes makes things up">
             <p>
               Because it always predicts plausible-looking text, a model will produce a confident answer
               even when it has nothing real to go on. That's a "hallucination".
@@ -128,7 +128,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={5} title="How it reads text — tokens, and why letters trip it up">
+          <Section n={5} id="tokens" title="How it reads text — tokens, and why letters trip it up">
             <p>
               A model doesn't read letters. Text is first chopped into <em>tokens</em> — and real models
               use <strong>subword chunks</strong>, not single characters. That one design choice explains a
@@ -143,7 +143,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={6} title="Words as coordinates — how meaning becomes maths">
+          <Section n={6} id="embeddings" title="Words as coordinates — how meaning becomes maths">
             <p>
               Before any of the above, every word is turned into a list of numbers — an{' '}
               <em>embedding</em> — positioned so that words with similar meaning sit close together. The
@@ -158,7 +158,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={7} title="Giving it real facts — retrieval (RAG)">
+          <Section n={7} id="rag" title="Giving it real facts — retrieval (RAG)">
             <p>
               A model only knows what was in its training text, and it will confidently fill gaps by making
               things up (§4). The standard fix isn't a bigger model — it's <strong>retrieval</strong>: find
@@ -174,7 +174,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={8} title="What it costs to run">
+          <Section n={8} id="cost" title="What it costs to run">
             <p>
               You pay by the <em>token</em> — roughly a few characters of text — for what goes in
               <strong> and</strong> what comes out. Cost scales with document length, answer length, how
@@ -220,7 +220,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={9} title="Inference economics — the same answer can cost very different amounts">
+          <Section n={9} id="inference" title="Inference economics — the same answer can cost very different amounts">
             <p>
               Two levers move the bill far more than the price-per-token headline: <strong>which model</strong>{' '}
               you run for a task, and <strong>how you handle the context</strong> (the KV cache). Both are
@@ -240,7 +240,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={10} title="What you can't see, and questions to ask">
+          <Section n={10} id="governance" title="What you can't see, and questions to ask">
             <Governance />
           </Section>
 
