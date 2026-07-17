@@ -55,6 +55,29 @@ export function buildSortCorpus(targetChars = 40000): string {
   return lines.join('\n') + '\n'
 }
 
+// ---- descending sort (the LoRA re-task target) -----------------------------
+// SAME prompt as ascending ("sort a b c => "), but the answer is high→low. A LoRA
+// adapter on the frozen ascending base learns to flip the output; toggling the
+// overlay switches "2 6 9" <-> "9 6 2". Reuses the ascending train/held-out split
+// (seed 20250626), so `sortHeldOut()` stays disjoint from this corpus too.
+export const descendingSortLine = (v: SortVec): string =>
+  `sort ${v.join(' ')} => ${[...v].sort((x, y) => y - x).join(' ')}`
+
+/** A descending-sort corpus (~targetChars) from the same training split as the ascending one. */
+export function buildDescendingSortCorpus(targetChars = 40000): string {
+  const rnd = mulberry32(20250626)
+  const vecs = allSortVecs(rnd)
+  const train = vecs.slice(Math.floor(vecs.length * 0.2))
+  const lines: string[] = []
+  let chars = 0
+  while (chars < targetChars) {
+    const l = descendingSortLine(train[Math.floor(rnd() * train.length)])
+    lines.push(l)
+    chars += l.length + 1
+  }
+  return lines.join('\n') + '\n'
+}
+
 // ---- algebra (single-variable, correct working — the model still can't learn it) ----
 export const algebraLine = (rnd: () => number): string => {
   const a = 2 + Math.floor(rnd() * 8) // 2..9

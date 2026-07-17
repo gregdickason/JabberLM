@@ -3,7 +3,7 @@ import { CharTokenizer } from '../engine/tokenizer'
 import { generate } from '../engine/generate'
 import { crossEntropy } from '../engine/ops'
 import { RNG } from '../engine/random'
-import { DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG } from '../engine/config'
+import { DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, type FeatureFlags } from '../engine/config'
 
 // Head ablation: knock out attention heads (zero their output) and measure how
 // much each skill of the bundled three-skill model degrades. Shows which heads
@@ -40,6 +40,41 @@ export function sortAccuracy(model: Model, tok: CharTokenizer, vectors: SortVec[
     const want = [...v].sort((a, b) => a - b).join(' ')
     const got = (genLine(model, tok, `sort ${v.join(' ')} => `, 8, ablate).match(/\d(?: \d)*/) || [''])[0].trim()
     if (got === want) ok++
+  }
+  return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
+}
+
+/** Greedy answer for one `sort a b c => ` prompt, honouring a feature-flag override
+ *  (e.g. `lora` on/off to compare the frozen base vs the adapted overlay). */
+export function genSortLine(model: Model, tok: CharTokenizer, v: SortVec, flags: FeatureFlags): string {
+  const out = generate(
+    model,
+    flags,
+    tok,
+    `sort ${v.join(' ')} => `,
+    { ...DEFAULT_SAMPLE_CONFIG, temperature: 0, maxNewTokens: 8 },
+    new RNG(1),
+  )
+  return (out.split('\n')[0].match(/\d(?: \d)*/) || [''])[0].trim()
+}
+
+/**
+ * Sort accuracy with a **feature-flag override** and a chooseable direction. Used by the
+ * LoRA demo: measure ascending with the overlay OFF (`{flags:{...,lora:false}}`) and
+ * descending with the overlay ON (`{descending:true, flags:{...,lora:true}}`) on the same
+ * frozen model, using the same `sort a b c => ` prompt.
+ */
+export function sortAccuracyDir(
+  model: Model,
+  tok: CharTokenizer,
+  vectors: SortVec[],
+  opts: { descending?: boolean; flags?: FeatureFlags } = {},
+): number {
+  const flags = opts.flags ?? DEFAULT_FEATURE_FLAGS
+  let ok = 0
+  for (const v of vectors) {
+    const want = [...v].sort((a, b) => (opts.descending ? b - a : a - b)).join(' ')
+    if (genSortLine(model, tok, v, flags) === want) ok++
   }
   return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
 }
