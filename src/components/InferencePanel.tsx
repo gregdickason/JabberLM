@@ -39,7 +39,11 @@ const btn =
 // non-empty line), so "continue from here" matches what the model just learned.
 function startPrompt(text: string): string {
   const firstLine = text.split('\n').find((l) => l.trim().length > 0) ?? text
-  return firstLine.slice(0, 40)
+  // If the first line is a task example ("sort 6 9 8 => 6 8 9"), keep only the stem
+  // ("sort 6 9 8 => ") so the model GENERATES the answer instead of us handing it over.
+  const arrow = firstLine.indexOf('=>')
+  const stem = arrow >= 0 ? firstLine.slice(0, arrow + 2) + ' ' : firstLine
+  return stem.slice(0, 40)
 }
 
 export default function InferencePanel() {
