@@ -26,8 +26,15 @@ The ablation zeroing (`attention.ts`, `scale(headOut, 0)`) is differentiable, so
 loss = `T²·softCrossEntropy(studentLogits/T, softmax(teacherLogits/T))` (new `softCrossEntropy` op in
 `ops.ts`, grad `(studentProbs − teacherProbs)/seq`); teacher & student must share a vocab (build the
 student on the teacher's corpus). Offline: the ~6× smaller student reaches the teacher's ~95% and groks
-~2–3× faster than an identical hard-label student. `gen:jabber`/`gen:sonnets` build the older
-single-skill poem models. Bundled-model facts in `src/data/modelStats.ts`.
+~2–3× faster than an identical hard-label student. The lab's **LoRA fine-tuning** tab (`LoraSection.tsx`)
+also reuses `sort-model.json`: freeze the ascending base, attach a tiny LoRA adapter (rank 8, attn+mlp,
+~12% of base) via `Trainer.startFineTune`, and train ONLY the adapter on **descending** sort
+(`descendingSortLine`/`buildDescendingSortCorpus` in `tasks.ts`, same `sort a b c => ` prompt) — toggling
+the overlay (`flags.lora`) flips the output `2 6 9 ↔ 9 6 2` while ascending (overlay off) stays ~97%
+(base frozen). Measured with `sortAccuracyDir`/`genSortLine` (`interp/ablation.ts`, flags-aware). **LoRA UI
+was removed from the playground** (kept to simple training); the lab is the only LoRA surface.
+`gen:jabber`/`gen:sonnets` build the older single-skill poem models. Bundled-model facts in
+`src/data/modelStats.ts`.
 
 The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
