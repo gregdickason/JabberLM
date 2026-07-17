@@ -3,6 +3,7 @@ import ConfigSidebar, { PRESETS } from './components/ConfigSidebar'
 import TrainingPanel from './components/TrainingPanel'
 import InferencePanel from './components/InferencePanel'
 import Tour, { type TourStep } from './components/Tour'
+import SiteNav from './components/SiteNav'
 import { useStore } from './state/store'
 import { TEXT_SAMPLES } from './data/jabberwocky'
 import { openGuide } from './guide'
@@ -94,7 +95,7 @@ export default function App() {
     try {
       return localStorage.getItem(MODE_KEY) !== '1'
     } catch {
-      return false
+      return true // storage blocked (private mode) — still show the intro
     }
   })
   const dismissChooser = () => {
@@ -160,8 +161,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col font-mono text-sm lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2">
-        <h1 className="text-base font-bold text-sky-300">JabberLM</h1>
+      <SiteNav current="playground">
         <span
           className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 text-[10px] text-slate-400"
           title={
@@ -172,8 +172,8 @@ export default function App() {
         >
           {pretrainedActive ? 'built-in model' : 'your model'}
         </span>
-        <span className="hidden text-xs text-slate-400 sm:inline">
-          a decoder-only transformer you can see inside ·{' '}
+        <span className="hidden text-xs text-slate-400 md:inline">
+          a transformer you can see inside ·{' '}
           <a
             href="https://www.linkedin.com/in/greg-dickason-633920/"
             target="_blank"
@@ -181,25 +181,8 @@ export default function App() {
             className="text-sky-400 hover:underline"
           >
             by Greg Dickason
-          </a>{' '}
-          ·{' '}
-          <a
-            href="https://github.com/gregdickason/JabberLM"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sky-400 hover:underline"
-          >
-            GitHub
           </a>
         </span>
-        <a
-          href="https://github.com/gregdickason/JabberLM"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-sky-400 hover:underline sm:hidden"
-        >
-          GitHub ↗
-        </a>
         <button
           onClick={() => setShowConfig((v) => !v)}
           className="rounded border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:bg-slate-800 lg:hidden"
@@ -208,22 +191,17 @@ export default function App() {
         </button>
         <button
           onClick={startTour}
-          className="rounded border border-fuchsia-700 bg-fuchsia-900/30 px-2 py-0.5 text-xs text-fuchsia-200 hover:bg-fuchsia-900/60 sm:ml-auto"
+          className="rounded border border-fuchsia-700 bg-fuchsia-900/30 px-2 py-0.5 text-xs text-fuchsia-200 hover:bg-fuchsia-900/60"
         >
           ✨ Guide me
         </button>
-        <a href="./explain.html" className="text-xs text-emerald-300 hover:underline">
-          New to AI? →
-        </a>
-        <a href="./learn.html" className="text-xs text-sky-300 hover:underline">
-          How it works →
-        </a>
-        <a href="./harness.html" className="text-xs text-sky-300 hover:underline">
-          Tool use →
-        </a>
-        <a href="./lab.html" className="text-xs text-fuchsia-300 hover:underline">
-          Lab →
-        </a>
+        <button
+          onClick={() => setChooseMode(true)}
+          title="Show the welcome intro again"
+          className="rounded border border-slate-700 px-2 py-0.5 text-xs text-slate-300 hover:bg-slate-800"
+        >
+          Intro
+        </button>
         <details className="relative text-xs text-slate-400">
           <summary className="cursor-pointer select-none rounded border border-slate-700 px-2 py-0.5 hover:bg-slate-800">
             how to use
@@ -249,7 +227,7 @@ export default function App() {
             </button>
           </div>
         </details>
-      </header>
+      </SiteNav>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <aside
@@ -290,103 +268,64 @@ export default function App() {
               would you like to start?
             </p>
 
-            {/* recommended novice path */}
+            {/* 1 — recommended: use AI more intelligently */}
             <a
               href="./explain.html"
               onClick={dismissChooser}
               className={tile + ' mt-4 block border-emerald-700 bg-emerald-900/25 hover:bg-emerald-900/45'}
             >
-              <div className="text-sm font-semibold text-emerald-200">
-                New to AI? — a visual introduction ★
-              </div>
+              <div className="text-sm font-semibold text-emerald-200">Use AI more intelligently ★</div>
               <div className="text-[11px] text-slate-400">
-                Plain language, no maths: how it answers, why it varies, what it costs, where it goes
+                Plain language, no maths: how it answers, why it varies, what it costs, and where it goes
                 wrong.
               </div>
             </a>
 
-            {/* understand-the-mechanics path */}
+            {/* 2 — understand a transformer */}
             <a
               href="./learn.html"
               onClick={dismissChooser}
               className={tile + ' mt-2 block border-sky-700 bg-sky-900/25 hover:bg-sky-900/45'}
             >
-              <div className="text-sm font-semibold text-sky-200">
-                Understand how it works — a guided tour of the architecture
-              </div>
+              <div className="text-sm font-semibold text-sky-200">Understand a transformer</div>
               <div className="text-[11px] text-slate-400">
-                Follow one example through a real model: tokens → vectors → attention → next-character
-                guess, then watch it grok.
+                Follow one prediction through a real model: tokens → vectors → attention → next-character
+                guess.
               </div>
             </a>
 
-            {/* tool use / agents path */}
-            <a
-              href="./harness.html"
-              onClick={dismissChooser}
-              className={tile + ' mt-2 block border-teal-700 bg-teal-900/25 hover:bg-teal-900/45'}
-            >
-              <div className="text-sm font-semibold text-teal-200">
-                Tool use &amp; agents — how models call real tools
-              </div>
+            {/* 3 — experiment (stay in the playground) */}
+            <div className={tile + ' mt-2 border-fuchsia-700/60 bg-fuchsia-950/15'}>
+              <div className="text-sm font-semibold text-fuchsia-200">Experiment with the model</div>
               <div className="text-[11px] text-slate-400">
-                Watch a tiny model that can't add call a calculator and get it right — the harness that
-                makes AI agents work.
+                Generate text and sort numbers here, then train one from scratch and watch it "grok".
               </div>
-            </a>
-
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {/* explore */}
-              <div className={tile + ' border-slate-600'}>
-                <div className="text-[13px] font-semibold text-slate-100">Explore a trained model</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">
-                  Generate text, sort numbers, and look inside the built-in model.
-                </div>
+              <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   onClick={dismissChooser}
-                  className="mt-2 w-full rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-700"
+                  className="flex-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-[11px] text-slate-200 hover:bg-slate-700"
                 >
-                  Open to explore →
+                  Open the playground →
                 </button>
-              </div>
-
-              {/* train (has the tour) */}
-              <div className={tile + ' border-fuchsia-700/60 bg-fuchsia-950/15'}>
-                <div className="text-[13px] font-semibold text-fuchsia-200">Train & watch it grok</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">
-                  Train it to sort from scratch and watch the "aha" jump.
-                </div>
                 <button
                   onClick={startTour}
-                  className="mt-2 w-full rounded border border-fuchsia-600 bg-fuchsia-900/50 px-2 py-0.5 text-[11px] text-fuchsia-100 hover:bg-fuchsia-900/80"
+                  className="flex-1 rounded border border-fuchsia-600 bg-fuchsia-900/50 px-2 py-1 text-[11px] text-fuchsia-100 hover:bg-fuchsia-900/80"
                 >
-                  Walk me through
-                </button>
-                <button
-                  onClick={() => {
-                    if (sortText) setTrainingText(sortText)
-                    dismissChooser()
-                  }}
-                  className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-[11px] text-slate-200 hover:bg-slate-700"
-                >
-                  Open to explore
+                  Guided training tour
                 </button>
               </div>
+            </div>
 
-              {/* advanced */}
-              <div className={tile + ' border-slate-600'}>
-                <div className="text-[13px] font-semibold text-slate-100">Advanced</div>
-                <div className="mt-0.5 text-[10px] text-slate-400">
-                  Interpretability lab: head ablation, neurons, steering. Plus LoRA fine-tuning here.
-                </div>
-                <a
-                  href="./lab.html"
-                  onClick={dismissChooser}
-                  className="mt-2 block rounded border border-slate-600 bg-slate-800 px-2 py-0.5 text-center text-[11px] text-slate-200 hover:bg-slate-700"
-                >
-                  Open the lab →
-                </a>
-              </div>
+            {/* secondary destinations */}
+            <div className="mt-3 text-center text-[11px] text-slate-500">
+              Also:{' '}
+              <a href="./harness.html" onClick={dismissChooser} className="text-sky-400 hover:underline">
+                Tool use &amp; agents
+              </a>{' '}
+              ·{' '}
+              <a href="./lab.html" onClick={dismissChooser} className="text-sky-400 hover:underline">
+                Interpretability lab
+              </a>
             </div>
 
             <button
