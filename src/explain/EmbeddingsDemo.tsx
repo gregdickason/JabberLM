@@ -121,6 +121,12 @@ export default function EmbeddingsDemo() {
             )}
           </div>
         )}
+        {!known && (
+          <div className="mt-3 rounded border border-dashed border-slate-700 p-3 text-[11px] text-slate-500">
+            This 1,429-word demo set doesn't include “{word || '…'}”. Pick one of the words above to see its
+            nearest neighbours and 2-D map.
+          </div>
+        )}
       </div>
 
       {/* analogy */}

@@ -61,7 +61,7 @@ export function quantiseModel(model: Model, bits: number): number {
  * small LN/bias vectors stay fp32 — the "size" side of the accuracy-vs-size trade-off.
  */
 export function modelBytes(model: Model, bits: number): number {
-  let bits8 = 0
-  for (const p of model.params) bits8 += p.size * (isWeightMatrix(p.rows) ? bits : 32)
-  return bits8 / 8
+  let totalBits = 0
+  for (const p of model.params) totalBits += p.size * (isWeightMatrix(p.rows) ? bits : 32)
+  return totalBits / 8
 }

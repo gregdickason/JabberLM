@@ -274,7 +274,7 @@ export default function App() {
               onClick={dismissChooser}
               className={tile + ' mt-4 block border-emerald-700 bg-emerald-900/25 hover:bg-emerald-900/45'}
             >
-              <div className="text-sm font-semibold text-emerald-200">Use AI more intelligently ★</div>
+              <div className="text-sm font-semibold text-emerald-200">New to AI — use it more wisely ★</div>
               <div className="text-[11px] text-slate-400">
                 Plain language, no maths: how it answers, why it varies, what it costs, and where it goes
                 wrong.
@@ -320,7 +320,7 @@ export default function App() {
             <div className="mt-3 text-center text-[11px] text-slate-500">
               Also:{' '}
               <a href="./harness.html" onClick={dismissChooser} className="text-sky-400 hover:underline">
-                Tool use &amp; agents
+                Tools &amp; agents
               </a>{' '}
               ·{' '}
               <a href="./lab.html" onClick={dismissChooser} className="text-sky-400 hover:underline">

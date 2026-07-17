@@ -8,7 +8,7 @@ const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'playground', label: 'Playground', href: './' },
   { key: 'explain', label: 'New to AI', href: './explain.html' },
   { key: 'learn', label: 'How it works', href: './learn.html' },
-  { key: 'harness', label: 'Tool use', href: './harness.html' },
+  { key: 'harness', label: 'Tools & agents', href: './harness.html' },
   { key: 'lab', label: 'Lab', href: './lab.html' },
 ]
 
@@ -30,7 +30,7 @@ export default function SiteNav({ current, children }: { current: NavKey; childr
             <span
               key={l.key}
               aria-current="page"
-              className="rounded bg-slate-800 px-1.5 py-0.5 font-semibold text-sky-200 ring-1 ring-slate-600"
+              className="rounded bg-slate-800 px-1.5 py-1 sm:py-0.5 font-semibold text-sky-200 ring-1 ring-slate-600"
             >
               {l.label}
             </span>
@@ -38,7 +38,7 @@ export default function SiteNav({ current, children }: { current: NavKey; childr
             <a
               key={l.key}
               href={l.href}
-              className="rounded px-1.5 py-0.5 text-slate-300 hover:bg-slate-800 hover:text-sky-200"
+              className="rounded px-1.5 py-1 sm:py-0.5 text-slate-300 hover:bg-slate-800 hover:text-sky-200"
             >
               {l.label}
             </a>
@@ -48,7 +48,7 @@ export default function SiteNav({ current, children }: { current: NavKey; childr
           href="https://github.com/gregdickason/JabberLM"
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded px-1.5 py-0.5 text-slate-400 hover:text-sky-300"
+          className="rounded px-1.5 py-1 sm:py-0.5 text-slate-400 hover:text-sky-300"
         >
           GitHub ↗
         </a>

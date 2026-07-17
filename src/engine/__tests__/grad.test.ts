@@ -8,6 +8,8 @@ import {
   transpose,
   sub,
   mulElem,
+  concatCols,
+  sliceCols,
   scaleRows,
   abs,
   rowSoftmax,
@@ -115,6 +117,30 @@ describe('autograd gradient checks', () => {
   it('sub', () => {
     checkGrad([{ rows: 2, cols: 3, data: rand(6) }, { rows: 2, cols: 3, data: rand(6) }], (i) =>
       sum(sub(i[0], i[1])),
+    )
+  })
+
+  // concatCols / sliceCols are the attention head merge/split — a scatter/gather of
+  // gradients by column offset. A wrong offset would be silent, so weight the output
+  // with a random matrix (mulElem) so any mis-routed column fails the check.
+  it('concatCols (attention head merge)', () => {
+    checkGrad(
+      [
+        { rows: 2, cols: 2, data: rand(4) }, // part A (2 cols)
+        { rows: 2, cols: 3, data: rand(6) }, // part B (3 cols) — different width catches offset bugs
+        { rows: 2, cols: 5, data: rand(10) }, // weights over the concatenated 2+3 = 5 cols
+      ],
+      (i) => sum(mulElem(concatCols([i[0], i[1]]), i[2])),
+    )
+  })
+
+  it('sliceCols (attention head split)', () => {
+    checkGrad(
+      [
+        { rows: 2, cols: 5, data: rand(10) }, // slice cols [1,4) out of 5
+        { rows: 2, cols: 3, data: rand(6) }, // weights over the 3-col slice
+      ],
+      (i) => sum(mulElem(sliceCols(i[0], 1, 3), i[1])),
     )
   })
 
