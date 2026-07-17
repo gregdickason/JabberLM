@@ -1,8 +1,11 @@
 import { Tensor } from './tensor'
 
-// Rotary Position Embedding. Dimensions are paired up (2i, 2i+1) and each pair is
-// rotated by an angle proportional to the token's position and a per-pair
-// frequency. Relative position then falls out of the dot product Q·K. The
+// Rotary Position Embedding (RoPE) — one way to tell the model WHERE each token sits.
+// Instead of adding a separate "position vector", it rotates each query/key: dimensions
+// are paired up (2i, 2i+1) and each pair is turned by an angle proportional to the token's
+// position times a per-pair frequency. The neat payoff: when two tokens' Q·K dot product is
+// taken, the absolute angles cancel and only the *difference* in positions remains — so the
+// model naturally sees RELATIVE distance ("3 tokens apart") rather than absolute slots. The
 // rotation is linear, so it's cleanly differentiable.
 
 /** Per-pair angular frequencies θ_i = base^(−2i/d), length headDim/2. */

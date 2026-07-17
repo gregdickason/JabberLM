@@ -96,7 +96,9 @@ interface LayerParams {
 }
 
 export interface ForwardResult {
-  logits: Tensor // (seq × vocab)
+  // logits = the model's raw, unnormalised score for every possible next token at every
+  // position (seq × vocab). Run them through softmax to get next-token probabilities.
+  logits: Tensor
   trace?: Trace
 }
 
@@ -307,6 +309,10 @@ export class Model {
         !!capture,
         ablatedHeads,
       )
+      // Residual (skip) connection: ADD attention's output back onto its input instead of
+      // replacing it. Earlier-layer information flows straight through, and a layer that
+      // learns to output ~0 simply does nothing — which is a big part of why deep stacks
+      // train at all. (Same pattern for the MLP below.)
       const afterAttn = add(preLNAttn, attnRes.out)
 
       const normedMLP = layerNorm(afterAttn, lp.ln2g, lp.ln2b)
@@ -314,9 +320,11 @@ export class Model {
       let hidden: Tensor // MLP hidden for the trace/walkthrough (expert 0 under MoE)
       let gateSnap: Matrix | undefined
       if (lp.experts && lp.gate) {
-        // Mixture-of-Experts MLP: route each token through a softmax gate over E
-        // expert FFNs. Dense (all experts, gate-weighted) during training; the
-        // inference-only top-k / ablation rebuilds a detached gate.
+        // Mixture-of-Experts MLP: instead of ONE shared MLP, there are E expert FFNs plus
+        // a small "gate" that scores (via softmax) how much each token should use each
+        // expert. Training is DENSE — run every expert and blend by the gate weights, fully
+        // differentiable. Inference can go SPARSE (top-k): the same weights, but only a slice
+        // runs per token, so a huge model stays cheap. (top-k / ablation rebuilds a detached gate.)
         const E = lp.experts.length
         let gateW = rowSoftmax(matmul(normedMLP, lp.gate)) // (seq × E), differentiable
         let ablatedExperts: number[] | null = null

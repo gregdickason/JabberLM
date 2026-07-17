@@ -197,7 +197,11 @@ export function addMaskConst(a: Tensor, mask: Float32Array): Tensor {
   return c
 }
 
-/** Row-wise softmax (numerically stable). */
+/** Row-wise softmax: turns each row of raw scores into a probability distribution —
+ *  every entry in 0..1, each row summing to 1 — via exp(x)/Σexp(x). Subtracting the
+ *  row max first is a numerical-stability trick: it doesn't change the result but stops
+ *  exp() overflowing on large scores. This is what makes attention weights and the final
+ *  next-token probabilities. */
 export function rowSoftmax(a: Tensor): Tensor {
   const data = new Float32Array(a.size)
   const n = a.cols
@@ -215,7 +219,11 @@ export function rowSoftmax(a: Tensor): Tensor {
   const c = out(data, a.rows, n, [a], 'softmax')
   c._backward = () => {
     for (let i = 0; i < a.rows; i++) {
-      // dx_j = s_j * (dy_j - Σ_k dy_k s_k)
+      // Softmax couples every entry in a row (they share the Σexp denominator), so a
+      // change in one input shifts ALL outputs. The gradient reflects that:
+      //   dx_j = s_j · (dy_j − Σ_k dy_k·s_k)
+      // i.e. this entry's upstream grad, minus the probability-weighted average grad
+      // across the row (`dot`). `s_j` = data[j] = the softmax output for entry j.
       let dot = 0
       for (let j = 0; j < n; j++) dot += c.grad[i * n + j] * data[i * n + j]
       for (let j = 0; j < n; j++)
@@ -225,7 +233,10 @@ export function rowSoftmax(a: Tensor): Tensor {
   return c
 }
 
-/** Row-wise LayerNorm with learned gamma/beta (each 1×n). */
+/** LayerNorm: re-centre and re-scale each row to mean 0 / variance 1 (the normalised
+ *  `xhat`), then apply a learned scale (gamma) and shift (beta) per column. This keeps
+ *  activations in a stable range so training doesn't blow up or stall — a standard
+ *  transformer building block applied before attention and the MLP. */
 export function layerNorm(x: Tensor, gamma: Tensor, beta: Tensor, eps = 1e-5): Tensor {
   const n = x.cols
   const data = new Float32Array(x.size)
@@ -251,6 +262,10 @@ export function layerNorm(x: Tensor, gamma: Tensor, beta: Tensor, eps = 1e-5): T
   }
   const c = out(data, x.rows, n, [x, gamma, beta], 'layerNorm')
   c._backward = () => {
+    // Backprop through normalisation is fiddly because every output in a row depends on
+    // the row's mean AND variance — i.e. on all n inputs. The two running sums below are
+    // the correction terms for that shared dependence; gamma/beta get the plain per-column
+    // gradients (how much each scale/shift affected the loss).
     for (let i = 0; i < x.rows; i++) {
       const is = invStd[i]
       let sumDxhat = 0
@@ -303,7 +318,8 @@ export function relu(a: Tensor): Tensor {
   return c
 }
 
-/** Take a contiguous block of columns [start, start+count) → (rows×count). */
+/** Take a contiguous block of columns [start, start+count) → (rows×count). Used to pull
+ *  one attention head's slice out of the packed Q/K/V, and one expert's gate column. */
 export function sliceCols(x: Tensor, start: number, count: number): Tensor {
   if (start < 0 || start + count > x.cols) throw new Error('sliceCols: out of range')
   const data = new Float32Array(x.rows * count)
@@ -311,13 +327,15 @@ export function sliceCols(x: Tensor, start: number, count: number): Tensor {
     for (let j = 0; j < count; j++) data[i * count + j] = x.data[i * x.cols + (start + j)]
   const c = out(data, x.rows, count, [x], 'sliceCols')
   c._backward = () => {
+    // Scatter the slice's gradient back to columns [start, start+count); the rest get 0.
     for (let i = 0; i < x.rows; i++)
       for (let j = 0; j < count; j++) x.grad[i * x.cols + (start + j)] += c.grad[i * count + j]
   }
   return c
 }
 
-/** Concatenate tensors column-wise (all must share row count). */
+/** Concatenate tensors column-wise (all must share row count). The inverse of sliceCols —
+ *  used to stitch the per-head attention outputs back into one matrix. */
 export function concatCols(parts: Tensor[]): Tensor {
   const rows = parts[0].rows
   let totalCols = 0
@@ -334,6 +352,8 @@ export function concatCols(parts: Tensor[]): Tensor {
   }
   const c = out(data, rows, totalCols, parts, 'concatCols')
   c._backward = () => {
+    // Each part gets back exactly the block of the output gradient sitting at its column
+    // offset — the merge run in reverse, so gradients return to the head they came from.
     let off = 0
     for (const p of parts) {
       for (let i = 0; i < rows; i++)
@@ -354,6 +374,9 @@ export function embeddingLookup(table: Tensor, ids: number[]): Tensor {
   }
   const c = out(data, ids.length, d, [table], 'embedding')
   c._backward = () => {
+    // Scatter the gradients back to the rows they were gathered from. Because a token
+    // can appear several times in one sequence, multiple output rows may point at the
+    // SAME table row — so we must accumulate (+=), summing each occurrence's gradient.
     for (let i = 0; i < ids.length; i++) {
       const base = ids[i] * d
       for (let j = 0; j < d; j++) table.grad[base + j] += c.grad[i * d + j]
@@ -403,6 +426,9 @@ export function crossEntropy(logits: Tensor, targets: number[]): CrossEntropyRes
   loss /= seq
   const c = out(Float32Array.from([loss]), 1, 1, [logits], 'crossEntropy')
   c._backward = () => {
+    // The gradient of softmax+cross-entropy is famously simple: (predicted − target).
+    // For each position it's `probs − one-hot(correct token)` — push the probability of
+    // the right token up and everything else down, scaled by 1/seq for the mean.
     const g = c.grad[0] / seq
     for (let i = 0; i < seq; i++) {
       for (let j = 0; j < vocab; j++) {
