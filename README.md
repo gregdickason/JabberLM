@@ -139,6 +139,15 @@ It's a fully static site (no backend), six HTML pages, hosted on **Cloudflare Pa
 gzipped) is fetched once on the teaching surfaces and cached; the MoE model (`moe-model.json`) and the
 tool-calling model (`harness-model.json`) are each fetched only when their page/tab is opened.
 
+**Analytics:** enabled via **Cloudflare Web Analytics** (free, cookieless — no consent banner, no code).
+Turn it on in the Cloudflare dashboard → the Pages project → *Metrics / Web Analytics* → "Enable" (or
+Web Analytics → Add a site → pick the Pages project). Cloudflare injects the beacon at the edge, so
+there's nothing to add to the repo. It reports referrers (e.g. LinkedIn), top pages, and bounce.
+
+**Social preview:** `og:image` is a raster **`public/og-image.png`** (1200×630) — LinkedIn and X don't
+render SVG cards. Regenerate it with `python3 scripts/gen-og.py` if the branding changes, then re-scrape
+the URL in the LinkedIn Post Inspector / X Card Validator to bust their cache.
+
 ## How it's built
 
 ```
