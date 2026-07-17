@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { loadDemoModel, type LoadedModel } from './loadDemoModel'
 import { MODEL_STATS, MODEL_METHOD } from '../data/modelStats'
+import SiteNav from '../components/SiteNav'
 import { Section, Callout } from './ui'
 import NextTokenDemo from './NextTokenDemo'
 import RandomnessDemo from './RandomnessDemo'
@@ -39,21 +40,9 @@ export default function ExplainApp() {
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2 font-mono">
-        <h1 className="text-base font-bold text-fuchsia-300">JabberLM · AI explained simply</h1>
-        <a className="text-xs text-sky-300 hover:underline sm:ml-auto" href="./learn.html">
-          How it works →
-        </a>
-        <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
-          Tool use →
-        </a>
-        <a className="text-xs text-sky-400 hover:underline" href="./">
-          Playground →
-        </a>
-        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">
-          Interpretability lab →
-        </a>
-      </header>
+      <SiteNav current="explain">
+        <span className="hidden text-xs text-slate-400 sm:inline">AI, explained simply</span>
+      </SiteNav>
 
       {/* hero / intro */}
       <div className="mx-auto max-w-2xl px-4 py-8">

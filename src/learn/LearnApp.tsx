@@ -5,6 +5,7 @@ import { traceOf } from '../engine/generate'
 import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import { pca2 } from '../interp/pca'
 import { MODEL_STATS } from '../data/modelStats'
+import SiteNav from '../components/SiteNav'
 import type { Trace } from '../engine/trace'
 
 import TokenizerView from '../components/inspector/TokenizerView'
@@ -103,21 +104,9 @@ export default function LearnApp() {
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2 font-mono">
-        <h1 className="text-base font-bold text-sky-300">JabberLM · How a transformer actually works</h1>
-        <a className="text-xs text-emerald-300 hover:underline sm:ml-auto" href="./explain.html">
-          New to AI? →
-        </a>
-        <a className="text-xs text-sky-400 hover:underline" href="./">
-          Playground →
-        </a>
-        <a className="text-xs text-sky-300 hover:underline" href="./harness.html">
-          Tool use →
-        </a>
-        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">
-          Lab →
-        </a>
-      </header>
+      <SiteNav current="learn">
+        <span className="hidden text-xs text-slate-400 sm:inline">How a transformer actually works</span>
+      </SiteNav>
 
       {/* hero / intro */}
       <div className="mx-auto max-w-2xl px-4 py-8">

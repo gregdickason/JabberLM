@@ -12,6 +12,7 @@ import {
 } from './runHarness'
 import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
 import { Section, Callout, card } from '../explain/ui'
+import SiteNav from '../components/SiteNav'
 
 async function loadHarnessModel(): Promise<Trainer | null> {
   try {
@@ -170,13 +171,9 @@ export default function HarnessApp() {
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2 font-mono">
-        <h1 className="text-base font-bold text-sky-300">JabberLM · Tool use &amp; a tiny harness</h1>
-        <a className="text-xs text-emerald-300 hover:underline sm:ml-auto" href="./explain.html">New to AI? →</a>
-        <a className="text-xs text-sky-300 hover:underline" href="./learn.html">How it works →</a>
-        <a className="text-xs text-sky-400 hover:underline" href="./">Playground →</a>
-        <a className="text-xs text-fuchsia-300 hover:underline" href="./lab.html">Lab →</a>
-      </header>
+      <SiteNav current="harness">
+        <span className="hidden text-xs text-slate-400 sm:inline">Tool use &amp; a tiny harness</span>
+      </SiteNav>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
         <p className="text-lg leading-relaxed text-slate-200">
