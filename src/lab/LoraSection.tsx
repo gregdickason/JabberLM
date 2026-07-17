@@ -7,6 +7,8 @@ import { RNG } from '../engine/random'
 import { sortAccuracyDir, genSortLine } from '../interp/ablation'
 import { sortHeldOut, buildDescendingSortCorpus, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
+import LoRAView from '../components/inspector/LoRAView'
+import type { Trace } from '../engine/trace'
 import SectionIntro from './SectionIntro'
 
 // The bundled sort model sorts ASCENDING (~97% held-out). We attach a tiny LoRA adapter,
@@ -55,6 +57,7 @@ export default function LoraSection() {
   const [prompt, setPrompt] = useState('sort 4 6 1 => ')
   const [overlay, setOverlay] = useState(true)
   const [output, setOutput] = useState('')
+  const [loraTrace, setLoraTrace] = useState<Trace | null>(null)
 
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
@@ -88,6 +91,9 @@ export default function LoraSection() {
         return { v, asc, desc, ok: desc === want }
       }),
     )
+    // snapshot the adapter matrices (A, B, ΔW) so the low-rank overlay fills in as we train
+    const { trace } = t.model.forward(t.tok.encode('sort 4 6 1 => '), FLAGS_ON, undefined, true)
+    setLoraTrace(trace ?? null)
     lastEvalRef.current = s
   }
 
@@ -280,6 +286,19 @@ export default function LoraSection() {
           re-run to compare.
         </p>
       </div>
+
+      {/* see inside the overlay: A · B = ΔW is genuinely low-rank */}
+      {loraTrace && (
+        <div className="rounded border border-slate-700 bg-slate-900/40 p-3">
+          <div className="mb-2 text-[11px] text-slate-400">
+            See inside the overlay — <b>layer 0</b>'s adapters. Each learns a tall <b>A</b> (in×{RANK}) times a
+            wide <b>B</b> ({RANK}×out); their product <b>ΔW = A·B</b> is a full-size matrix but{' '}
+            <b>rank ≤ {RANK}</b> — that's the whole "low-rank" idea, and why the overlay is tiny. Watch it fill
+            in from zero as the adapter trains.
+          </div>
+          <LoRAView trace={loraTrace} layer={0} />
+        </div>
+      )}
     </div>
   )
 }
