@@ -158,9 +158,19 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
     models are aligned). This is where "helpful, harmless, honest," the model's tone, and its refusals come
     from — they're *trained in*, not emergent. Honest caveat: alignment shapes *behaviour and preferences*,
     not *truth* — RLHF doesn't cure the hallucination of Chapter 7, it just makes the model nicer about it.
-    **Site gap — prose** (the tiny in-browser model can't demo RL; anchor to the LoRA fine-tune experience
-    as the nearest hands-on analogue — "SFT is LoRA-with-better-data at scale"). Deeper: reward models,
-    PPO vs DPO, the KL penalty / "alignment tax," Constitutional AI.
+    - **Catastrophic forgetting, and beating it (measured; lab demo).** The hidden cost of fine-tuning:
+      teaching a new skill can *erase* an old one. Shown live — teach the ascending sort model a new verb
+      `tros` ("sort" backwards → descending, in-vocab so one model can hold both): plain **full fine-tuning
+      (SFT)** learns `tros` (~90–98%) but its old `sort` skill **collapses ~96%→~4%**. The fix is **replay /
+      self-distillation** — fine-tune on `tros` while distilling `sort` from a frozen snapshot of the model's
+      own *old self* (`softCrossEntropy` against the frozen teacher) — which keeps **both** (λ=0.5, T=2:
+      `tros`→~100%, `sort`→~95%). This is the honest, in-browser core of **relevance-masked self-distillation**
+      (Applied Compute) — the real method adds an LLM judge to spend the retention budget only on the tokens
+      that matter, which we can't run in a browser. Ties to LoRA (freezing the base is a third way to not
+      forget). Engine: `Trainer.sftStep`/`replayStep`. Try: `lab` → forgetting.
+    **Site note** (RLHF/PPO itself stays prose — the tiny in-browser model can't run RL rollouts; anchor to
+    the LoRA fine-tune + forgetting demos as the nearest hands-on analogues — "SFT is LoRA-with-better-data at
+    scale"). Deeper: reward models, PPO vs DPO, the KL penalty / "alignment tax," Constitutional AI.
 13. *Talking to it well* — prompting & context engineering *(new; site gap)*. Try: context/attention demos. Deeper: few-shot, system prompts.
 14. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
 15. *Agents — and their risks* — the loop, and its blind spot: **prompt injection**. The loop feeds a
