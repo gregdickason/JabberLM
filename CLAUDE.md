@@ -33,6 +33,16 @@ also reuses `sort-model.json`: freeze the ascending base, attach a tiny LoRA ada
 the overlay (`flags.lora`) flips the output `2 6 9 ↔ 9 6 2` while ascending (overlay off) stays ~97%
 (base frozen). Measured with `sortAccuracyDir`/`genSortLine` (`interp/ablation.ts`, flags-aware). **LoRA UI
 was removed from the playground** (kept to simple training); the lab is the only LoRA surface.
+The lab's **Forgetting** tab (`ForgettingSection.tsx`) reuses `sort-model.json` to show **catastrophic
+forgetting** and the **self-distillation / replay** fix: teach the model a new verb **`tros`** ("sort"
+backwards → descending, in-vocab so one model can hold both — `trosLine`/`buildTrosCorpus` in `tasks.ts`) two
+ways. `Trainer.sftStep(cfg, flags, ids)` (full-param CE on a supplied corpus) forgets — `sort` collapses
+~96%→~4% as `tros` is learned. `Trainer.replayStep(cfg, flags, {newIds, oldIds, teacher, lambda, temperature})`
+adds a `softCrossEntropy` self-distillation loss against a **frozen snapshot** (`deserialize` copy) on the OLD
+task, so both survive (λ=0.5, T=2; `tros`→~100%, `sort`→~95%). This is the in-browser core of relevance-masked
+self-distillation (minus the paper's LLM judge — we replay whole old-task windows). The **same-prompt**
+asc/desc pair only works for LoRA (the overlay disambiguates); a single weight set needs the distinct `tros`
+verb.
 `gen:jabber`/`gen:sonnets` build the older single-skill poem models. Bundled-model facts in
 `src/data/modelStats.ts`.
 

@@ -10,10 +10,11 @@ import GrokSection from './GrokSection'
 import RecoverySection from './RecoverySection'
 import DistillSection from './DistillSection'
 import LoraSection from './LoraSection'
+import ForgettingSection from './ForgettingSection'
 import SiteNav from '../components/SiteNav'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking', 'distillation', 'LoRA fine-tuning'] as const
+const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking', 'distillation', 'LoRA fine-tuning', 'forgetting'] as const
 type Tab = (typeof TABS)[number]
 
 const btn =
@@ -165,6 +166,7 @@ export default function LabApp() {
             {tab === 'advanced grokking' && <GrokSection />}
             {tab === 'distillation' && <DistillSection />}
             {tab === 'LoRA fine-tuning' && <LoraSection />}
+            {tab === 'forgetting' && <ForgettingSection />}
           </div>
         </>
       )}
