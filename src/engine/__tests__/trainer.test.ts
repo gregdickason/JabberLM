@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Trainer } from '../trainer'
+import { serialize, deserialize } from '../persist'
+import { crossEntropy } from '../ops'
 import { JABBERWOCKY } from '../../data/jabberwocky'
 import {
   DEFAULT_FEATURE_FLAGS,
@@ -7,6 +9,22 @@ import {
   DEFAULT_TRAIN_CONFIG,
   type ModelConfig,
 } from '../config'
+
+// Mean next-char cross-entropy of a model on a text (forward only) — "how well does it
+// still do this task". Used to show that fine-tuning on a new task raises the loss on the
+// old one (forgetting), and that replay keeps it low.
+function taskLoss(t: Trainer, text: string): number {
+  const ids = t.tok.encode(text)
+  const L = Math.min(t.cfg.contextLen, 24)
+  let s = 0
+  let n = 0
+  for (let st = 0; st + L + 1 < ids.length && n < 8; st += L) {
+    const w = ids.slice(st, st + L + 1)
+    s += crossEntropy(t.model.forward(w.slice(0, L), DEFAULT_FEATURE_FLAGS).logits, w.slice(1, L + 1)).loss.data[0]
+    n++
+  }
+  return n ? s / n : 0
+}
 
 const cfg: ModelConfig = {
   vocabSize: 0, // Trainer fills this from the tokenizer
@@ -121,4 +139,41 @@ describe('Trainer (integration)', () => {
     for (let i = 0; i < plain.length; i++) diff += Math.abs(plain[i] - abl[i])
     expect(diff).toBeGreaterThan(0) // zeroing a head's output changes the logits
   })
+
+  // Catastrophic forgetting: full fine-tuning on a NEW task erases an OLD one, but replay
+  // (self-distilling the old task from a frozen snapshot) keeps both. Two patterns over one
+  // shared alphabet so the vocab covers both (like sort vs tros on the digit vocab).
+  it('sftStep forgets the old task; replayStep retains it', () => {
+    const OLD = 'ab ab ac '.repeat(120) // old task pattern
+    const NEW = 'ba ba ca '.repeat(120) // new task, same characters
+    const tcfg = { ...DEFAULT_TRAIN_CONFIG, batchSize: 8, learningRate: 0.01 }
+    const small: ModelConfig = { ...cfg, dModel: 16, dFF: 32 }
+
+    // learn the OLD task, then snapshot it as the frozen teacher
+    const base = new Trainer(OLD + NEW, small, 1) // vocab spans both
+    const oldIds = base.tok.encode(OLD)
+    const newIds = base.tok.encode(NEW)
+    for (let i = 0; i < 120; i++) base.sftStep(tcfg, DEFAULT_FEATURE_FLAGS, oldIds)
+    const oldLossStart = taskLoss(base, OLD)
+
+    const snap = serialize(base, OLD + NEW) // keep the full vocab in the snapshot
+    const sftT = deserialize(snap)
+    const repT = deserialize(snap)
+    const teacher = deserialize(snap).model // frozen original
+
+    // both fine-tune on the NEW task from the same start
+    for (let i = 0; i < 120; i++) {
+      sftT.sftStep(tcfg, DEFAULT_FEATURE_FLAGS, newIds)
+      repT.replayStep(tcfg, DEFAULT_FEATURE_FLAGS, { newIds, oldIds, teacher: teacher, lambda: 1, temperature: 2 })
+    }
+
+    const oldLossSft = taskLoss(sftT, OLD)
+    const oldLossRep = taskLoss(repT, OLD)
+    // plain SFT forgets the old task (its old-task loss rises well above where it started)
+    expect(oldLossSft).toBeGreaterThan(oldLossStart + 0.1)
+    // replay retains it far better than plain SFT
+    expect(oldLossRep).toBeLessThan(oldLossSft)
+    // and both still learn the new task (finite, trained loss)
+    expect(Number.isFinite(taskLoss(repT, NEW))).toBe(true)
+  }, 30000)
 })

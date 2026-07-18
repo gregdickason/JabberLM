@@ -44,14 +44,15 @@ export function sortAccuracy(model: Model, tok: CharTokenizer, vectors: SortVec[
   return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
 }
 
-/** Greedy answer for one `sort a b c => ` prompt, honouring a feature-flag override
- *  (e.g. `lora` on/off to compare the frozen base vs the adapted overlay). */
-export function genSortLine(model: Model, tok: CharTokenizer, v: SortVec, flags: FeatureFlags): string {
+/** Greedy answer for one `<verb> a b c => ` prompt (verb defaults to `sort`), honouring a
+ *  feature-flag override (e.g. `lora` on/off to compare the frozen base vs the adapted
+ *  overlay). The forgetting demo passes `verb='tros'` for the reverse-sort task. */
+export function genSortLine(model: Model, tok: CharTokenizer, v: SortVec, flags: FeatureFlags, verb = 'sort'): string {
   const out = generate(
     model,
     flags,
     tok,
-    `sort ${v.join(' ')} => `,
+    `${verb} ${v.join(' ')} => `,
     { ...DEFAULT_SAMPLE_CONFIG, temperature: 0, maxNewTokens: 8 },
     new RNG(1),
   )
@@ -59,22 +60,22 @@ export function genSortLine(model: Model, tok: CharTokenizer, v: SortVec, flags:
 }
 
 /**
- * Sort accuracy with a **feature-flag override** and a chooseable direction. Used by the
- * LoRA demo: measure ascending with the overlay OFF (`{flags:{...,lora:false}}`) and
- * descending with the overlay ON (`{descending:true, flags:{...,lora:true}}`) on the same
- * frozen model, using the same `sort a b c => ` prompt.
+ * Sort accuracy with a **feature-flag override**, a chooseable **direction**, and a
+ * chooseable prompt **verb**. Used by the LoRA demo (same `sort` verb, overlay on/off)
+ * and the forgetting demo (old task `verb='sort'` ascending vs new task `verb='tros'`
+ * descending, so one model can be scored on both).
  */
 export function sortAccuracyDir(
   model: Model,
   tok: CharTokenizer,
   vectors: SortVec[],
-  opts: { descending?: boolean; flags?: FeatureFlags } = {},
+  opts: { descending?: boolean; flags?: FeatureFlags; verb?: string } = {},
 ): number {
   const flags = opts.flags ?? DEFAULT_FEATURE_FLAGS
   let ok = 0
   for (const v of vectors) {
     const want = [...v].sort((a, b) => (opts.descending ? b - a : a - b)).join(' ')
-    if (genSortLine(model, tok, v, flags) === want) ok++
+    if (genSortLine(model, tok, v, flags, opts.verb ?? 'sort') === want) ok++
   }
   return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
 }

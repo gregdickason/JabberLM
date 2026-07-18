@@ -251,6 +251,89 @@ export class Trainer {
     return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
   }
 
+  /** Pick one random (input, next-token target) window from a token stream. */
+  private pickWindow(ids: number[], L: number): { input: number[]; target: number[] } {
+    const maxStart = ids.length - 1 - L
+    const start = maxStart <= 0 ? 0 : Math.floor(this.rng.next() * (maxStart + 1))
+    return { input: ids.slice(start, start + L), target: ids.slice(start + 1, start + 1 + L) }
+  }
+
+  /**
+   * Full-parameter supervised fine-tune on a **supplied** token stream (a NEW task),
+   * ignoring this Trainer's own corpus. Unlike `stepBatch` nothing is frozen, so this is
+   * how catastrophic forgetting is shown: fine-tune hard on the new task and the OLD skill
+   * degrades, because every weight is free to move. Not for fine-tuning (LoRA) mode.
+   */
+  sftStep(trainCfg: TrainConfig, flags: FeatureFlags, ids: number[]): StepResult {
+    const L = Math.min(this.cfg.contextLen, ids.length - 1)
+    if (L < 1) throw new Error('fine-tune corpus too short for the context length')
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    const batch = Math.max(1, trainCfg.batchSize)
+    for (let b = 0; b < batch; b++) {
+      const { input, target } = this.pickWindow(ids, L)
+      const { loss } = crossEntropy(this.model.forward(input, flags).logits, target)
+      total = total ? add(total, loss) : loss
+    }
+    const meanLoss = scale(total!, 1 / batch)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
+  /**
+   * Self-distillation / **replay** against catastrophic forgetting: fine-tune all weights
+   * on a NEW task (`newIds`, hard cross-entropy) while ALSO distilling from a frozen
+   * `teacher` (a snapshot of the ORIGINAL model) on the OLD task (`oldIds`), so the old
+   * skill isn't overwritten. Per step:
+   *   loss = CE(new window) + λ · T²·softCE(student(old)/T, softmax(teacher(old)/T))
+   * This is the in-browser core of relevance-masked self-distillation (minus the paper's
+   * LLM judge; here the whole old-task window stands in for the "relevant" tokens).
+   */
+  replayStep(
+    trainCfg: TrainConfig,
+    flags: FeatureFlags,
+    opts: { newIds: number[]; oldIds: number[]; teacher: Model; lambda?: number; temperature?: number },
+  ): StepResult {
+    const { newIds, oldIds, teacher } = opts
+    const lambda = opts.lambda ?? 1
+    const T = Math.max(1, opts.temperature ?? 2)
+    const vocab = this.cfg.vocabSize
+    const Ln = Math.min(this.cfg.contextLen, newIds.length - 1)
+    const Lo = Math.min(this.cfg.contextLen, oldIds.length - 1)
+    if (Ln < 1 || Lo < 1) throw new Error('replay corpus too short for the context length')
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    const batch = Math.max(1, trainCfg.batchSize)
+    for (let b = 0; b < batch; b++) {
+      // new-task hard cross-entropy
+      const nw = this.pickWindow(newIds, Ln)
+      const ce = crossEntropy(this.model.forward(nw.input, flags).logits, nw.target).loss
+      // old-task self-distillation: match the frozen teacher's softened distribution
+      const ow = this.pickWindow(oldIds, Lo)
+      const tl = teacher.forward(ow.input, flags).logits
+      const q = new Float32Array(Lo * vocab)
+      for (let i = 0; i < Lo; i++) {
+        let max = -Infinity
+        for (let j = 0; j < vocab; j++) max = Math.max(max, tl.data[i * vocab + j] / T)
+        let sumE = 0
+        for (let j = 0; j < vocab; j++) {
+          const e = Math.exp(tl.data[i * vocab + j] / T - max)
+          q[i * vocab + j] = e
+          sumE += e
+        }
+        for (let j = 0; j < vocab; j++) q[i * vocab + j] /= sumE
+      }
+      const distill = scale(softCrossEntropy(scale(this.model.forward(ow.input, flags).logits, 1 / T), q), T * T)
+      const stepLoss = add(ce, scale(distill, lambda))
+      total = total ? add(total, stepLoss) : stepLoss
+    }
+    const meanLoss = scale(total!, 1 / batch)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
   /**
    * Mean cross-entropy over the held-out validation region — forward only, so no
    * gradients are touched and weights are never updated. Uses a fixed set of

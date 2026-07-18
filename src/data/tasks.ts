@@ -78,6 +78,31 @@ export function buildDescendingSortCorpus(targetChars = 40000): string {
   return lines.join('\n') + '\n'
 }
 
+// ---- "tros" = a NEW, prompt-DISTINGUISHABLE task (the forgetting demo) ------
+// "tros" is "sort" spelled backwards, and it sorts backwards (descending) — but under
+// a DIFFERENT verb, so one model can hold BOTH `sort → ascending` and `tros → descending`
+// (unlike the LoRA demo's same-"sort" prompt, where a single weight set can't do both).
+// Uses only in-vocab letters (s,o,r,t), so the ascending sort model tokenizes it unchanged.
+// This is the substrate for catastrophic forgetting: fine-tune hard on `tros` and watch
+// `sort` degrade — unless you replay/self-distil the old skill.
+export const trosLine = (v: SortVec): string =>
+  `tros ${v.join(' ')} => ${[...v].sort((x, y) => y - x).join(' ')}`
+
+/** A `tros` (reverse-sort) corpus from the same training split as ascending sort. */
+export function buildTrosCorpus(targetChars = 40000): string {
+  const rnd = mulberry32(20250626)
+  const vecs = allSortVecs(rnd)
+  const train = vecs.slice(Math.floor(vecs.length * 0.2))
+  const lines: string[] = []
+  let chars = 0
+  while (chars < targetChars) {
+    const l = trosLine(train[Math.floor(rnd() * train.length)])
+    lines.push(l)
+    chars += l.length + 1
+  }
+  return lines.join('\n') + '\n'
+}
+
 // ---- algebra (single-variable, correct working — the model still can't learn it) ----
 export const algebraLine = (rnd: () => number): string => {
   const a = 2 + Math.floor(rnd() * 8) // 2..9
