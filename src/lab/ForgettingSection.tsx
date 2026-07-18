@@ -191,11 +191,11 @@ export default function ForgettingSection() {
       >
         Teaching a model a <b>new</b> skill can quietly erase an <b>old</b> one — "catastrophic forgetting".
         The bundled model sorts <b>ascending</b> (<span className="font-mono">sort 6 9 2 =&gt; 2 6 9</span>,
-        ~{baseAcc}%). We teach it a new verb, <b><span className="font-mono">tros</span></b> ("sort" backwards
-        = descending), two ways and watch what happens to the old <span className="font-mono">sort</span>{' '}
+        ~{baseAcc}%). We teach it a new verb, "<b><span className="font-mono">tros</span></b>" ("sort" backwards
+        = descending), two ways and watch what happens to the old "<span className="font-mono">sort</span>"{' '}
         skill: plain <span style={{ color: SFT }}>full fine-tuning (SFT)</span> vs{' '}
-        <span style={{ color: REPLAY }}>replay / self-distillation</span> — learn <span className="font-mono">tros</span>{' '}
-        while distilling <span className="font-mono">sort</span> from a frozen snapshot of the model's own{' '}
+        <span style={{ color: REPLAY }}>replay / self-distillation</span> — learn "<span className="font-mono">tros</span>"{' '}
+        while distilling "<span className="font-mono">sort</span>" from a frozen snapshot of the model's own{' '}
         <em>old self</em>. That's the core of <b>relevance-masked self-distillation</b> (the paper adds an LLM
         judge to pick which tokens to keep; in a browser we just replay whole old-task windows). Freezing the
         base is a third way — see the <a className="text-fuchsia-300 hover:underline" href="#lora-fine-tuning">LoRA tab</a>.
@@ -220,13 +220,13 @@ export default function ForgettingSection() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <div className="mb-1 text-[11px] text-slate-400">
-            New skill — <b className="font-mono">tros</b> (descending) accuracy — both learn it
+            New skill — "<b className="font-mono">tros</b>" (descending) accuracy — both learn it
           </div>
           <LineChart series={newSeries} width={440} height={185} yLabel="tros %" />
         </div>
         <div>
           <div className="mb-1 text-[11px] text-slate-400">
-            Old skill — <b className="font-mono">sort</b> (ascending) accuracy — SFT forgets, replay keeps it
+            Old skill — "<b className="font-mono">sort</b>" (ascending) accuracy — SFT forgets, replay keeps it
           </div>
           <LineChart series={oldSeries} width={440} height={185} yLabel="sort %" />
         </div>
@@ -249,11 +249,11 @@ export default function ForgettingSection() {
       )}
 
       <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-500">
-        <span style={{ color: SFT }}>SFT</span> learns <span className="font-mono">tros</span> but its{' '}
-        <span className="font-mono">sort</span> accuracy <b>collapses</b> — nothing protected the old skill, so
+        <span style={{ color: SFT }}>SFT</span> learns "<span className="font-mono">tros</span>" but its{' '}
+        "<span className="font-mono">sort</span>" accuracy <b>collapses</b> — nothing protected the old skill, so
         the new task overwrote it. <span style={{ color: REPLAY }}>Replay / self-distillation</span> keeps{' '}
         <em>both</em> in one set of weights: every step it also matches its own old outputs on{' '}
-        <span className="font-mono">sort</span>, so learning <span className="font-mono">tros</span> can't erase
+        "<span className="font-mono">sort</span>", so learning "<span className="font-mono">tros</span>" can't erase
         them. This is how you add a capability to a deployed model without regressions — the honest,
         in-browser heart of the RMSD idea (the real method adds an LLM judge to spend the retention budget only
         on the tokens that matter).
