@@ -125,23 +125,32 @@ export default function InferencePanel() {
   const tok = trainer.tok
   const model = trainer.model
 
-  // Run restarts from the prompt AND emits the first predicted token, so the output
-  // visibly grows past what you typed (otherwise it looks like nothing happened).
-  // The first time, nudge the user toward Step/Generate by pulsing those buttons.
+  // Run generates the WHOLE answer from the prompt (up to a newline, or a cap), so the
+  // first click produces a complete result — e.g. `sort 6 9 2 => 2 6 9` — and populates
+  // the inspector. Step then lets you redo it one token at a time to watch it think.
   function run() {
     let seed = tok.encode(prompt)
     if (seed.length === 0) seed = [0]
-    const promptTrace = traceOf(model, featureFlags, seed).trace
-    const last = lastRowLogits(promptTrace.logits.data, promptTrace.logits.rows, promptTrace.logits.cols)
-    const { chosen } = sampleFromLogits(last, sampleConfig, rng.current)
-    const next = [...seed, chosen]
-    const { trace } = traceOf(model, featureFlags, next)
-    setIds(next)
+    const nl = tok.stoi.get('\n')
+    const ctx = model.cfg.contextLen
+    const cur = [...seed]
+    let lastChosen = sampled
+    for (let i = 0; i < 32; i++) {
+      const window = cur.slice(Math.max(0, cur.length - ctx))
+      const { logits } = model.forward(window, featureFlags)
+      const last = lastRowLogits(logits.data, logits.rows, logits.cols)
+      const { chosen } = sampleFromLogits(last, sampleConfig, rng.current)
+      if (chosen === nl) break // stop at the end of the line (the answer)
+      cur.push(chosen)
+      lastChosen = chosen
+    }
+    const { trace } = traceOf(model, featureFlags, cur)
+    setIds(cur)
     setPromptLen(seed.length)
     setTrace(trace)
-    setSampled(chosen)
-    setGenText(tok.decode(next))
-    if (!hintUsed.current) setHintNext(true)
+    setSampled(lastChosen)
+    setGenText(tok.decode(cur))
+    if (!hintUsed.current) setHintNext(true) // nudge toward the inspector tabs
   }
 
   function step() {
@@ -233,8 +242,8 @@ export default function InferencePanel() {
             }}
             placeholder="prompt…"
           />
-          <button className={btn} onClick={run}>
-            Run
+          <button className={btn + ' border-emerald-600 bg-emerald-900/40 text-emerald-200'} onClick={run}>
+            ▶ Run
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -245,7 +254,7 @@ export default function InferencePanel() {
             className={btn + (hintNext ? ' animate-pulse ring-2 ring-sky-400' : '')}
             onClick={() => generate(20)}
           >
-            Generate ×20
+            Continue ×20
           </button>
           <button className={btn} onClick={clearSession} disabled={!trace}>
             ↺ Reset
@@ -297,14 +306,14 @@ export default function InferencePanel() {
           {genText || '(run a prompt to begin)'}
         </pre>
         <div className="text-[10px] text-slate-500">
-          Run = start from prompt + first letter · Step = continue one token · Generate ×20 = add many
-          · Reset = clear · editing the prompt starts fresh
+          Run = generate the whole answer · Step = one token at a time (watch it think) · Continue ×20 =
+          keep going · Reset = clear · editing the prompt starts fresh
         </div>
       </div>
 
       {!trace ? (
         <div className="rounded border border-dashed border-slate-700 p-4 text-center text-[11px] text-slate-500">
-          Press Run, then Step, to populate the inspector.
+          Press <span className="text-emerald-300">▶ Run</span> to generate an answer and open the inspector.
         </div>
       ) : (
         <div className="space-y-3">

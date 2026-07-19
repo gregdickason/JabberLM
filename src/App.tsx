@@ -261,10 +261,12 @@ export default function App() {
         </aside>
 
         <main className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-2">
-          <section className="border-b border-slate-800 lg:min-h-0 lg:border-b-0 lg:border-r lg:overflow-y-auto">
+          {/* On mobile, show the ready-to-use Inference panel FIRST (order-1); on desktop
+              reset to source order so Training is the left column, Inference the right. */}
+          <section className="order-2 border-t border-slate-800 lg:order-none lg:min-h-0 lg:border-t-0 lg:border-r lg:overflow-y-auto">
             <TrainingPanel />
           </section>
-          <section className="lg:min-h-0 lg:overflow-y-auto">
+          <section className="order-1 lg:order-none lg:min-h-0 lg:overflow-y-auto">
             <InferencePanel />
           </section>
         </main>
@@ -288,6 +290,11 @@ export default function App() {
               A real, tiny language model you can see inside — running entirely in your browser. Where
               would you like to start?
             </p>
+            <p className="mt-1 text-[10px] text-slate-500">
+              New here? A good path: <span className="text-emerald-300">New to AI</span> →{' '}
+              <span className="text-sky-300">How it works</span> →{' '}
+              <span className="text-fuchsia-300">Experiment</span>.
+            </p>
 
             {/* 1 — recommended: use AI more intelligently */}
             <a
@@ -295,7 +302,10 @@ export default function App() {
               onClick={dismissChooser}
               className={tile + ' mt-4 block border-emerald-700 bg-emerald-900/25 hover:bg-emerald-900/45'}
             >
-              <div className="text-sm font-semibold text-emerald-200">New to AI — use it more wisely ★</div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-emerald-200">New to AI — use it more wisely ★</span>
+                <span className="shrink-0 text-[10px] text-slate-500">~10 min</span>
+              </div>
               <div className="text-[11px] text-slate-400">
                 Plain language, no maths: how it answers, why it varies, what it costs, and where it goes
                 wrong.
@@ -308,7 +318,10 @@ export default function App() {
               onClick={dismissChooser}
               className={tile + ' mt-2 block border-sky-700 bg-sky-900/25 hover:bg-sky-900/45'}
             >
-              <div className="text-sm font-semibold text-sky-200">Understand a transformer</div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-sky-200">Understand a transformer</span>
+                <span className="shrink-0 text-[10px] text-slate-500">~15 min</span>
+              </div>
               <div className="text-[11px] text-slate-400">
                 Follow one prediction through a real model: tokens → vectors → attention → next-character
                 guess.
@@ -317,7 +330,10 @@ export default function App() {
 
             {/* 3 — experiment (stay in the playground) */}
             <div className={tile + ' mt-2 border-fuchsia-700/60 bg-fuchsia-950/15'}>
-              <div className="text-sm font-semibold text-fuchsia-200">Experiment with the model</div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-fuchsia-200">Experiment with the model</span>
+                <span className="shrink-0 text-[10px] text-slate-500">~5 min</span>
+              </div>
               <div className="text-[11px] text-slate-400">
                 Generate text and sort numbers here, then train one from scratch and watch it "grok".
               </div>

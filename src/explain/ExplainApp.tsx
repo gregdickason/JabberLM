@@ -17,6 +17,16 @@ import RagDemo from './RagDemo'
 import QuantizationDemo from './QuantizationDemo'
 import Governance from './Governance'
 
+// Placeholder shown in a model-driven demo slot while the tiny model is still loading —
+// so the lesson copy renders immediately instead of a blank page behind "loading…".
+function DemoLoading() {
+  return (
+    <div className="my-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-slate-800 text-[11px] text-slate-500">
+      loading the model…
+    </div>
+  )
+}
+
 export default function ExplainApp() {
   const [loaded, setLoaded] = useState<LoadedModel | null>(null)
   const [status, setStatus] = useState('loading the model…')
@@ -71,17 +81,14 @@ export default function ExplainApp() {
         )}
       </div>
 
-      {!loaded ? (
-        <div className="px-4 pb-16 text-center text-xs text-slate-500">{status}</div>
-      ) : (
-        <>
+      <>
           <Section n={1} id="prediction" title="It predicts the next piece of text">
             <p>
               At heart, a language model is very advanced autocomplete. Given the text so far, it
               estimates how likely <em>every</em> possible next piece of text is, then picks one. It
               isn't looking anything up — it's predicting what tends to come next.
             </p>
-            <NextTokenDemo trainer={loaded.trainer} />
+            {loaded ? <NextTokenDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               A fluent, confident answer is a prediction, not a fact or a citation. It's excellent for a
               first draft — a clause, a summary, a memo — but the authority has to come from you checking
@@ -94,7 +101,7 @@ export default function ExplainApp() {
               Models usually add a little randomness when choosing the next piece, controlled by a
               setting called <em>temperature</em>. Turn it down for consistency; turn it up for variety.
             </p>
-            <RandomnessDemo trainer={loaded.trainer} />
+            {loaded ? <RandomnessDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               For anything that must be consistent or auditable — policy answers, figures, standard
               wording — use a low temperature, record the model version, and keep the output. Never
@@ -107,7 +114,7 @@ export default function ExplainApp() {
               A model only reads a limited amount of text at once: its <em>context window</em>. When it
               chooses the next piece it leans more on some earlier parts than others (its "attention").
             </p>
-            <ContextDemo trainer={loaded.trainer} />
+            {loaded ? <ContextDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               Long contracts, policies, or filings can exceed the window or get truncated, so a key
               clause buried deep can simply be missed. Put the critical instruction and facts up front,
@@ -120,7 +127,7 @@ export default function ExplainApp() {
               Because it always predicts plausible-looking text, a model will produce a confident answer
               even when it has nothing real to go on. That's a "hallucination".
             </p>
-            <HallucinationDemo trainer={loaded.trainer} />
+            {loaded ? <HallucinationDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               Treat every fact, number, quotation, citation, and case name as unverified until you've
               checked the source. The risk is highest exactly where it matters most — legal references,
@@ -261,7 +268,6 @@ export default function ExplainApp() {
             .
           </footer>
         </>
-      )}
     </div>
   )
 }
