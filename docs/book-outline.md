@@ -194,8 +194,14 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
       than input tokens*. (c) **Prompt caching** — reuse the same big prompt across calls and pay the
       prefill once (a real discount for repeated queries); the catch is the cache lives in **memory** and
       grows with context, so long contexts are limited by memory, not just compute. (d) Batching / GPU
-      utilisation as the other big lever. Try: `explain §6` (KV-cache cost slider). Ch 4's Q/K/V is exactly
-      what gets cached here — a one-line forward pointer there.
+      utilisation as the other big lever. (e) **Speculative decoding** — generation is serial (one big-model
+      forward per token), so pair the big **target** with a small **draft** that proposes K tokens; the target
+      then *verifies all K in one forward* (its logits at every position say what it would have produced),
+      accept the longest matching prefix, correct the first miss. Because the target has the final say, the
+      output is **identical** to running it alone — *faster, not approximate*. Measured in the lab: ~2.3×
+      fewer target forwards at K=4 (honest caveat: wall-clock only wins at real scale, where the target dwarfs
+      the draft and runs on parallel hardware). Try: `explain §6` (KV-cache cost slider), `lab` → speculative
+      decoding. Ch 4's Q/K/V is exactly what gets cached here — a one-line forward pointer there.
 **Capstone (end of Part IV):** *Build your own* — train a mini-model, then a 2-tool agent, on the site.
 
 **Part V — Intelligence (the strange loop)** — the finale; philosophy *earned* by everything above.
