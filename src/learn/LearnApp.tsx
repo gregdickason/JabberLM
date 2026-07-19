@@ -333,7 +333,7 @@ export default function LearnApp() {
               invents get richer and more abstract, and they aren't placed by hand: specific{' '}
               <strong>heads</strong> and neurons quietly specialise. You can find the head that does the
               sorting and switch it off in the{' '}
-              <a className="text-fuchsia-300 underline" href="./lab.html">
+              <a className="text-fuchsia-300 underline" href="./lab.html#head-ablation">
                 interpretability lab
               </a>
               .
