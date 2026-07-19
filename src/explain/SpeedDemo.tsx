@@ -119,10 +119,12 @@ export default function SpeedDemo() {
       <div className="mt-3 rounded border border-sky-900/60 bg-sky-950/30 p-2 text-[11px] leading-relaxed text-slate-300">
         <span className="font-semibold text-sky-300">No server, no API:</span> this entire page is an{' '}
         <span className="text-slate-100">open-weights model running on your own device</span>. That's a
-        real option to weigh against paying a provider per token — smaller open models you can{' '}
-        <span className="text-slate-100">self-host</span> trade some capability for control, privacy,
-        and predictable cost. Worth asking your team: "could a small self-hosted model handle this
-        task?"
+        real option to weigh against paying a provider per token. Smaller open-weight models can improve{' '}
+        <span className="text-slate-100">control</span> and make spending more{' '}
+        <span className="text-slate-100">predictable</span> — especially at high, steady utilisation. But
+        compare the <span className="text-slate-100">full cost of ownership</span>: GPU capacity and idle
+        time, engineering, monitoring, upgrades, reliability, security, and model governance. Worth asking:
+        "could a small self-hosted model handle this — and would the total cost be lower?"
       </div>
     </div>
   )

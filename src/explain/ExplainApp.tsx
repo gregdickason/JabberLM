@@ -278,10 +278,11 @@ export default function ExplainApp() {
             </p>
             <SpeedDemo />
             <Callout>
-              Budget by tokens, not by "questions". Summarising or repeatedly querying large documents is
-              where spend accumulates; a more capable model can cost several times more per token — and
-              answer more slowly. Pick the smallest model that does the job, and weigh a small,
-              self-hosted open model where control, privacy, or predictable cost matter.
+              Forecast from token volume; manage by <em>business outcome</em>. Track input, output, caching,
+              retries, tool calls, and human rework by product or workflow — the useful measure is cost per{' '}
+              <strong>successfully completed task</strong>, not simply cost per request. Summarising or
+              repeatedly querying large documents is where spend accumulates, and a more capable model can
+              cost several times more per token — so pick the smallest model that clears the bar.
             </Callout>
           </Section>
 
