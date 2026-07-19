@@ -151,9 +151,10 @@ export default function LearnApp() {
           <Section n={2} title="Each number becomes a vector (embed)">
             <p>
               Each token id looks up a learned row of numbers — a <em>vector</em>. This is where meaning
-              starts to live: similar characters get similar vectors. This grid of vectors (one row per
-              character) is the <strong>residual stream</strong> — the train track every later step reads
-              from and writes back to.
+              starts to live: over training the model <em>tends</em> to give characters that behave alike
+              similar vectors (it learns this from the data — nothing forces it). This grid of vectors,{' '}
+              <em>plus</em> a position signal added on top, becomes the <strong>residual stream</strong> — the
+              train track every later step reads from and writes back to.
             </p>
             <Viz>
               <EmbeddingView trace={trace} tok={tok} />
@@ -277,9 +278,10 @@ export default function LearnApp() {
           <Section n={7} title="Grokking: the moment it 'gets it'">
             <p>
               Here's the surprise. Train this tiny model on sorting and for a long time it looks hopeless on
-              unseen lists — then accuracy <em>suddenly leaps</em>. It stops memorising and grasps the
-              concept of <em>order</em>. The proof is below: the model's 9 digit vectors, projected to 2-D.
-              A model that has truly learned to sort arranges them into a <strong>number line</strong> —{' '}
+              unseen lists — then accuracy <em>suddenly leaps</em>. It stops memorising and starts to{' '}
+              <em>generalise</em> — an algorithm for <em>order</em> rather than a lookup table. The real proof
+              is that jump on lists it never saw; the picture below shows <em>how</em>: the model's 9 digit
+              vectors, projected to 2-D, arrange themselves into a <strong>number line</strong> —{' '}
               <span className="font-mono">1…9</span> in order — all on its own.
             </p>
             {numberLine && numberLine.points.length > 0 && (

@@ -273,9 +273,12 @@ export default function HarnessApp() {
 
             <Callout>
               A fluent answer from a model is a <em>guess</em>. Wrapping it in a harness — parse the intent,
-              call a real tool, use the tool's result — turns "probably right" into "provably right" for
-              anything a tool can do (maths, lookups, code, search). That's why every serious AI product is
-              mostly harness.
+              call a real tool, use the tool's result — makes the <em>execution</em> authoritative: for
+              anything a tool actually does (maths, lookups, code, search), you get the tool's real answer
+              instead of the model's guess. That removes the hallucination for that step — but not every risk:
+              the model can still misread the intent, and the tool's data, permissions, and inputs can be
+              wrong or hostile (see §4). Reliability comes from the harness engineering around the call, not
+              from the wrapper alone. That's why every serious AI product is mostly harness.
             </Callout>
           </Section>
 

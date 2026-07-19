@@ -101,8 +101,8 @@ export default function SpeculativeSection() {
         proposes <b>K</b> tokens, then the big <b>target</b> checks all K in <b>one</b> forward pass (its logits
         at every position say what it would have produced there). Accept the longest matching prefix; correct
         the first miss; if all K match you get the target's next token <b>free</b>. Because the target has the
-        final say on every token, the output is <b>bit-for-bit identical</b> to running the target alone —{' '}
-        <em>faster, not approximate</em>.
+        final say on every token, the output is <b>bit-for-bit identical to greedy target decoding</b> (what
+        this demo runs) — <em>faster, not approximate</em>.
       </SectionIntro>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">

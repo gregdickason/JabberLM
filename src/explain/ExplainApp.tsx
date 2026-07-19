@@ -52,10 +52,10 @@ export default function ExplainApp() {
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
           Everything below is driven by a tiny model that predicts the next <em>character</em> of text.
-          The large models you use at work do the very same thing with whole words, trained on a huge
-          slice of the internet — running on <strong>the same core prediction mechanism</strong>, at
-          vastly larger scale. The mechanics you can see here, and the catches they cause, carry over. You
-          can poke every demo yourself.
+          The large models you use at work do the very same thing with <em>tokens</em> — word-pieces rather
+          than single characters (more on that below) — trained on a huge slice of the internet, running on{' '}
+          <strong>the same core prediction mechanism</strong>, at vastly larger scale. The mechanics you can
+          see here, and the catches they cause, carry over. You can poke every demo yourself.
         </p>
         <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
         {loaded?.source.includes('three-skill') && (
