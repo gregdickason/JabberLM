@@ -13,6 +13,7 @@ import {
 import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
 import { Section, Callout, card } from '../explain/ui'
 import SiteNav from '../components/SiteNav'
+import { useHashScroll } from '../components/useHashScroll'
 
 async function loadHarnessModel(): Promise<Trainer | null> {
   try {
@@ -132,6 +133,8 @@ export default function HarnessApp() {
       cancelled = true
     }
   }, [])
+
+  useHashScroll(trainer) // deep-link scroll once the model loads and sections render
 
   function run(text: string) {
     if (!trainer) return

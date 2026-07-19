@@ -6,6 +6,7 @@ import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import { pca2 } from '../interp/pca'
 import { MODEL_STATS } from '../data/modelStats'
 import SiteNav from '../components/SiteNav'
+import { useHashScroll } from '../components/useHashScroll'
 import type { Trace } from '../engine/trace'
 
 import TokenizerView from '../components/inspector/TokenizerView'
@@ -66,6 +67,8 @@ export default function LearnApp() {
       cancelled = true
     }
   }, [])
+
+  useHashScroll(loaded) // deep-link scroll once the model loads and sections render
 
   // One forward pass over the running example — every Act-1 view reads from this
   // single Trace, so the learner follows one example all the way through.

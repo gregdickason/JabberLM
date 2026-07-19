@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { loadDemoModel, type LoadedModel } from './loadDemoModel'
 import { MODEL_STATS, MODEL_METHOD } from '../data/modelStats'
 import SiteNav from '../components/SiteNav'
+import { useHashScroll } from '../components/useHashScroll'
 import { Section, Callout } from './ui'
 import NextTokenDemo from './NextTokenDemo'
 import RandomnessDemo from './RandomnessDemo'
@@ -80,6 +81,10 @@ export default function ExplainApp() {
       cancelled = true
     }
   }, [])
+
+  // Deep-link scroll (e.g. explain.html#cost) — re-runs once the model loads so it lands
+  // correctly after the §1–4 demos hydrate and the layout above the target settles.
+  useHashScroll(loaded)
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
