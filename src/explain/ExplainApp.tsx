@@ -27,6 +27,39 @@ function DemoLoading() {
   )
 }
 
+// Compact in-page contents so the ten sections read as three tiers — and signal that the
+// cost/inference sections are an optional deeper module for decision-makers.
+const TOC: { group: string; items: [string, string][] }[] = [
+  { group: 'The basics', items: [['prediction', 'Prediction'], ['randomness', 'Randomness'], ['context', 'Context & memory'], ['hallucination', 'Hallucination']] },
+  { group: 'Under the hood', items: [['tokens', 'Tokens'], ['embeddings', 'Embeddings'], ['rag', 'Retrieval (RAG)']] },
+  { group: 'For decision-makers', items: [['cost', 'Cost'], ['inference', 'Inference economics'], ['governance', 'What to ask']] },
+]
+function ContentsNav() {
+  return (
+    <nav className="mx-auto max-w-2xl px-4 py-4" aria-label="Contents">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-3">
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">On this page</div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {TOC.map((g) => (
+            <div key={g.group}>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{g.group}</div>
+              <ul className="mt-0.5 space-y-0.5">
+                {g.items.map(([id, label]) => (
+                  <li key={id}>
+                    <a href={`#${id}`} className="text-[12px] text-sky-400 hover:underline">
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </nav>
+  )
+}
+
 export default function ExplainApp() {
   const [loaded, setLoaded] = useState<LoadedModel | null>(null)
   const [status, setStatus] = useState('loading the model…')
@@ -82,6 +115,7 @@ export default function ExplainApp() {
       </div>
 
       <>
+          <ContentsNav />
           <Section n={1} id="prediction" title="It predicts the next piece of text">
             <p>
               At heart, a language model is very advanced autocomplete. Given the text so far, it
@@ -127,6 +161,17 @@ export default function ExplainApp() {
               Because it always predicts plausible-looking text, a model will produce a confident answer
               even when it has nothing real to go on. That's a "hallucination".
             </p>
+            <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
+              <summary className="cursor-pointer select-none text-slate-400">
+                Predict first: this model was trained on equations like <span className="font-mono">7x + 2 = 16</span>.
+                Will it solve a new one correctly?
+              </summary>
+              <p className="mt-2">
+                No. It learned the <em>shape</em> of the working, so it writes confident, fluent steps — but
+                the arithmetic is invented (a tiny model can't actually compute). Fluent ≠ correct: that's the
+                whole lesson.
+              </p>
+            </details>
             {loaded ? <HallucinationDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               Treat every fact, number, quotation, citation, and case name as unverified until you've
@@ -180,6 +225,14 @@ export default function ExplainApp() {
               vendor: <em>where does the answer come from, and can it show me the passage?</em>
             </Callout>
           </Section>
+
+          <div className="mx-auto max-w-2xl border-t border-slate-800 px-4 pt-6">
+            <div className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-[12px] text-sky-100">
+              <span className="font-semibold text-sky-300">For product &amp; technical decision-makers</span> —
+              the last three sections go deeper on what these tools <em>cost</em> to run and what to ask
+              before you buy or build. Skip them if you just wanted the how-it-works tour above.
+            </div>
+          </div>
 
           <Section n={8} id="cost" title="What it costs to run">
             <p>

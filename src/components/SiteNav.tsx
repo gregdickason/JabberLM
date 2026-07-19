@@ -12,12 +12,25 @@ const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'lab', label: 'Lab', href: './lab.html' },
 ]
 
+// The recommended learning sequence (distinct from the display order above), with a
+// rough time per stop — powers the "Next →" affordance so every page suggests where to go.
+const ORDER: NavKey[] = ['explain', 'learn', 'playground', 'harness', 'lab']
+const MINUTES: Record<NavKey, string> = {
+  explain: '10 min',
+  learn: '15 min',
+  playground: '5 min',
+  harness: '10 min',
+  lab: 'explore',
+}
+
 /**
  * `current` highlights the active page; `children` holds page-specific controls
  * (rendered between the brand and the right-aligned nav) — e.g. the playground's
  * Config/Guide buttons and model badge, or a page's descriptive subtitle.
  */
 export default function SiteNav({ current, children }: { current: NavKey; children?: React.ReactNode }) {
+  const idx = ORDER.indexOf(current)
+  const next = idx >= 0 && idx < ORDER.length - 1 ? LINKS.find((l) => l.key === ORDER[idx + 1]) : null
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-slate-800 bg-slate-900/60 px-4 py-2 font-mono">
       <a href="./" className="text-base font-bold text-sky-300 hover:text-sky-200">
@@ -52,6 +65,15 @@ export default function SiteNav({ current, children }: { current: NavKey; childr
         >
           GitHub ↗
         </a>
+        {next && (
+          <a
+            href={next.href}
+            className="rounded border border-sky-800 bg-sky-950/40 px-1.5 py-1 text-sky-300 hover:bg-sky-900/50 sm:py-0.5"
+            title="Recommended next step in the learning path"
+          >
+            Next: {next.label} · {MINUTES[next.key]} →
+          </a>
+        )}
       </nav>
     </header>
   )

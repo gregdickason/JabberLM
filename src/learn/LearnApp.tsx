@@ -284,6 +284,16 @@ export default function LearnApp() {
               vectors, projected to 2-D, arrange themselves into a <strong>number line</strong> —{' '}
               <span className="font-mono">1…9</span> in order — all on its own.
             </p>
+            <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
+              <summary className="cursor-pointer select-none text-slate-400">
+                Predict first: as training goes on, what shape does the held-out accuracy curve make?
+              </summary>
+              <p className="mt-2">
+                Not a smooth climb — it sits near zero for a long time (memorising the training lists), then
+                <em> suddenly leaps</em> to high accuracy once it discovers the general rule. That late,
+                sharp jump is "grokking".
+              </p>
+            </details>
             {numberLine && numberLine.points.length > 0 && (
               <Viz>
                 <div className="p-2">
