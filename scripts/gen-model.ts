@@ -31,6 +31,9 @@ import {
 
 const LARGEST: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 96, nHeads: 4, nLayers: 4, contextLen: 128, dFF: 384 }
 const DEFAULTP: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 }
+// A small, fast DRAFT model for the speculative-decoding demo — same contextLen as the
+// default target (so verification needs no window cropping) but far fewer params.
+const DRAFTP: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 24, nHeads: 2, nLayers: 2, contextLen: 48, dFF: 96 }
 // Mixture-of-Experts demo model: each layer's MLP is E expert FFNs + a gate.
 const MOE: ModelConfig = {
   ...DEFAULT_MODEL_CONFIG,
@@ -58,6 +61,12 @@ function makeDS(name: string): DS {
     case 'multitask': {
       const m = buildMultitaskCorpus()
       return { corpus: m.corpus, file: 'multitask-model.json', seed: "'Twas ", config: DEFAULTP, sortHeldOut: m.sortHeldOut }
+    }
+    case 'multitask-draft': {
+      // tiny DRAFT trained on the SAME corpus as multitask-model.json → identical vocab
+      // (CharTokenizer sorts unique chars), so it can be the speculative-decoding draft.
+      const m = buildMultitaskCorpus()
+      return { corpus: m.corpus, file: 'multitask-draft.json', seed: "'Twas ", config: DRAFTP, sortHeldOut: m.sortHeldOut }
     }
     case 'moe':
       return { corpus: buildMoeCorpus(30000), file: 'moe-model.json', seed: 'sort 6 9 2 => ', config: MOE, sortHeldOut: sortHeldOut() }

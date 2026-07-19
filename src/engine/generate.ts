@@ -99,6 +99,116 @@ export function lastRowLogits(data: Float32Array, rows: number, cols: number): F
   return data.slice((rows - 1) * cols, rows * cols)
 }
 
+/** Greedy argmax of one row `r` of a (seq × cols) logits buffer. */
+function argmaxRow(data: Float32Array, r: number, cols: number): number {
+  const base = r * cols
+  let best = 0
+  for (let i = 1; i < cols; i++) if (data[base + i] > data[base + best]) best = i
+  return best
+}
+
+// ---- speculative decoding --------------------------------------------------
+// A small DRAFT proposes K tokens; the big TARGET verifies all K in ONE forward
+// (its logits at every position say what it would have produced there). Accept the
+// longest matching prefix; on the first mismatch keep the target's own token; if all
+// K match, the target's next-position logits give a free "bonus" token. Greedy, so the
+// output is BIT-FOR-BIT identical to running the target alone — just fewer target passes.
+
+export type SpecKind = 'accepted' | 'correction' | 'bonus'
+export interface SpecToken {
+  id: number
+  kind: SpecKind
+}
+export interface SpecRound {
+  proposed: number[] // the draft's K guesses
+  accepted: number // how many matched the target (prefix length)
+  emitted: SpecToken[] // tokens actually kept this round (accepted + 1 correction/bonus)
+}
+export interface SpecResult {
+  text: string
+  tokens: SpecToken[] // the full generated stream, each tagged by how it was produced
+  rounds: SpecRound[]
+  targetForwards: number // expensive passes actually run (naive would be tokens.length)
+  draftForwards: number // cheap passes
+}
+
+/**
+ * Speculative decoding (greedy). Generates up to `maxNewTokens`, capped so
+ * prompt+generated+K never exceeds the context (no window cropping) — which keeps the
+ * output provably identical to `generate(target, greedy)`. Returns the token stream
+ * tagged accepted/correction/bonus plus forward-pass counts for the demo.
+ */
+export function speculativeGenerate(
+  draft: Model,
+  target: Model,
+  tok: CharTokenizer,
+  prompt: string,
+  flags: FeatureFlags,
+  maxNewTokens: number,
+  K: number,
+): SpecResult {
+  const ctx = target.cfg.contextLen
+  let ids = tok.encode(prompt)
+  if (ids.length === 0) ids = [0]
+  ids = ids.slice(Math.max(0, ids.length - ctx))
+  const tokens: SpecToken[] = []
+  const rounds: SpecRound[] = []
+  let targetForwards = 0
+  let draftForwards = 0
+
+  while (tokens.length < maxNewTokens && ids.length < ctx) {
+    const W = ids.length // context length this round (captured before we append)
+    const kThis = Math.min(K, maxNewTokens - tokens.length, ctx - W)
+    if (kThis <= 0) break
+
+    // 1. draft proposes kThis tokens autoregressively (cheap)
+    const proposed: number[] = []
+    const dctx = draft.cfg.contextLen
+    const dids = ids.slice()
+    for (let k = 0; k < kThis; k++) {
+      const dwin = dids.slice(Math.max(0, dids.length - dctx))
+      const { logits } = draft.forward(dwin, flags)
+      draftForwards++
+      const t = argmaxRow(logits.data, logits.rows - 1, logits.cols)
+      proposed.push(t)
+      dids.push(t)
+    }
+
+    // 2. target verifies all proposed tokens in ONE forward over [ids, proposed]
+    const { logits: tl } = target.forward(ids.concat(proposed), flags)
+    targetForwards++
+
+    // 3. accept the longest matching prefix; correct the first mismatch
+    const emitted: SpecToken[] = []
+    let rejected = false
+    for (let k = 0; k < proposed.length; k++) {
+      const tChoice = argmaxRow(tl.data, W - 1 + k, tl.cols) // target's own pick at this position
+      if (tChoice === proposed[k]) {
+        emitted.push({ id: proposed[k], kind: 'accepted' })
+        ids.push(proposed[k])
+      } else {
+        emitted.push({ id: tChoice, kind: 'correction' })
+        ids.push(tChoice)
+        rejected = true
+        break
+      }
+      if (tokens.length + emitted.length >= maxNewTokens) break
+    }
+    // 4. all accepted → the target's next-position logits are a free bonus token
+    if (!rejected && emitted.length === proposed.length && tokens.length + emitted.length < maxNewTokens && ids.length < ctx) {
+      const bonus = argmaxRow(tl.data, W - 1 + proposed.length, tl.cols)
+      emitted.push({ id: bonus, kind: 'bonus' })
+      ids.push(bonus)
+    }
+
+    tokens.push(...emitted)
+    rounds.push({ proposed, accepted: emitted.filter((e) => e.kind === 'accepted').length, emitted })
+    if (emitted.length === 0) break // safety
+  }
+
+  return { text: tok.decode(tokens.map((t) => t.id)), tokens, rounds, targetForwards, draftForwards }
+}
+
 /**
  * Generate `maxNewTokens` characters from a prompt by recomputing the full
  * (context-cropped) forward each step. Returns the generated continuation only.
