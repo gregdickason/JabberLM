@@ -24,6 +24,8 @@
   Cache-Control: public, max-age=0, must-revalidate
 /sort-model.json
   Cache-Control: public, max-age=0, must-revalidate
+/multitask-draft.json
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Bundled word embeddings (GloVe subset, ~200KB) for the embeddings/RAG demos.
 /word-vectors.json

@@ -43,7 +43,16 @@ task, so both survive (λ=0.5, T=2; `tros`→~100%, `sort`→~95%). This is the 
 self-distillation (minus the paper's LLM judge — we replay whole old-task windows). The **same-prompt**
 asc/desc pair only works for LoRA (the overlay disambiguates); a single weight set needs the distinct `tros`
 verb.
-`gen:jabber`/`gen:sonnets` build the older single-skill poem models. Bundled-model facts in
+The lab's **Speculative decoding** tab (`SpeculativeSection.tsx`) pairs the bundled `multitask-model.json`
+(**target**, ~90K) with `public/multitask-draft.json` (**draft**, ~17K tiny, `gen:multitask-draft`, trained
+on the SAME corpus → identical vocab). `speculativeGenerate(draft, target, tok, prompt, flags, maxNew, K)`
+(`engine/generate.ts`): the draft proposes K tokens, the target verifies all K in ONE forward (its logits at
+every position — `Model.forward` returns seq×vocab), accept the longest matching prefix, correct the first
+miss, and a free "bonus" token if all K match. Greedy ⇒ output is **bit-for-bit identical** to
+`generate(target)` (capped so prompt+gen+K ≤ contextLen, no cropping — that identity is the unit test).
+Measured: ~2.3× fewer TARGET forwards at K=4, ~34% draft acceptance; honest caveat — wall-clock barely moves
+at this tiny single-thread/no-KV-cache scale (the win is fewer sequential big-model steps, which is latency at
+real scale). `gen:jabber`/`gen:sonnets` build the older single-skill poem models. Bundled-model facts in
 `src/data/modelStats.ts`.
 
 The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
@@ -136,5 +145,6 @@ npm run gen:multitask # retrain the bundled three-skill model -> public/multitas
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
 npm run gen:sort      # retrain the sort-only model (recovery)-> public/sort-model.json
+npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json
 npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```
