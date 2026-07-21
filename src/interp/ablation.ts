@@ -44,6 +44,16 @@ export function sortAccuracy(model: Model, tok: CharTokenizer, vectors: SortVec[
   return vectors.length ? Math.round((100 * ok) / vectors.length) : 0
 }
 
+/** Verifiable reward for the RLVR demo: 1 if the completion is the correctly-sorted list for
+ *  the prompt's `sort a b c => ` vector, else 0 — a checker, not a labelled answer. */
+export function sortReward(prompt: string, completion: string): number {
+  const m = prompt.match(/sort\s+(\d)\s+(\d)\s+(\d)/)
+  if (!m) return 0
+  const want = [Number(m[1]), Number(m[2]), Number(m[3])].sort((a, b) => a - b).join(' ')
+  const got = (completion.split('\n')[0].match(/\d(?: \d)*/) || [''])[0].trim()
+  return got === want ? 1 : 0
+}
+
 /** Greedy answer for one `<verb> a b c => ` prompt (verb defaults to `sort`), honouring a
  *  feature-flag override (e.g. `lora` on/off to compare the frozen base vs the adapted
  *  overlay). The forgetting demo passes `verb='tros'` for the reverse-sort task. */

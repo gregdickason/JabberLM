@@ -480,3 +480,47 @@ export function softCrossEntropy(logits: Tensor, teacherProbs: Float32Array): Te
   }
   return c
 }
+
+/**
+ * Per-position, weighted negative log-likelihood — the core of policy-gradient RLVR.
+ * Like `crossEntropy`, but each position's −log p(token) is multiplied by a per-row
+ * weight `weights` (seq×1): loss = mean_i weights[i]·(−log softmax(logits[i])[tokens[i]]).
+ * A weight of 0 MASKS a position (e.g. the prompt tokens we didn't generate); a positive
+ * weight (an above-average sample's advantage) pushes that token's probability UP; a
+ * NEGATIVE weight (a below-average sample) pushes it DOWN. That single sign-carrying
+ * weight is what turns supervised NLL into "reinforce good samples, discourage bad ones".
+ */
+export function weightedNLL(logits: Tensor, tokens: number[], weights: Tensor): Tensor {
+  const seq = logits.rows
+  const vocab = logits.cols
+  if (tokens.length !== seq) throw new Error('weightedNLL: tokens length != seq')
+  if (weights.rows !== seq || weights.cols !== 1) throw new Error('weightedNLL: weights shape != seq×1')
+  const probs = new Float32Array(seq * vocab)
+  let loss = 0
+  for (let i = 0; i < seq; i++) {
+    let max = -Infinity
+    for (let j = 0; j < vocab; j++) max = Math.max(max, logits.data[i * vocab + j])
+    let sumE = 0
+    for (let j = 0; j < vocab; j++) {
+      const e = Math.exp(logits.data[i * vocab + j] - max)
+      probs[i * vocab + j] = e
+      sumE += e
+    }
+    for (let j = 0; j < vocab; j++) probs[i * vocab + j] /= sumE
+    loss += weights.data[i] * -Math.log(probs[i * vocab + tokens[i]] + 1e-12)
+  }
+  loss /= seq
+  const c = out(Float32Array.from([loss]), 1, 1, [logits, weights], 'weightedNLL')
+  c._backward = () => {
+    const g = c.grad[0] / seq
+    for (let i = 0; i < seq; i++) {
+      const w = weights.data[i]
+      for (let j = 0; j < vocab; j++) {
+        const t = tokens[i] === j ? 1 : 0
+        logits.grad[i * vocab + j] += g * w * (probs[i * vocab + j] - t)
+      }
+      weights.grad[i] += g * -Math.log(probs[i * vocab + tokens[i]] + 1e-12)
+    }
+  }
+  return c
+}

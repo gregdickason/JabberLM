@@ -40,6 +40,13 @@ export function sortHeldOut(): SortVec[] {
   return vecs.slice(0, Math.floor(vecs.length * 0.2))
 }
 
+/** The training-split sort vectors (the 80% complement of `sortHeldOut`) — e.g. RLVR prompts,
+ *  kept disjoint from the held-out eval. */
+export function sortTrainVecs(): SortVec[] {
+  const vecs = allSortVecs(mulberry32(20250626))
+  return vecs.slice(Math.floor(vecs.length * 0.2))
+}
+
 /** A sorting corpus (~targetChars) built only from the training split. */
 export function buildSortCorpus(targetChars = 40000): string {
   const rnd = mulberry32(20250626)

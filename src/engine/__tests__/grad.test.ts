@@ -19,6 +19,7 @@ import {
   embeddingLookup,
   crossEntropy,
   softCrossEntropy,
+  weightedNLL,
   sum,
   loraDelta,
 } from '../ops'
@@ -219,6 +220,18 @@ describe('autograd gradient checks', () => {
       0.1, 0.2, 0.3, 0.4, 0.6, 0.1, 0.1, 0.2, 0.25, 0.25, 0.25, 0.25,
     ])
     checkGrad([{ rows: 3, cols: 4, data: rand(12) }], (i) => softCrossEntropy(i[0], teacher))
+  })
+
+  it('weightedNLL (policy-gradient: per-row weights, incl. 0 and negative)', () => {
+    // logits (4×6) + weights (4×1, mixed sign incl. a 0 mask); grad flows into both.
+    const tokens = [1, 3, 0, 4]
+    checkGrad(
+      [
+        { rows: 4, cols: 6, data: rand(24) },
+        { rows: 4, cols: 1, data: [1.2, -0.8, 0, 0.5] },
+      ],
+      (i) => weightedNLL(i[0], tokens, i[1]),
+    )
   })
 
   it('applyRope', () => {

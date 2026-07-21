@@ -1,9 +1,10 @@
 import { Model } from './model'
+import { Tensor } from './tensor'
 import { Optimizer, type GradNorm } from './optimizer'
 import { CharTokenizer } from './tokenizer'
 import { RNG } from './random'
-import { add, crossEntropy, scale, softCrossEntropy } from './ops'
-import { generate } from './generate'
+import { add, crossEntropy, scale, softCrossEntropy, weightedNLL } from './ops'
+import { generate, sampleFromLogits, lastRowLogits } from './generate'
 import type { FeatureFlags, FineTuneConfig, ModelConfig, SampleConfig, TrainConfig } from './config'
 
 // The training engine. Holds the model, tokenizer and optimizer, and runs one
@@ -332,6 +333,101 @@ export class Trainer {
     meanLoss.backward()
     const gradNorm = this.opt.step(trainCfg)
     return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
+  /** Sample one completion from `promptIds` (temperature exploration, no gradient). */
+  private sampleCompletion(promptIds: number[], flags: FeatureFlags, cfg: SampleConfig): number[] {
+    const ctx = this.cfg.contextLen
+    const nl = this.tok.stoi.get('\n')
+    const ids = promptIds.slice()
+    const out: number[] = []
+    for (let s = 0; s < cfg.maxNewTokens && ids.length < ctx; s++) {
+      const window = ids.slice(Math.max(0, ids.length - ctx))
+      const { logits } = this.model.forward(window, flags)
+      const { chosen } = sampleFromLogits(lastRowLogits(logits.data, logits.rows, logits.cols), cfg, this.rng)
+      if (chosen === nl) break
+      out.push(chosen)
+      ids.push(chosen)
+    }
+    return out
+  }
+
+  /**
+   * One RLVR (reinforcement-learning-from-verifiable-rewards) step — GRPO-lite policy
+   * gradient. For each prompt: sample `groupSize` completions (temperature > 0), score each
+   * with the `reward` verifier, and update via advantage-weighted NLL over the GENERATED
+   * tokens only (advantage = reward − group mean; above-average samples pushed up, below
+   * pushed down). No labelled answers — the only supervision is the checker. A group whose
+   * rewards are all equal gives zero advantage (no signal) and is skipped; that's the
+   * cold-start problem, which a little SFT warm-up fixes. Not for LoRA fine-tune mode.
+   */
+  rlvrStep(
+    trainCfg: TrainConfig,
+    flags: FeatureFlags,
+    opts: {
+      prompts: string[]
+      groupSize: number
+      temperature: number
+      maxNew: number
+      reward: (prompt: string, completion: string) => number
+      promptsPerStep?: number
+    },
+  ): StepResult & { meanReward: number; samples: { prompt: string; completion: string; reward: number; advantage: number }[] } {
+    const sampleCfg: SampleConfig = { temperature: Math.max(1e-3, opts.temperature), topK: null, topP: null, maxNewTokens: opts.maxNew }
+    const nProm = Math.max(1, opts.promptsPerStep ?? 1)
+    const samples: { prompt: string; completion: string; reward: number; advantage: number }[] = []
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    let contributing = 0
+    let rewardSum = 0
+    let rewardN = 0
+
+    for (let p = 0; p < nProm; p++) {
+      const prompt = opts.prompts[Math.floor(this.rng.next() * opts.prompts.length)]
+      const promptIds = this.tok.encode(prompt)
+      if (promptIds.length < 1 || promptIds.length >= this.cfg.contextLen) continue
+
+      // 1. sample a group of completions and score them (no grad)
+      const group: { ids: number[]; text: string; reward: number }[] = []
+      for (let k = 0; k < opts.groupSize; k++) {
+        const compIds = this.sampleCompletion(promptIds, flags, sampleCfg)
+        const text = this.tok.decode(compIds)
+        const r = opts.reward(prompt, text)
+        group.push({ ids: compIds, text, reward: r })
+        rewardSum += r
+        rewardN++
+      }
+      const baseline = group.reduce((a, g) => a + g.reward, 0) / group.length
+
+      // 2. advantage-weighted policy-gradient loss over the generated tokens of each completion
+      for (const g of group) {
+        const adv = g.reward - baseline
+        samples.push({ prompt, completion: g.text, reward: g.reward, advantage: adv })
+        if (Math.abs(adv) < 1e-9 || g.ids.length === 0) continue
+        const full = promptIds.concat(g.ids)
+        if (full.length > this.cfg.contextLen) continue
+        const input = full.slice(0, full.length - 1)
+        const target = full.slice(1)
+        // weight = advantage on the positions that PREDICT a generated token, 0 on the prompt
+        const w = new Float32Array(target.length)
+        for (let i = promptIds.length - 1; i < target.length; i++) w[i] = adv
+        const weights = new Tensor(w, target.length, 1, 'rlvr.w')
+        const { logits } = this.model.forward(input, flags)
+        const loss = weightedNLL(logits, target, weights)
+        total = total ? add(total, loss) : loss
+        contributing++
+      }
+    }
+
+    const meanReward = rewardN ? rewardSum / rewardN : 0
+    if (!total || contributing === 0) {
+      // uniform group(s) → no learning signal this step (cold-start); don't update
+      return { loss: 0, gradNorm: 0, gradNorms: this.opt.gradNorms(), meanReward, samples }
+    }
+    const meanLoss = scale(total, 1 / contributing)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms(), meanReward, samples }
   }
 
   /**
