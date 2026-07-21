@@ -15,6 +15,7 @@ import KVCostDemo from './KVCostDemo'
 import TokenizationDemo from './TokenizationDemo'
 import EmbeddingsDemo from './EmbeddingsDemo'
 import RagDemo from './RagDemo'
+import GraphDemo from './GraphDemo'
 import QuantizationDemo from './QuantizationDemo'
 import Governance from './Governance'
 
@@ -224,10 +225,20 @@ export default function ExplainApp() {
               documents.
             </p>
             <RagDemo />
+            <p className="mt-4">
+              <strong>Two shapes of context.</strong> Above, retrieval finds the most relevant <em>chunk of
+              text</em>. But context can also be <em>structured</em> — facts and how they connect, as a{' '}
+              <strong>knowledge graph</strong>. That lets you answer <em>relational</em> questions by walking
+              the connections (even several hops), which chunk-retrieval fumbles — and it's the natural way to
+              give a model persistent, updatable <strong>memory</strong>:
+            </p>
+            <GraphDemo />
             <Callout>
               For anything private or current — your policies, this quarter's numbers, a specific contract —
               a retrieval system that quotes the source beats a bigger model guessing from memory. Ask any
-              vendor: <em>where does the answer come from, and can it show me the passage?</em>
+              vendor: <em>where does the answer come from, and can it show me the passage?</em> For questions
+              that span many connected facts, ask whether they use a <em>knowledge graph</em> too — and how
+              the model's <em>memory</em> is stored and updated.
             </Callout>
           </Section>
 
