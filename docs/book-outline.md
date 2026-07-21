@@ -118,6 +118,16 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
      ground) with real GloVe vectors, not end-to-end generation. The *pattern* is the lesson, and it's the
      modern framing of "RAG = giving the model a retrieval tool" (ties forward to Ch 13, tools/harness:
      a `lookup`/`search` the agent calls). Try: `explain §7` (lookup + semantic retrieval).
+   - **Sidebar 7B′ — Structured knowledge & memory (context beyond chunks).** Retrieval doesn't have to
+     return prose. Facts can be stored as a **knowledge graph** — `subject → relation → object` triples — and
+     answered by *walking* the connections, including **multi-hop** chains a chunk-search can't compose
+     (prince → father → what he rules). The honest split holds: the graph's *structure* is design; its
+     *content* is knowledge you look up, not weights you retrain — which makes a graph a natural home for
+     **memory** (add one triple and it's instantly usable). Caveats to keep honest: a real graph is **built
+     by an LLM** extracting entities/relations (a tiny char model can't), and production systems usually
+     **blend** vector RAG with graphs ("GraphRAG") rather than choosing one. Memory itself (short/long-term,
+     agent memory, context management) is a forward-pointer to the agents chapter, not a second full subject.
+     Try: `explain §7` (the knowledge-graph coda — pick a question, watch the traversal light up).
    - **Sidebar 7C — Quantisation: the same model at lower precision.** The 4th "cheaper inference" lever,
      alongside distillation, Mixture-of-Experts, and KV-caching. A model is a pile of numbers, normally 32
      bits each; **quantisation** stores them with far fewer bits (int8, int4), shrinking memory and the
