@@ -178,9 +178,21 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
       (Applied Compute) — the real method adds an LLM judge to spend the retention budget only on the tokens
       that matter, which we can't run in a browser. Ties to LoRA (freezing the base is a third way to not
       forget). Engine: `Trainer.sftStep`/`replayStep`. Try: `lab` → forgetting.
-    **Site note** (RLHF/PPO itself stays prose — the tiny in-browser model can't run RL rollouts; anchor to
-    the LoRA fine-tune + forgetting demos as the nearest hands-on analogues — "SFT is LoRA-with-better-data at
-    scale"). Deeper: reward models, PPO vs DPO, the KL penalty / "alignment tax," Constitutional AI.
+    - **RLVR — learning from a verifier, not labels (measured; lab demo).** The third way to improve a model,
+      after imitating labels (SFT) and copying a teacher (distillation): let it **sample its own attempts**,
+      have a **checker** score them, and reinforce the good ones — no answer keys. This is how reasoning
+      models are trained where answers are *verifiable* (maths, code). Shown live on sorting (a verifiable
+      task): a brief **SFT warm-up** to ~55–60%, then **RLVR** (GRPO-lite policy gradient: advantage = reward
+      − group mean, over the generated tokens) climbs to **~90%+ from the reward alone**, having never been
+      shown a correct sort. The honest lessons are in the failures too: it needs a **verifiable** task and a
+      **competent-enough base** (cold-start — from scratch every guess is wrong, so nothing to reinforce), the
+      0/1 reward is **sparse**, and naïve policy gradient is **unstable** (too high a learning rate/temperature
+      collapses it — production adds a KL penalty to the reference policy, a value model, etc.). Engine:
+      `Trainer.rlvrStep` + the `weightedNLL` op. Try: `lab` → reward learning (RLVR).
+    **Site note** (verifiable-reward RL is now demoed above; what stays **prose** is RLHF over *human
+    preferences* — a learned reward model + PPO on non-verifiable tasks like helpfulness/tone, which needs
+    scale and human labels we can't run in a browser). Deeper: reward models, PPO vs DPO vs GRPO, the KL
+    penalty / "alignment tax," RLAIF / Constitutional AI.
 13. *Talking to it well* — prompting & context engineering *(new; site gap)*. Try: context/attention demos. Deeper: few-shot, system prompts.
 14. *Giving it tools* — function calling & the harness; reliability. Try: `harness` §1–2. Deeper: tool schemas, validation.
 15. *Agents — and their risks* — the loop, and its blind spot: **prompt injection**. The loop feeds a
