@@ -6,6 +6,9 @@ import { sortAccuracy, genLine } from '../interp/ablation'
 import { sortHeldOut, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
+
+const CAP = 4000 // hard step backstop if recovery never plateaus
 
 async function loadSortModel(): Promise<Trainer | null> {
   try {
@@ -39,7 +42,12 @@ export default function RecoverySection() {
   const [running, setRunning] = useState(false)
   const [busy, setBusy] = useState(false)
   const [examples, setExamples] = useState<{ v: SortVec; out: string; ok: boolean }[]>([])
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
+  // Recovery may settle BELOW baseline (the injured head stays dead), so pause on a
+  // plateau rather than a fixed bar. ε is loose enough to tolerate held-out quantisation
+  // (30 examples → ~3.3% per example).
+  const gateRef = useRef(new ConvergenceGate({ mode: 'plateau', window: 5, epsilon: 7 }))
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
   const rafRef = useRef(0)
@@ -116,6 +124,8 @@ export default function RecoverySection() {
     stepCountRef.current = 0
     lastEvalRef.current = 0
     setStep(0)
+    gateRef.current.reset() // fresh recovery run
+    setAutoPaused(null)
     // seed the recovery chart: healthy baseline point, then the injured drop
     const abl = new Set([head])
     const injured = trainer ? sortAccuracy(trainer.model, trainer.tok, held, abl) : 0
@@ -135,17 +145,32 @@ export default function RecoverySection() {
       if (stepCountRef.current - lastEvalRef.current >= EVAL_EVERY) {
         const acc = sortAccuracy(trainer.model, trainer.tok, held, ablSet)
         setCurve((c) => [...c, { step: stepCountRef.current, acc }].slice(-300))
+        gateRef.current.record('recovery', acc)
         runExamples(trainer, ablSet) // watch the live examples heal
         lastEvalRef.current = stepCountRef.current
       }
+      if (stepCountRef.current >= CAP) {
+        runningRef.current = false
+        setRunning(false)
+        setPhase('recovered')
+        setAutoPaused('cap')
+      } else if (gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setPhase('recovered')
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(30, Math.round(20 / Math.max(0.2, perStep))))
     stepsRef.current = Math.max(1, Math.round(n * 0.6 + want * 0.4))
     setStep(stepCountRef.current)
-    rafRef.current = requestAnimationFrame(loop)
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
   function play() {
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     setPhase('recovering')
@@ -182,6 +207,8 @@ export default function RecoverySection() {
     setDead(null)
     setAfter(null)
     setCurve([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     setStep(0)
     stepCountRef.current = 0
     lastEvalRef.current = 0
@@ -240,6 +267,13 @@ export default function RecoverySection() {
             · injured head <span className="font-mono text-red-300">{dead}</span> · now{' '}
             <span className="font-mono text-emerald-300">{latestAcc}%</span>
             {step > 0 && <span className="text-slate-500"> (+{step} steps)</span>}
+          </span>
+        )}
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ recovery plateaued — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
           </span>
         )}
       </div>

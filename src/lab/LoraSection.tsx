@@ -10,6 +10,9 @@ import LineChart from '../viz/LineChart'
 import LoRAView from '../components/inspector/LoRAView'
 import type { Trace } from '../engine/trace'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
+
+const CAP = 4000 // hard step backstop if the adapter never converges
 
 // The bundled sort model sorts ASCENDING (~97% held-out). We attach a tiny LoRA adapter,
 // freeze the base, and fine-tune ONLY the adapter on DESCENDING sort (same "sort a b c =>"
@@ -58,7 +61,10 @@ export default function LoraSection() {
   const [overlay, setOverlay] = useState(true)
   const [output, setOutput] = useState('')
   const [loraTrace, setLoraTrace] = useState<Trace | null>(null)
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
+  // pause once the adapter's descending accuracy has converged (last 5 checkpoints ≥ 90%)
+  const gateRef = useRef(new ConvergenceGate({ window: 5, threshold: 90 }))
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
   const rafRef = useRef(0)
@@ -77,9 +83,9 @@ export default function LoraSection() {
   }
 
   function evalNow(t: Trainer, s: number) {
-    setCurveDesc((c) =>
-      [...c, { x: s, y: sortAccuracyDir(t.model, t.tok, held, { descending: true, flags: FLAGS_ON }) }].slice(-300),
-    )
+    const yd = sortAccuracyDir(t.model, t.tok, held, { descending: true, flags: FLAGS_ON })
+    setCurveDesc((c) => [...c, { x: s, y: yd }].slice(-300))
+    gateRef.current.record('desc', yd)
     setCurveAsc((c) =>
       [...c, { x: s, y: sortAccuracyDir(t.model, t.tok, held, { descending: false, flags: FLAGS_OFF }) }].slice(-300),
     )
@@ -132,14 +138,26 @@ export default function LoraSection() {
       if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) {
         evalNow(t, stepCountRef.current)
       }
+      if (stepCountRef.current >= CAP) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('cap')
+      } else if (gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(20, Math.round(20 / Math.max(0.4, perStep))))
     stepsRef.current = Math.max(1, Math.round(n * 0.6 + want * 0.4))
     setStep(stepCountRef.current)
-    rafRef.current = requestAnimationFrame(loop)
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
   function play() {
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -157,6 +175,8 @@ export default function LoraSection() {
     setStep(0)
     setCurveDesc([])
     setCurveAsc([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     if (trainer) evalNow(trainer, 0)
   }
 
@@ -211,6 +231,13 @@ export default function LoraSection() {
         <span className="text-slate-500">
           step {step} · rank {RANK}, α {ALPHA}, {TARGETS.join('+')} · base frozen
         </span>
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ converged — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
+          </span>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

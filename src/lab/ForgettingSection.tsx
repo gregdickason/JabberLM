@@ -6,6 +6,9 @@ import { sortAccuracyDir, genSortLine } from '../interp/ablation'
 import { sortHeldOut, buildSortCorpus, buildTrosCorpus, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
+
+const CAP = 1500 // hard stop if the lesson never fully lands (both tros ≥90 & SFT sort <10)
 
 // Teach the ascending sort model a NEW skill — "tros" (sort backwards = descending, under
 // its own verb so one model can hold both) — two ways, and watch the OLD skill:
@@ -48,7 +51,12 @@ export default function ForgettingSection() {
   const [nRep, setNRep] = useState<Pt[]>([]) // new task (tros) — replay
   const [oSft, setOSft] = useState<Pt[]>([]) // old task (sort) retention — SFT
   const [oRep, setORep] = useState<Pt[]>([]) // old task (sort) retention — replay
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
+  // The forgetting lesson is fully on screen once BOTH runs have learned tros (≥90%) AND
+  // SFT's old skill has collapsed (<10%) — running past that just overfits. Encode all three
+  // as one gated metric so we pause promptly: min(trosSft, trosRep, 100−sortSft) ≥ 90.
+  const gateRef = useRef(new ConvergenceGate({ window: 2, threshold: 90 }))
   const savedRef = useRef<SavedModel | null>(null)
   const sft = useRef<Trainer | null>(null)
   const replay = useRef<Trainer | null>(null)
@@ -80,10 +88,14 @@ export default function ForgettingSection() {
   function evalAll(s: number) {
     const S = sft.current, R = replay.current
     if (!S || !R) return
-    setNSft((c) => [...c, { x: s, y: newAcc(S) }].slice(-300))
-    setNRep((c) => [...c, { x: s, y: newAcc(R) }].slice(-300))
-    setOSft((c) => [...c, { x: s, y: oldAcc(S) }].slice(-300))
-    setORep((c) => [...c, { x: s, y: oldAcc(R) }].slice(-300))
+    const ns = newAcc(S), nr = newAcc(R)
+    const os = oldAcc(S), or = oldAcc(R)
+    setNSft((c) => [...c, { x: s, y: ns }].slice(-300))
+    setNRep((c) => [...c, { x: s, y: nr }].slice(-300))
+    setOSft((c) => [...c, { x: s, y: os }].slice(-300))
+    setORep((c) => [...c, { x: s, y: or }].slice(-300))
+    // both tros ≥90 AND SFT sort ≤10  ⟺  min(ns, nr, 100−os) ≥ 90
+    gateRef.current.record('forgetShown', Math.min(ns, nr, 100 - os))
     lastEvalRef.current = s
   }
 
@@ -129,14 +141,26 @@ export default function ForgettingSection() {
       ms += performance.now() - a
       stepCountRef.current += 1
       if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) evalAll(stepCountRef.current)
+      if (stepCountRef.current >= CAP) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('cap')
+      } else if (gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(20, Math.round(20 / Math.max(0.4, perStep))))
     stepsRef.current = Math.max(1, Math.round(n * 0.6 + want * 0.4))
     setStep(stepCountRef.current)
-    rafRef.current = requestAnimationFrame(loop)
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
   function play() {
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -153,6 +177,8 @@ export default function ForgettingSection() {
     lastEvalRef.current = 0
     setStep(0)
     setNSft([]); setNRep([]); setOSft([]); setORep([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     evalAll(0)
   }
 
@@ -215,6 +241,13 @@ export default function ForgettingSection() {
           ↺ Reset
         </button>
         <span className="text-slate-500">step {step} · λ {LAMBDA}, T {TEMPERATURE}</span>
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ converged — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
+          </span>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

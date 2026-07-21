@@ -144,6 +144,16 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
   (`+=`) into inputs' `.grad`. Then add a numerical gradient check in
   `src/engine/__tests__/grad.test.ts` — this is the correctness gate; keep it green.
 - Visualizations read plain `Matrix` snapshots from the `Trace`, never live Tensors.
+- **Live-training lab sections auto-pause on convergence** via the shared `ConvergenceGate`
+  (`src/lab/converged.ts`, unit-tested). Each section holds one in a ref, feeds its held-out
+  "did it learn" checkpoint(s) into it on every eval (`gate.record(key, y)`), and in the rAF loop
+  stops (`runningRef=false; setRunning(false)` + a `converged`/`cap` status note) once
+  `gate.converged()` — plus a generous hard step backstop. Gate off the **learned** curve only:
+  never a train curve (grokking's train hits 100% pre-grok) or a deliberately-collapsing one
+  (forgetting's `oSft`). `threshold` mode (last N ≥ bar, default 5 ≥ 90) for the sort-style tasks;
+  `plateau` mode (last N within ε) for Recovery, whose skill settles below baseline. `play`/`reset`
+  call `gate.reset()`. The playground (`TrainingPanel.tsx`) is intentionally excluded — open-ended,
+  loss-based, no default held-out accuracy.
 
 ## Commands
 

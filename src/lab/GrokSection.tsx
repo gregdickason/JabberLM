@@ -5,7 +5,9 @@ import { moeAnswer, taskAccuracy, type MoeOp } from '../interp/ablation'
 import { buildMoeCorpus, sortHeldOut, maxHeldOut, reverseHeldOut, moeTrainVectors, type SortVec } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
 
+const CAP = 8000 // hard step backstop — generous, since a grok can be delayed
 const COLORS = { sort: '#34d399', max: '#60a5fa', reverse: '#f472b6' }
 const TRAIN_COLOR = '#f59e0b' // amber — accuracy on examples the model was TRAINED on
 // (held-out on the sort chart reuses COLORS.sort so it matches the left chart's sort line)
@@ -74,7 +76,11 @@ export default function GrokSection() {
   const [step, setStep] = useState(0)
   const [loss, setLoss] = useState(0)
   const [hist, setHist] = useState<Snapshot[]>([])
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
+  // pause once the HELD-OUT sort curve has grokked and held (last 5 checkpoints ≥ 90%).
+  // Key to held-out sort only — NEVER the train curve, which hits 100% long before the grok.
+  const gateRef = useRef(new ConvergenceGate({ window: 5, threshold: 90 }))
   const trainerRef = useRef<Trainer | null>(null)
   const runningRef = useRef(false)
   const stepsRef = useRef(3)
@@ -109,6 +115,7 @@ export default function GrokSection() {
     const trR = taskAccuracy(t.model, t.tok, 'reverse', trainVecs)
     const snap: Snapshot = { step: s, sort, max, reverse, train: { sort: trS, max: trM, reverse: trR } }
     setHist((h) => [...h, snap].slice(-200))
+    gateRef.current.record('sort', sort.acc) // held-out sort — the canonical grok signal
     lastEvalRef.current = s
   }
 
@@ -126,17 +133,29 @@ export default function GrokSection() {
       if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) {
         evalAll(t, stepCountRef.current)
       }
+      if (stepCountRef.current >= CAP) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('cap')
+      } else if (gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(40, Math.round(20 / Math.max(0.2, perStep))))
     stepsRef.current = Math.max(1, Math.round(n * 0.6 + want * 0.4))
     setStep(stepCountRef.current)
     setLoss(last)
-    rafRef.current = requestAnimationFrame(loop)
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
 
   function play() {
     if (!trainerRef.current) build()
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -155,6 +174,8 @@ export default function GrokSection() {
     setStep(0)
     setLoss(0)
     setHist([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     evalAll(t, 0) // immediate baseline so the panels/chart aren't empty
   }
 
@@ -216,6 +237,13 @@ export default function GrokSection() {
             <span style={{ color: COLORS.sort }}>sort {latest.sort.acc}%</span>{'  '}
             <span style={{ color: COLORS.max }}>max {latest.max.acc}%</span>{'  '}
             <span style={{ color: COLORS.reverse }}>rev {latest.reverse.acc}%</span>
+          </span>
+        )}
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ sort grokked — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
           </span>
         )}
       </div>

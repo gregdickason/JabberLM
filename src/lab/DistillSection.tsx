@@ -6,8 +6,10 @@ import { sortAccuracy } from '../interp/ablation'
 import { sortHeldOut } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
 
 const TINY: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 }
+const CAP = 4000 // hard step backstop if neither student converges
 // dense-early eval so the chart fills in within seconds (matches the grokking view)
 const evalInterval = (step: number) => (step < 100 ? 20 : step < 600 ? 100 : 200)
 const TEMPERATURE = 2
@@ -33,9 +35,12 @@ export default function DistillSection() {
   const [step, setStep] = useState(0)
   const [curveA, setCurveA] = useState<{ x: number; y: number }[]>([]) // distilled
   const [curveB, setCurveB] = useState<{ x: number; y: number }[]>([]) // hard labels
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
   const studentA = useRef<Trainer | null>(null) // learns from the teacher (distill)
   const studentB = useRef<Trainer | null>(null) // learns from the answers (hard labels)
+  // pause once BOTH students' held-out accuracy has converged (so the full speed gap shows)
+  const gateRef = useRef(new ConvergenceGate({ window: 5, threshold: 90 }))
   const runningRef = useRef(false)
   const stepsRef = useRef(2)
   const rafRef = useRef(0)
@@ -56,8 +61,12 @@ export default function DistillSection() {
     const A = studentA.current
     const B = studentB.current
     if (!A || !B) return
-    setCurveA((c) => [...c, { x: s, y: sortAccuracy(A.model, A.tok, held) }].slice(-300))
-    setCurveB((c) => [...c, { x: s, y: sortAccuracy(B.model, B.tok, held) }].slice(-300))
+    const ya = sortAccuracy(A.model, A.tok, held)
+    const yb = sortAccuracy(B.model, B.tok, held)
+    setCurveA((c) => [...c, { x: s, y: ya }].slice(-300))
+    setCurveB((c) => [...c, { x: s, y: yb }].slice(-300))
+    gateRef.current.record('distilled', ya)
+    gateRef.current.record('labels', yb)
     lastEvalRef.current = s
   }
 
@@ -99,14 +108,26 @@ export default function DistillSection() {
       if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) {
         evalBoth(stepCountRef.current)
       }
+      if (stepCountRef.current >= CAP) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('cap')
+      } else if (gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(20, Math.round(20 / Math.max(0.4, perStep))))
     stepsRef.current = Math.max(1, Math.round(n * 0.6 + want * 0.4))
     setStep(stepCountRef.current)
-    rafRef.current = requestAnimationFrame(loop)
+    if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
   function play() {
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -124,6 +145,8 @@ export default function DistillSection() {
     setStep(0)
     setCurveA([])
     setCurveB([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     evalBoth(0) // step-0 baseline
   }
 
@@ -177,6 +200,13 @@ export default function DistillSection() {
           <span className="ml-1">
             <span style={{ color: DISTILL }}>distilled {curveA.at(-1)?.y}%</span>{'  '}
             <span style={{ color: LABELS }}>labels {curveB.at(-1)?.y}%</span>
+          </span>
+        )}
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ converged — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
           </span>
         )}
       </div>
