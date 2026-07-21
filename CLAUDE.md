@@ -52,8 +52,18 @@ miss, and a free "bonus" token if all K match. Greedy ⇒ output is **bit-for-bi
 `generate(target)` (capped so prompt+gen+K ≤ contextLen, no cropping — that identity is the unit test).
 Measured: ~2.3× fewer TARGET forwards at K=4, ~34% draft acceptance; honest caveat — wall-clock barely moves
 at this tiny single-thread/no-KV-cache scale (the win is fewer sequential big-model steps, which is latency at
-real scale). `gen:jabber`/`gen:sonnets` build the older single-skill poem models. Bundled-model facts in
-`src/data/modelStats.ts`.
+real scale). The lab's **reward learning (RLVR)** tab (`RlvrSection.tsx`) trains a fresh tiny sort model live
+in two phases: a brief **SFT warm-up** (stepBatch) to ~55–60%, then **RLVR** (GRPO-lite policy gradient) that
+climbs to ~90%+ **from a verifier reward alone** — no labelled answers. Engine: `Trainer.rlvrStep(cfg, flags,
+{prompts, groupSize, temperature, maxNew, reward, promptsPerStep})` samples a group of completions per prompt,
+scores each with `sortReward` (`interp/ablation.ts` — 1 if correctly sorted), advantage = reward − group mean,
+and updates via the new **`weightedNLL(logits, tokens, weights)`** op (`ops.ts`, grad-checked) — per-position
+NLL scaled by a per-row weight (0 masks the prompt; the advantage, which can be **negative**, reinforces or
+discourages the generated tokens). Defaults from an offline sweep (lr 5e-4, temp 0.5, group 6, 4 prompts/step —
+higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task + a competent-enough base
+(cold-start) + many samples; we skip the KL penalty / value model. `sortTrainVecs()` (`tasks.ts`) supplies RL
+prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
+Bundled-model facts in `src/data/modelStats.ts`.
 
 The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk

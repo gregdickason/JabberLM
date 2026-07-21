@@ -12,18 +12,19 @@ import DistillSection from './DistillSection'
 import LoraSection from './LoraSection'
 import ForgettingSection from './ForgettingSection'
 import SpeculativeSection from './SpeculativeSection'
+import RlvrSection from './RlvrSection'
 import SiteNav from '../components/SiteNav'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking', 'distillation', 'LoRA fine-tuning', 'forgetting', 'speculative decoding'] as const
+const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking', 'distillation', 'LoRA fine-tuning', 'forgetting', 'reward learning (RLVR)', 'speculative decoding'] as const
 type Tab = (typeof TABS)[number]
 
-// The twelve tabs grouped into a small curriculum so the lab reads as four themes,
+// The tabs grouped into a small curriculum so the lab reads as four themes,
 // not a flat feature shelf. (Ordering/hash routing below are unchanged.)
 const GROUPS: { label: string; blurb: string; tabs: Tab[] }[] = [
   { label: 'Observe', blurb: 'see what the trained model represents inside', tabs: ['neurons', 'attention heads', 'dictionary (SAE)'] },
   { label: 'Intervene', blurb: 'poke the circuit and watch what breaks or moves', tabs: ['head ablation', 'injury & recovery', 'steering'] },
-  { label: 'Adapt', blurb: 'change what it does — cheaply, or destructively', tabs: ['distillation', 'LoRA fine-tuning', 'forgetting'] },
+  { label: 'Adapt', blurb: 'change what it does — cheaply, or destructively', tabs: ['distillation', 'LoRA fine-tuning', 'forgetting', 'reward learning (RLVR)'] },
   { label: 'Scale & serve', blurb: 'structure, emergence, and faster inference', tabs: ['mixture of experts', 'advanced grokking', 'speculative decoding'] },
 ]
 
@@ -187,6 +188,7 @@ export default function LabApp() {
             {tab === 'distillation' && <DistillSection />}
             {tab === 'LoRA fine-tuning' && <LoraSection />}
             {tab === 'forgetting' && <ForgettingSection />}
+            {tab === 'reward learning (RLVR)' && <RlvrSection />}
             {tab === 'speculative decoding' && <SpeculativeSection />}
           </div>
         </>
