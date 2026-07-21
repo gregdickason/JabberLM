@@ -5,6 +5,7 @@ import { sortAccuracy, sortReward } from '../interp/ablation'
 import { buildSortCorpus, sortHeldOut, sortTrainVecs } from '../data/tasks'
 import LineChart from '../viz/LineChart'
 import SectionIntro from './SectionIntro'
+import { ConvergenceGate } from './converged'
 
 // A small sort model, warmed up briefly with SFT (imitate answers) to make it competent
 // enough to explore, then improved by RLVR (policy gradient) driven ONLY by a verifier —
@@ -31,8 +32,11 @@ export default function RlvrSection() {
   const [reward, setReward] = useState<Pt[]>([])
   const [attempts, setAttempts] = useState<Attempt[]>([])
   const [ready, setReady] = useState(false)
+  const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
   const trainer = useRef<Trainer | null>(null)
+  // auto-pause once held-out sort accuracy has clearly converged (last 5 checkpoints ≥ 90%)
+  const gateRef = useRef(new ConvergenceGate({ window: 5, threshold: 90 }))
   const runningRef = useRef(false)
   const phaseRef = useRef<'warmup' | 'rlvr'>('warmup')
   const stepsRef = useRef(2)
@@ -54,7 +58,10 @@ export default function RlvrSection() {
   function evalNow(s: number) {
     const a = acc()
     if (phaseRef.current === 'warmup') setAccWarm((c) => [...c, { x: s, y: a }].slice(-300))
-    else setAccRlvr((c) => [...c, { x: s, y: a }].slice(-300))
+    else {
+      setAccRlvr((c) => [...c, { x: s, y: a }].slice(-300))
+      gateRef.current.record('rlvr', a)
+    }
     lastEvalRef.current = s
   }
 
@@ -101,10 +108,17 @@ export default function RlvrSection() {
         if (stepCountRef.current >= WARM_CAP + RLVR_CAP) {
           runningRef.current = false
           setRunning(false)
+          setAutoPaused('cap')
         }
       }
       ms += performance.now() - a
       if (stepCountRef.current - lastEvalRef.current >= evalInterval(stepCountRef.current)) evalNow(stepCountRef.current)
+      if (phaseRef.current === 'rlvr' && runningRef.current && gateRef.current.converged()) {
+        runningRef.current = false
+        setRunning(false)
+        setAutoPaused('converged')
+      }
+      if (!runningRef.current) break
     }
     const perStep = ms / n
     const want = Math.max(1, Math.min(20, Math.round(20 / Math.max(0.4, perStep))))
@@ -113,6 +127,9 @@ export default function RlvrSection() {
     if (runningRef.current) rafRef.current = requestAnimationFrame(loop)
   }
   function play() {
+    // clear a prior auto-pause and give the gate a fresh window before it can re-fire
+    setAutoPaused(null)
+    gateRef.current.reset()
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -131,6 +148,8 @@ export default function RlvrSection() {
     lastEvalRef.current = 0
     setStep(0)
     setAccWarm([]); setAccRlvr([]); setReward([]); setAttempts([])
+    gateRef.current.reset()
+    setAutoPaused(null)
     evalNow(0)
   }
 
@@ -179,6 +198,13 @@ export default function RlvrSection() {
           step {step} · phase{' '}
           <span style={{ color: phase === 'warmup' ? WARM : RLVR }}>{phase === 'warmup' ? 'SFT warm-up' : 'RLVR (reward only)'}</span>
         </span>
+        {autoPaused && (
+          <span className="text-emerald-300">
+            {autoPaused === 'converged'
+              ? '✓ converged — auto-paused (Reset to run again)'
+              : 'reached step cap — paused'}
+          </span>
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
