@@ -2,7 +2,7 @@
 // and where they currently are. Replaces the bespoke, per-page header link sets that
 // varied in which links they showed, their order, and their labels.
 
-export type NavKey = 'playground' | 'explain' | 'learn' | 'harness' | 'lab'
+export type NavKey = 'playground' | 'explain' | 'learn' | 'harness' | 'lab' | 'capstone'
 
 const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'playground', label: 'Playground', href: './' },
@@ -10,17 +10,19 @@ const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'learn', label: 'How it works', href: './learn.html' },
   { key: 'harness', label: 'Tools & agents', href: './harness.html' },
   { key: 'lab', label: 'Lab', href: './lab.html' },
+  { key: 'capstone', label: 'Capstone', href: './capstone.html' },
 ]
 
 // The recommended learning sequence (distinct from the display order above), with a
 // rough time per stop — powers the "Next →" affordance so every page suggests where to go.
-const ORDER: NavKey[] = ['explain', 'learn', 'playground', 'harness', 'lab']
+const ORDER: NavKey[] = ['explain', 'learn', 'playground', 'harness', 'lab', 'capstone']
 const MINUTES: Record<NavKey, string> = {
   explain: '10 min',
   learn: '15 min',
   playground: '5 min',
   harness: '10 min',
   lab: 'explore',
+  capstone: '10 min',
 }
 
 /**

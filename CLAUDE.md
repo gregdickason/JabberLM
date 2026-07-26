@@ -65,12 +65,87 @@ higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task 
 prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
 Bundled-model facts in `src/data/modelStats.ts`.
 
-The app is **five pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+The app is **six pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
-(`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), and a **tool use &
-harness** demo (`harness.html` → `src/harness/`); plus a generated long-form guide (`GUIDE.md` →
-`public/guide.html`). All five share one nav component, `src/components/SiteNav.tsx` (same
+(`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), a **tool use &
+harness** demo (`harness.html` → `src/harness/`), and the **capstone** warehouse-agent
+(`capstone.html` → `src/capstone/`); plus a generated long-form guide (`GUIDE.md` →
+`public/guide.html`). All six share one nav component, `src/components/SiteNav.tsx` (same
 destinations/order/labels, current page marked; each page passes its `current` key + a subtitle child).
+
+The **capstone page** opens with a **playable tic-tac-toe agent** (`src/capstone/TicTacToe.tsx`): a ~130K
+char model (`public/tictactoe-model.json`, `DATASET=tictactoe`/`gen:tictactoe`) you play against — a real
+closed **agent loop** (you move → the harness feeds it the new board → it reads it and responds). Game rules +
+minimax + the corpus live in **`src/data/tictactoe.ts`** (pure); the model emits a **cell index** and the
+board is **index-labelled** (`0X1O2.…`) so a move is a *copy* of an empty cell's index, not a positional count
+(which a tiny char model does badly). Training is **soft-target distillation from the minimax oracle**:
+`moveTarget(b)` (tictactoe.ts) turns minimax's per-cell value into a soft policy (illegal→0, win→high,
+block-preferred), and `Trainer.distillMoveStep` matches the model's move-position distribution to it via the new
+`weightedSoftCE` op (masked soft-CE, grad-checked). This beats one-hot masked SFT (`sftMaskedStep`, also kept):
+plain next-char SFT wastes gradient on the un-guessable board (move-loss flat ~0.44); one-hot masked SFT leaves
+a near-**uniform** output (it barely discriminates); distillation concentrates it and teaches "never an occupied
+cell" (not-lost vs random 66%→84%). Honest ceiling: a ~130K char model tops out low-50s% tactical (spatial
+line-detection it can't fully represent — capacity didn't help); it diverges at lr 0.01 / overfits past ~2000
+steps, so `gen:tictactoe` is lr 0.003 / STEPS 2000.
+
+The capstone ships **two** ~130K models — same architecture, same size — to teach that **training-data design, not
+parameter count, is the lever**. The **undertrained** `public/tictactoe-model.json` (weak sampler, above) is the
+interpretability specimen; the **well-trained** `public/tictactoe-strong-model.json` (`DATASET=tictactoe-strong`/
+`gen:tictactoe-strong`) uses the **coverage-balanced `trainingDeck`** (tictactoe.ts): every reachable state each
+pass (guaranteed coverage — which also trains all 8 D4-symmetric variants for free, since they're distinct
+reachable states) + **tactical (win/block) emphasis** + only a *small* opening nudge. NB the plan's original
+"oversample openings" idea (borrowed from an external analysis) was **wrong for TTT and collapsed the model**:
+openings have near-*uniform* optimal targets (every early move draws → `moveTarget(EMPTY)` ≈ uniform, entropy
+≈ ln 9 ≈ 2.2), so flooding them drowns training in high-entropy targets. The real weakness is *tactical*, and
+coverage+tactical-emphasis (lr 0.002 / STEPS 4000) beats the weak model on every axis — optimal 64→68%, blocks
+51→54%, not-lost vs random 77→80%, and **not-lost vs perfect 3→25%** (8×). Strength is measured by
+**`evalExhaustive(model, tok)`** (`tictactoe-agent.ts`) over ALL ~4,520 states (legal/optimal/win/block %,
+optimal-by-ply, + games vs random & vs perfect) — trustworthy, replacing the old 50-game sample. `TicTacToe.tsx`
+has an **undertrained / well-trained / your live model** toggle (loads both bundles) with copy spelling out the
+data-design lesson (and that the well-trained model rarely trips the harness — a better model needs the guard
+less). **We do NOT put game intelligence in the harness** — it only
+checks legality. `agentTurn(model, tok, board, {validate}, rng)` (`src/capstone/tictactoe-agent.ts`): the model
+emits its raw (unmasked) move; if illegal and the check is ON, the harness rejects it and **re-asks** the model
+(re-sample), shown as a retry chain, else best-legal fallback; OFF, the illegal move sticks (the game breaks) —
+the check-layer lesson. An always-on **loop trace** narrates observe→act→check→apply every turn; `analyzeMove`
+surfaces took-win/blocked/**missed-block** reasoning.
+
+The capstone's payoff is **"play the agent, then look inside it"** — the Part-III interpretability tools on the
+Part-IV agent, board-aware (`src/capstone/Inspector.tsx` + `AttentionBoard`/`AblationBoard`/`SaeBoard`). Reuses
+`Model.forward(collect=true)` (attention per head), `ablate` (keys `"l.h"`), and `src/interp/sae.ts`. Key
+mapping: cell `c`'s tokens sit at prompt positions `5+2c` (index) and `6+2c` (mark), so a head's attention at the
+move-decision position projects onto the 3×3 board. The Inspector has a **weak/strong selector** (loads both
+bundles) and a live **threat-focus comparison**: `threatFocus(model, tok, board, threat)` (AttentionBoard.tsx) =
+the strongest head's attention on your threat cell — the **well-trained model scores far higher** (mean 0.53 →
+0.74 over block boards), the mechanistic reason it blocks more. That contrast is the payoff: same size, same
+architecture, better data → the heads learn to **attend to what's at risk**. AttentionBoard's copy is
+data-driven (adapts to the selected model's measured focus). Other findings (real): heads are **specialised
+per-cell readers**; ablating the **critical head** crashes tactical play — the injury demo on the game. SAE is a
+graceful stretch (rough features at this size, links to the lab). Each panel deep-links its
+lab counterpart. The page then continues with the warehouse demo and closes with an "output → input" callout and
+a "whole book in one page" recap.
+
+Below the game, the **warehouse agent** is the relational demo. An order is a multiset of 1-3
+SKUs (`A`-`F`); the agent emits `get <sku> [pad] pack<1|2>` per item then `done` (**abstracted moves** — the
+harness animates the walk). Packing is **relational**: a fragile item pads iff a heavy item shares the
+basket; a chemical goes in box 2 iff food shares it — so correct action needs attending across the whole
+basket (the honest motivation for a transformer). Each SKU's attribute (fragile/heavy/food/chemical) is
+**hidden** — never a token — so the model must infer it; the `ConceptMap` then shows the learned SKU
+embeddings **cluster by that hidden attribute** (reuses `pca2` + `model.tokenEmbed`, like the learn-page
+number line). The pure task lives in **`src/data/warehouse.ts`** (single source of truth: SKUs/attrs, grid +
+greedy-nearest planner `expertTrace`/`planActions`, `warehouseReward` verifier, `parsePlan`, the 83-basket
+space with a **rule-covering held-out split** guaranteeing each relational trigger is tested unseen,
+`buildWarehouseCorpus`, 83-basket space; SFT expert lists items in prompt/sorted order so the plan is a
+straight copy — a reordered tour makes the tiny model drop/conflate items; efficiency is left to RL);
+model-using glue (`runBasket`, `heldOutStats`, `CAPSTONE_CFG`) is in
+`src/capstone/agent.ts`. The page (`CapstoneApp.tsx`, `WarehouseGrid.tsx`, `ConceptMap.tsx`) is
+**bundled-first** (`public/warehouse-model.json`, `DATASET=warehouse`/`gen:warehouse`, ~24K params, ctx 72)
+and also trains a live **two-phase** model from scratch: **SFT** (`stepBatch`) to held-out competence, then
+**RL** (`rlvrStep` with a correctness+efficiency `rlReward`) polishing wasted-tiles — the `RlvrSection`
+phase-switch + `ConvergenceGate` (plateau on efficiency) auto-pause. Offline Phase-0: 2500 SFT steps →
+held-out 0%→~90% (train ~98%), proving it learned the **rule** (generalises to unseen baskets), with the
+train-vs-held efficiency gap the RL polish target. Honest caveats in copy (verifiable task, cold-start, RL is
+a modest polish, tuned offline).
 
 The **explain page** is a sequence of no-maths sections, several driven by **real precomputed data**
 (shipped as JSON, fetched at runtime — mirror the model-fetch pattern) rather than the live model:
@@ -160,11 +235,14 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
 ```bash
 npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
 npm run test         # vitest: gradient checks + model/trainer/persist
-npm run build        # tsc -b && vite build (emits 6 pages: index/explain/learn/lab/harness/guide)
+npm run build        # tsc -b && vite build (emits 7 pages: index/explain/learn/lab/harness/capstone/guide)
 npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
 npm run gen:sort      # retrain the sort-only model (recovery)-> public/sort-model.json
+npm run gen:warehouse # retrain the capstone warehouse agent  -> public/warehouse-model.json
+npm run gen:tictactoe # retrain the UNDERTRAINED capstone tic-tac-toe agent -> public/tictactoe-model.json
+npm run gen:tictactoe-strong # WELL-TRAINED tic-tac-toe agent (coverage deck) -> public/tictactoe-strong-model.json
 npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json
 npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```

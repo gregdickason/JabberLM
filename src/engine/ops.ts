@@ -490,6 +490,49 @@ export function softCrossEntropy(logits: Tensor, teacherProbs: Float32Array): Te
  * NEGATIVE weight (a below-average sample) pushes it DOWN. That single sign-carrying
  * weight is what turns supervised NLL into "reinforce good samples, discourage bad ones".
  */
+/**
+ * Per-position, weighted SOFT cross-entropy — like `softCrossEntropy` but each position's
+ * −Σ target·log softmax is multiplied by a per-position `weights` (a plain Float32Array of
+ * length seq); a weight of 0 MASKS that position. Used to distil a SOFT target distribution
+ * (e.g. minimax's per-cell value policy) onto a single output position while ignoring the
+ * un-guessable prompt — the soft-target analogue of `weightedNLL`.
+ */
+export function weightedSoftCE(logits: Tensor, targetProbs: Float32Array, weights: Float32Array): Tensor {
+  const seq = logits.rows
+  const vocab = logits.cols
+  if (targetProbs.length !== seq * vocab) throw new Error('weightedSoftCE: targetProbs shape != seq×vocab')
+  if (weights.length !== seq) throw new Error('weightedSoftCE: weights length != seq')
+  const probs = new Float32Array(seq * vocab)
+  let loss = 0
+  for (let i = 0; i < seq; i++) {
+    let max = -Infinity
+    for (let j = 0; j < vocab; j++) max = Math.max(max, logits.data[i * vocab + j])
+    let sumE = 0
+    for (let j = 0; j < vocab; j++) {
+      const e = Math.exp(logits.data[i * vocab + j] - max)
+      probs[i * vocab + j] = e
+      sumE += e
+    }
+    let rowloss = 0
+    for (let j = 0; j < vocab; j++) {
+      const p = probs[i * vocab + j] / sumE
+      probs[i * vocab + j] = p
+      rowloss += -targetProbs[i * vocab + j] * Math.log(p + 1e-12)
+    }
+    loss += weights[i] * rowloss
+  }
+  loss /= seq
+  const c = out(Float32Array.from([loss]), 1, 1, [logits], 'weightedSoftCE')
+  c._backward = () => {
+    const g = c.grad[0] / seq
+    for (let i = 0; i < seq; i++) {
+      const w = weights[i]
+      for (let j = 0; j < vocab; j++) logits.grad[i * vocab + j] += g * w * (probs[i * vocab + j] - targetProbs[i * vocab + j])
+    }
+  }
+  return c
+}
+
 export function weightedNLL(logits: Tensor, tokens: number[], weights: Tensor): Tensor {
   const seq = logits.rows
   const vocab = logits.cols

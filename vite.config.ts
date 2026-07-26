@@ -17,6 +17,7 @@ export default defineConfig({
         explain: 'explain.html',
         learn: 'learn.html',
         harness: 'harness.html',
+        capstone: 'capstone.html',
       },
     },
   },

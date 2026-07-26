@@ -3,7 +3,7 @@ import { Tensor } from './tensor'
 import { Optimizer, type GradNorm } from './optimizer'
 import { CharTokenizer } from './tokenizer'
 import { RNG } from './random'
-import { add, crossEntropy, scale, softCrossEntropy, weightedNLL } from './ops'
+import { add, crossEntropy, scale, softCrossEntropy, weightedNLL, weightedSoftCE } from './ops'
 import { generate, sampleFromLogits, lastRowLogits } from './generate'
 import type { FeatureFlags, FineTuneConfig, ModelConfig, SampleConfig, TrainConfig } from './config'
 
@@ -329,6 +329,78 @@ export class Trainer {
       total = total ? add(total, stepLoss) : stepLoss
     }
     const meanLoss = scale(total!, 1 / batch)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
+  /**
+   * Supervised fine-tune with a PROMPT MASK: standard cross-entropy, but the loss is applied
+   * ONLY to the completion tokens (those at index ≥ `start` in each example's `ids`) via a
+   * `weightedNLL` weight of 1 there and 0 on the prompt. Essential when the target is a few
+   * tokens after a long, UNPREDICTABLE prompt (e.g. a game board → one move): plain
+   * next-char SFT wastes almost all the gradient trying to predict the un-guessable prompt,
+   * so the real target barely learns. Not for LoRA fine-tune mode.
+   */
+  sftMaskedStep(trainCfg: TrainConfig, flags: FeatureFlags, batch: { ids: number[]; start: number }[]): StepResult {
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    let n = 0
+    for (const ex of batch) {
+      const L = Math.min(this.cfg.contextLen, ex.ids.length - 1)
+      if (L < 1) continue
+      const input = ex.ids.slice(0, L)
+      const target = ex.ids.slice(1, L + 1)
+      // target[i] predicts ids[i+1]; weight it only when that predicted token is in the completion
+      const w = new Float32Array(target.length)
+      for (let i = 0; i < target.length; i++) if (i + 1 >= ex.start) w[i] = 1
+      const weights = new Tensor(w, target.length, 1, 'sftmask.w')
+      const { logits } = this.model.forward(input, flags)
+      const loss = weightedNLL(logits, target, weights)
+      total = total ? add(total, loss) : loss
+      n++
+    }
+    if (!total || n === 0) return { loss: 0, gradNorm: 0, gradNorms: this.opt.gradNorms() }
+    const meanLoss = scale(total, 1 / n)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
+  /**
+   * Soft-target DISTILLATION of a one-token output: forward `promptIds` and match the model's
+   * distribution at the FINAL position to a supplied target over a small set of output tokens
+   * (`digitTargets[j]` is the target prob for the token whose string is `j`). Only the final
+   * position is trained (`weightedSoftCE` mask), so the un-guessable prompt costs no gradient.
+   * Denser and better-ranked than one-hot SFT — e.g. distil minimax's per-cell value policy for
+   * tic-tac-toe (illegal→0, win→high, block-preferred) so the model stops outputting a near-
+   * uniform / illegal move.
+   */
+  distillMoveStep(trainCfg: TrainConfig, flags: FeatureFlags, batch: { promptIds: number[]; digitTargets: number[] }[]): StepResult {
+    const vocab = this.cfg.vocabSize
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    let n = 0
+    for (const ex of batch) {
+      const seq = Math.min(this.cfg.contextLen, ex.promptIds.length)
+      if (seq < 1) continue
+      const input = ex.promptIds.slice(ex.promptIds.length - seq)
+      const { logits } = this.model.forward(input, flags)
+      const targetProbs = new Float32Array(seq * vocab)
+      const weights = new Float32Array(seq)
+      const last = seq - 1
+      weights[last] = 1 // only the final (move) position is trained
+      for (let j = 0; j < ex.digitTargets.length; j++) {
+        const id = this.tok.stoi.get(String(j))
+        if (id != null) targetProbs[last * vocab + id] = ex.digitTargets[j]
+      }
+      // weightedSoftCE divides by seq internally; scale back up so the effective LR is normal
+      const loss = scale(weightedSoftCE(logits, targetProbs, weights), seq)
+      total = total ? add(total, loss) : loss
+      n++
+    }
+    if (!total || n === 0) return { loss: 0, gradNorm: 0, gradNorms: this.opt.gradNorms() }
+    const meanLoss = scale(total, 1 / n)
     this.opt.zeroGrad()
     meanLoss.backward()
     const gradNorm = this.opt.step(trainCfg)

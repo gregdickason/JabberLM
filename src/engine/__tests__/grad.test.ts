@@ -19,6 +19,7 @@ import {
   embeddingLookup,
   crossEntropy,
   softCrossEntropy,
+  weightedSoftCE,
   weightedNLL,
   sum,
   loraDelta,
@@ -220,6 +221,15 @@ describe('autograd gradient checks', () => {
       0.1, 0.2, 0.3, 0.4, 0.6, 0.1, 0.1, 0.2, 0.25, 0.25, 0.25, 0.25,
     ])
     checkGrad([{ rows: 3, cols: 4, data: rand(12) }], (i) => softCrossEntropy(i[0], teacher))
+  })
+
+  it('weightedSoftCE (masked soft-target distillation)', () => {
+    // per-row target distributions; weights mask rows (row 1 masked with weight 0)
+    const target = Float32Array.from([
+      0.1, 0.2, 0.3, 0.4, 0.6, 0.1, 0.1, 0.2, 0.25, 0.25, 0.25, 0.25,
+    ])
+    const weights = Float32Array.from([1, 0, 1])
+    checkGrad([{ rows: 3, cols: 4, data: rand(12) }], (i) => weightedSoftCE(i[0], target, weights))
   })
 
   it('weightedNLL (policy-gradient: per-row weights, incl. 0 and negative)', () => {
