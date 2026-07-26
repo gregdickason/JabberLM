@@ -225,6 +225,47 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
       the draft and runs on parallel hardware). Try: `explain §6` (KV-cache cost slider), `lab` → speculative
       decoding. Ch 4's Q/K/V is exactly what gets cached here — a one-line forward pointer there.
 **Capstone (end of Part IV):** *Build your own* — train a mini-model, then a 2-tool agent, on the site.
+Site note: the **capstone page** (`capstone.html`) makes this concrete and pulls the whole spine together —
+a ~24K-param transformer learns to be a **warehouse packing agent**. The lesson is *relational* tool use:
+whether an item needs padding, and which box it goes in, depends on **what else is in the order** (fragile
+pads only alongside heavy; chemical → box 2 only alongside food), so correct action requires **attending
+across the whole basket** — the honest, task-level reason a transformer earns its keep (call back to Ch 3).
+Two-phase, live: **SFT** imitates a scripted expert until it packs **unseen** orders correctly (that
+held-out generalisation is the proof it learned the *rule*, not a lookup — Ch 6), then **RL** (verifiable
+reward, Sidebar 12B) polishes the route with no new labels. The kicker for the interpretability thread
+(Part III): the SKU attributes are **never shown to the model as tokens**, yet its learned SKU embeddings
+**cluster by that hidden attribute** — it *discovered* "fragile/heavy/food/chemical" from the job alone
+(the number-line demo, grown up). One page that touches attention, generalisation, agents, SFT→RL, and
+interpretability at once — the book's argument in miniature.
+The page now OPENS with a **playable tic-tac-toe agent** — the friendly, universal way in ("play a game, then
+look inside from safety in understanding"). It's a real closed **agent loop** (you move → the harness feeds
+the agent the new board → it reads and responds), running inside a harness whose **legal-move check** is a
+toggle: on, it deterministically catches the model's occasional illegal (hallucinated) move and plays the best
+legal one; off, the fumble breaks the game — the clearest demo that the harness is a *check layer* over a
+probabilistic model (Ch 14/15). Two honest lessons fell out of building it: emitting a move had to be a *copy*
+of an index-labelled cell (a tiny char model can't count positions — the strawberry-r's trap, Ch 2), and it
+took **masked** supervised learning (loss on the move only, not the un-guessable board) for the signal to land
+— a concrete lesson in what the loss is actually graded on.
+The page ships **two same-size (~130K) agents** — an *undertrained* one and a *well-trained* one, identical
+architecture — to make one lesson unmissable: **training-data design, not parameter count, is the lever**. The
+well-trained model saw *every* position (with the game-deciding ones emphasised); the undertrained one sampled
+carelessly. Same brain, better lessons — and it plays measurably better (loses far less to perfect play). This
+is also a small, honest cautionary tale about *doing* ML: the first "fix" I tried — oversample the openings,
+because every game starts there — *collapsed the model*, because tic-tac-toe openings have near-*uniform* best
+moves (every early move draws), so flooding them drowns training in no-information targets. The real weakness was
+tactical, not positional. Research in miniature: the plausible fix was wrong, and the exhaustive evaluation
+(score all ~4,520 positions) is what told me so (Sidebar).
+And the capstone's real payoff is **"play the agent, then look inside it"**: the Part-III lab tools (attention,
+ablation, SAE) applied to the Part-IV agent, projected onto the board — now with a **weak-vs-strong comparison**.
+Put a threat on the board and read each model's attention: the undertrained heads barely look at the cell you're
+about to win on; the well-trained heads *swing onto it* (measured focus 0.53 → 0.74). *That* is the mechanistic
+reason better data makes a better player — the heads learned to **attend to what's at risk** — and you can watch
+it, side by side, in one toggle. You also *ablate the one critical head* and watch tactical play collapse — the
+injury demo, on the game you just played. That closes the loop of the whole book: a model predicts the next
+token, you can see the circuit that does it, and it's small enough to break and fix — Part IV's agent explained
+by Part III's tools, one page, in your hands. Distillation footnote: the oracle (minimax) supervises a *soft*
+per-cell policy (`weightedSoftCE`) not a one-hot move, which is what finally concentrates the tiny model's
+near-uniform output — a clean cameo of "distil the teacher's whole distribution, not just its answer" (Sidebar 7A).
 
 **Part V — Intelligence (the strange loop)** — the finale; philosophy *earned* by everything above.
 Prose-led but anchored to mechanisms the reader has *seen* (grokking/number-line = emergence; the agent
