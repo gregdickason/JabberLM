@@ -101,6 +101,69 @@ function prng(seed: number): () => number {
   return () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 }
 }
 
+export interface NeverLosesProof {
+  linesX: number // complete games explored with the model as X
+  linesO: number // …and as O
+  lossesX: number // losing lines as X
+  lossesO: number
+  states: number // distinct boards the model's own play can reach (its true exposure)
+  passes: boolean // zero losing lines on either side
+  summary: string
+}
+
+/** EXHAUSTIVE never-loses proof. The model's move is DETERMINISTIC (greedy, legal fallback — the
+ *  same rule the harness plays), so the game tree branches only where the OPPONENT chooses. That
+ *  makes it small enough to enumerate completely: every legal opponent sequence, as X and as O.
+ *
+ *  This is a much stronger claim than "notLost over N sampled games", and a much WEAKER one than
+ *  it sounds: it only visits states the model's own play steers into — a fraction of the 4,520
+ *  (tictactoeLM FINDINGS F-05). A model can be provably safe and demonstrably imperfect at once,
+ *  so always read `passes` beside all-state `optimal`. */
+export function neverLosesProof(model: Model, tok: CharTokenizer): NeverLosesProof {
+  const memo = new Map<Board, number>()
+  return proveNeverLoses((b) => {
+    const hit = memo.get(b)
+    if (hit != null) return hit
+    const mv = playMoveLegal(model, tok, b)
+    memo.set(b, mv)
+    return mv
+  })
+}
+
+/** The proof itself, over ANY deterministic policy `pick`. Split out from the model so the metric
+ *  can be ANCHORED on a policy whose correct score is known in advance — a perfect (minimax) policy
+ *  must score zero losing lines, and a deliberately bad one must score some. Three metrics in the
+ *  sibling project were specified above what perfect play can even reach, and each was caught only
+ *  by scoring perfect play first (tictactoeLM F-09, F-10, F-24). See `__tests__`. */
+export function proveNeverLoses(pick: (b: Board) => number): NeverLosesProof {
+  let lines = 0, losses = 0
+  const visited = new Set<Board>()
+  const walk = (b: Board, agentMark: Mark): void => {
+    const w = winner(b)
+    if (w) { lines++; if (w !== agentMark) losses++; return }
+    if (legalMoves(b).length === 0) { lines++; return }
+    const mk = toMove(b)
+    if (mk === agentMark) {
+      visited.add(b)
+      walk(applyMove(b, pick(b), mk), agentMark) // one branch: the policy is deterministic
+    } else {
+      for (const m of legalMoves(b)) walk(applyMove(b, m, mk), agentMark) // every legal reply
+    }
+  }
+  walk('.........', 'X')
+  const linesX = lines, lossesX = losses
+  lines = 0; losses = 0
+  walk('.........', 'O')
+  const passes = lossesX === 0 && losses === 0
+  return {
+    linesX, linesO: lines, lossesX, lossesO: losses, states: visited.size, passes,
+    summary:
+      `never-loses ${passes ? 'PASS' : 'FAIL'} · as X ${lossesX}/${linesX} losing lines · ` +
+      `as O ${losses}/${lines} · covers ${visited.size} of 4520 states ` +
+      `(${((100 * visited.size) / 4520).toFixed(1)}% — a necessary condition, not all-state competence)`,
+  }
+}
+
 export interface ExhaustiveEval {
   n: number // states scored
   legal: number // % of raw greedy moves that are legal

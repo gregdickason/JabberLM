@@ -69,43 +69,65 @@ interface DS {
   evalLabel?: string
   sftBatch?: (bs: number) => { ids: number[]; start: number }[] // present ⇒ train with masked SFT
   distillBatch?: (bs: number) => { promptIds: number[]; digitTargets: number[] }[] // ⇒ soft-target distillation (tic-tac-toe)
+  deckSize?: number // examples in one pass — lets EPOCHS set the step count (tic-tac-toe)
 }
 
 // Tic-tac-toe DS — soft-target distillation of minimax's per-cell policy.
-//  • WEAK (default): sample states with replacement, tactical-oversampled. Undersamples openings
-//    (every game starts there) → the undertrained interpretability specimen.
-//  • STRONG (`strong: true`): draw from the COVERAGE-BALANCED `trainingDeck` — every state each
-//    pass + opening/ply oversampling + tactical. Same ~130K params; the difference is the DATA.
-//    Eval switches to the exhaustive report over all ~4,520 states.
+//  • WEAK (default): sample states with replacement, tactical-oversampled, soft target T=0.4,
+//    a short budget. Undersamples openings → the undertrained interpretability specimen.
+//  • STRONG (`strong: true`): SHUFFLED EXHAUSTIVE EPOCHS — every one of the ~4,520 decision
+//    states once per pass, reshuffled each pass — with a SHARPENED target (T=0.1) and a budget
+//    measured in epochs, not steps. Same ~130K params; the difference is data + budget.
+//
+//  Why this recipe (measured in the sibling `tictactoeLM` project, same 64/4/3/192 architecture
+//  and the same index-labelled encoding — its "A′"):
+//   • FINDINGS F-21: the 64–72% ceiling every earlier checkpoint hit was UNDERTRAINING and
+//     nothing else. 28 epochs → 70–75%; 153 epochs → 99.3–100.0% optimal over all 4,520 states.
+//     All the movement happens after ~3,000 steps, past where every earlier run stopped.
+//   • FINDINGS F-08: the target's temperature is a real limiter. T=0.4 leaves a TIED argmax in
+//     46.8% of states — in nearly half the board space the target does not single out a move, so
+//     argmax accuracy is decided by noise. T=0.1 measured +3.7 points at equal budget.
+//   • FINDINGS F-27: keep the plain value-softmax target (their T1). The depth-refined variant
+//     scores higher when it converges and swings 12.5 points across seeds — stability wins for a
+//     model readers depend on.
+//  Knobs: DECK=uniform|balanced|sample · TARGET_T · EPOCHS (overrides STEPS) · SEED · FILE.
 function tttDS(config: ModelConfig, file: string, strong = false): DS {
   const states = allDecisionStates()
   const tactical = tacticalStates() // game-deciding positions (win-now / block-now) — oversampled
   const brng = new RNG(999)
-  // STRONG: a shuffled deck iterated sequentially (reshuffled each pass) ⇒ guaranteed exhaustive
-  // coverage with the deck's built-in opening/tactical multiplicities.
-  const deck = strong ? trainingDeck() : []
-  const drng = new RNG(4242)
+  // `uniform` = the proven recipe (one pass = one epoch over every state). `balanced` keeps the
+  // coverage+tactical-weighted deck for comparison; `sample` is the weak with-replacement sampler.
+  const deckMode = process.env.DECK ?? (strong ? 'uniform' : 'sample')
+  const deck: Board[] = deckMode === 'balanced' ? trainingDeck() : deckMode === 'uniform' ? states.slice() : []
+  const targetT = Number(process.env.TARGET_T ?? (strong ? 0.1 : 0.4))
+  const drng = new RNG((Number(process.env.SEED ?? 1337) ^ 0x4242) >>> 0)
   const shuffleDeck = () => { for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(drng.next() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]] } }
-  if (strong) shuffleDeck()
+  if (deck.length) shuffleDeck()
   let idx = 0
   const nextDeck = (): Board => { if (idx >= deck.length) { shuffleDeck(); idx = 0 } return deck[idx++] }
-  const pickState = strong ? nextDeck : () => sampleTrainState(states, tactical, brng.next(), brng.next())
+  const pickState = deck.length ? nextDeck : () => sampleTrainState(states, tactical, brng.next(), brng.next())
+  if (strong) console.log(`[ttt] deck=${deckMode} (${deck.length || 'sampled'}) · target T=${targetT} · states ${states.length}`)
   return {
     corpus: buildTicTacToeCorpus(150000), // only builds the tokenizer vocab; training uses distillBatch
     file,
     seed: ticPrompt(EMPTY),
     config,
     evalLabel: 'TICTACTOE',
+    // Always the STATE count, never the deck length — so EPOCHS means the same number of
+    // training examples whatever the deck weighting, and arms stay budget-matched (F-15).
+    deckSize: states.length,
     // soft-target distillation of minimax's per-cell value policy
     distillBatch: (bs) =>
       Array.from({ length: bs }, () => {
         const b = pickState()
-        return { promptIds: trainer.tok.encode(ticPrompt(b)), digitTargets: moveTarget(b) }
+        return { promptIds: trainer.tok.encode(ticPrompt(b)), digitTargets: moveTarget(b, targetT) }
       }),
     // STRONG uses the exhaustive report (all states, by ply, vs random + vs perfect); the headline
-    // number returned is notLost-vs-random, the full breakdown is logged as a side-line.
+    // number returned is all-state OPTIMAL-move accuracy (the signal that actually moves — beware
+    // reading the game columns alone: F-18/F-20, a specific opponent visits a tiny slice of the
+    // space), with the full breakdown logged beside it.
     evalAcc: strong
-      ? () => { const e = evalExhaustive(trainer.model, trainer.tok, 60); console.log('  TICTACTOE ' + e.summary); return Math.round(e.notLostVsRandom) }
+      ? () => { const e = evalExhaustive(trainer.model, trainer.tok, 60); console.log('  TICTACTOE ' + e.summary); return Math.round(e.optimal) }
       : () => {
       const rng = new RNG(7)
       const agentMv = (b: Board): number => {
@@ -192,12 +214,20 @@ const TRAIN_CONFIG: TrainConfig = {
   ...DEFAULT_TRAIN_CONFIG,
   batchSize: Number(process.env.BATCH ?? 32),
   learningRate: Number(process.env.LR ?? 0.005),
+  weightDecay: Number(process.env.WD ?? DEFAULT_TRAIN_CONFIG.weightDecay),
 }
-const STEPS = Number(process.env.STEPS ?? 6000)
+// EPOCHS is the honest unit when the dataset is a fixed finite set (tic-tac-toe: every reachable
+// state). Steps are not comparable across dataset sizes — that confound is what hid the
+// undertraining for so long (tictactoeLM FINDINGS F-15).
+const EPOCHS = process.env.EPOCHS ? Number(process.env.EPOCHS) : null
+const STEPS =
+  EPOCHS && ds.deckSize
+    ? Math.round((EPOCHS * ds.deckSize) / Number(process.env.BATCH ?? 32))
+    : Number(process.env.STEPS ?? 6000)
 const LOG_EVERY = Number(process.env.LOG_EVERY ?? 250)
 const CHECKPOINT_EVERY = Number(process.env.CHECKPOINT_EVERY ?? 200)
 
-const trainer = new Trainer(ds.corpus, MODEL_CONFIG, 1337)
+const trainer = new Trainer(ds.corpus, MODEL_CONFIG, Number(process.env.SEED ?? 1337))
 const nParams = trainer.model.params.reduce((n, p) => n + p.rows * p.cols, 0)
 console.log(
   `[gen-model:${DATASET}] ${nParams.toLocaleString()} params · vocab ${trainer.cfg.vocabSize} · ` +
@@ -205,7 +235,8 @@ console.log(
 )
 
 mkdirSync(new URL('../public/', import.meta.url), { recursive: true })
-const out = new URL(`../public/${ds.file}`, import.meta.url)
+// FILE overrides the destination — lets budget-matched arms of the same DATASET run side by side.
+const out = new URL(`../public/${process.env.FILE ?? ds.file}`, import.meta.url)
 
 // Held-out SORT exact-match accuracy — the generalisation signal for multitask.
 function sortAccuracy(): number {
@@ -246,7 +277,7 @@ function writeModel(step: number, loss: number): void {
       extra
   }
   console.log(
-    `[gen-model:${DATASET}] wrote public/${ds.file} @ step ${step} · loss ${loss.toFixed(3)} · ` +
+    `[gen-model:${DATASET}] wrote public/${process.env.FILE ?? ds.file} @ step ${step} · loss ${loss.toFixed(3)} · ` +
       `${(json.length / 1e6).toFixed(2)} MB${extra}\n--------------`,
   )
 }

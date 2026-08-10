@@ -181,15 +181,17 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
         </span>
       </div>
 
-      {/* the data-design lesson: same size, same architecture — the difference is the DATA */}
+      {/* the budget lesson: same size, same architecture — the difference is how LONG it trained */}
       {which !== 'live' && (
         <p className="max-w-3xl rounded border border-slate-800 bg-slate-900/40 p-2 text-[11px] leading-relaxed text-slate-400">
-          Both bundled agents are the <b>same ~130K-parameter model, same architecture</b> — the only difference is
-          the training <b>data design</b>. The <b className="text-slate-200">undertrained</b> one sampled positions with
-          replacement and skipped many; the <b className="text-emerald-300">well-trained</b> one saw <b>every</b> reachable
-          position with the game-deciding (win/block) ones emphasised. Result: it blocks and wins a bit more often, loses
-          far less against perfect play — and when you <b>look inside</b> (below), its attention heads swing onto your threat
-          much harder. <span className="text-slate-500">Not a bigger brain — better lessons.</span>
+          Both bundled agents are the <b>same ~130K-parameter model, same architecture</b> — the difference is the
+          training <b>budget</b>. The <b className="text-slate-200">undertrained</b> one saw the game <b>14 times</b>;
+          the <b className="text-emerald-300">well-trained</b> one saw every reachable position <b>~100 times</b>, with a
+          sharper target. Result, scored over <b>all 4,520</b> positions: optimal moves <b>64% → 98%</b>, blocking
+          <b> 51% → 92%</b>, and it now <b>never loses to a random opponent</b>. Nearly all of that arrived
+          <i> after</i> the point where the first model stopped training — the ceiling was never the model's size.
+          And when you <b>look inside</b> (below), its attention heads swing onto your threat much harder.
+          <span className="text-slate-500"> Not a bigger brain — a longer education.</span>
           {which === 'strong' && <> With the well-trained model, notice the harness legal-move check <b>rarely fires</b> — its
             moves are already legal, so it needs the guard less. A better model leans on the harness less.</>}
         </p>
