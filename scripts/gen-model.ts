@@ -26,6 +26,11 @@ import {
   parseMove, legalMoves, applyMove, winner, isTerminal, toMove, EMPTY, type Board, type Mark,
 } from '../src/data/tictactoe'
 import { evalExhaustive } from '../src/capstone/tictactoe-agent'
+import {
+  buildAdditionCorpus, allColumns, colPrompt, parseColumn, columnOracle, sumPrompt,
+  additionHeldOut, longHeldOut,
+} from '../src/data/addition'
+import { runAdder, runSinglePass } from '../src/harness/runAdder'
 import { RNG } from '../src/engine/random'
 import {
   DEFAULT_FEATURE_FLAGS,
@@ -48,6 +53,13 @@ const WAREHOUSE: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 32, nHeads: 2,
 // Tic-tac-toe capstone agent: trained by MASKED SFT (loss on the move token only) on minimax
 // games. Board is index-labelled ("0X1O2.…") so emitting a move is a copy, not a positional count.
 const TICTAC: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 64, nHeads: 4, nLayers: 3, contextLen: 32, dFF: 192 }
+// Reasoning-loop adder: ONE model, three modes. Trained on (a) all 200 single-column facts
+// `add 8 1 0 => 9 0`, (b) whole sums up to 4 digits `sum 8172 5166 => 13338`, and (c) the
+// model's own working `sum 8172 5166 => 2+6+0=8,0 | … => 13338`. ctx 96 fits the longest
+// trace line (~74 chars). The 4-digit cap on (b)/(c) is deliberate: it is exactly why the
+// single pass fails on long sums while the harness loop — one column at a time, constant
+// prompt — keeps working.
+const ADDER: ModelConfig = { ...DEFAULT_MODEL_CONFIG, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 96, dFF: 192 }
 // Mixture-of-Experts demo model: each layer's MLP is E expert FFNs + a gate.
 const MOE: ModelConfig = {
   ...DEFAULT_MODEL_CONFIG,
@@ -196,12 +208,46 @@ function makeDS(name: string): DS {
           return Math.round((100 * ok) / baskets.length)
         },
       }
+    case 'adder':
+      return {
+        corpus: buildAdditionCorpus({ columnRepeats: Number(process.env.COL_REPEATS ?? 150) }),
+        file: 'adder-model.json',
+        seed: sumPrompt('8172', '5166'),
+        config: ADDER,
+        evalLabel: 'ADDER',
+        // Three numbers, because the demo rests on all three:
+        //  columns   — the primitive the harness loop depends on (must be ~100%)
+        //  1-pass 4d — the model doing a whole sum unaided, in distribution
+        //  harness   — the money claim: 15-digit sums, far outside the corpus
+        // Headline returned is the harness number.
+        evalAcc: () => {
+          let cols = 0
+          for (const { a, b, cin } of allColumns()) {
+            const out = trainer.sample(DEFAULT_FEATURE_FLAGS, { ...DEFAULT_SAMPLE_CONFIG, temperature: 0 }, colPrompt(a, b, cin), 5).split('\n')[0]
+            const got = parseColumn(out)
+            const want = columnOracle(a, b, cin)
+            if (got && got.digit === want.digit && got.carry === want.carry) cols++
+          }
+          let direct = 0
+          const four = additionHeldOut(40, 4)
+          for (const [a, b] of four) if (runSinglePass(trainer.model, trainer.tok, a, b).correct) direct++
+          let harness = 0
+          const long = longHeldOut(20, 15)
+          for (const [a, b] of long) if (runAdder(trainer.model, trainer.tok, a, b).correct) harness++
+          const pc = (x: number, n: number) => Math.round((100 * x) / n)
+          console.log(
+            `  ADDER columns ${pc(cols, 200)}% (${cols}/200) · single-pass 4-digit ${pc(direct, four.length)}% · ` +
+              `HARNESS 15-digit ${pc(harness, long.length)}% (${harness}/${long.length})`,
+          )
+          return pc(harness, long.length)
+        },
+      }
     case 'tictactoe':
       return tttDS(TICTAC, 'tictactoe-model.json')
     case 'tictactoe-strong':
       return tttDS(TICTAC, 'tictactoe-strong-model.json', true)
     default:
-      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe, harness, sort, warehouse, tictactoe, tictactoe-strong)`)
+      throw new Error(`unknown DATASET '${name}' (expected: jabber, sonnets, multitask, moe, harness, sort, warehouse, tictactoe, tictactoe-strong, adder)`)
   }
 }
 const DATASET = process.env.DATASET ?? 'jabber'
@@ -226,6 +272,12 @@ const STEPS =
     : Number(process.env.STEPS ?? 6000)
 const LOG_EVERY = Number(process.env.LOG_EVERY ?? 250)
 const CHECKPOINT_EVERY = Number(process.env.CHECKPOINT_EVERY ?? 200)
+// Optional cosine decay to LR_MIN_FRAC of the base LR. OPT-IN (LR_DECAY=1) so no existing
+// recipe changes. Fixes the "oscillating in a band near convergence" signature — a fixed LR
+// that reached ~90% is too coarse to close the last few percent.
+const LR_DECAY = process.env.LR_DECAY === '1'
+const LR_MIN_FRAC = Number(process.env.LR_MIN_FRAC ?? 0.05)
+const BASE_LR = Number(process.env.LR ?? 0.005)
 
 const trainer = new Trainer(ds.corpus, MODEL_CONFIG, Number(process.env.SEED ?? 1337))
 const nParams = trainer.model.params.reduce((n, p) => n + p.rows * p.cols, 0)
@@ -285,6 +337,10 @@ function writeModel(step: number, loss: number): void {
 const t0 = Date.now()
 let last = 0
 for (let i = 1; i <= STEPS; i++) {
+  if (LR_DECAY) {
+    const frac = LR_MIN_FRAC + (1 - LR_MIN_FRAC) * 0.5 * (1 + Math.cos((Math.PI * (i - 1)) / STEPS))
+    TRAIN_CONFIG.learningRate = BASE_LR * frac
+  }
   last = ds.distillBatch
     ? trainer.distillMoveStep(TRAIN_CONFIG, DEFAULT_FEATURE_FLAGS, ds.distillBatch(TRAIN_CONFIG.batchSize)).loss
     : ds.sftBatch

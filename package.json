@@ -15,6 +15,7 @@
     "gen:sort": "DATASET=sort npx --yes vite-node scripts/gen-model.ts",
     "gen:multitask-draft": "DATASET=multitask-draft STEPS=3000 npx --yes vite-node scripts/gen-model.ts",
     "gen:warehouse": "DATASET=warehouse STEPS=3500 npx --yes vite-node scripts/gen-model.ts",
+    "gen:adder": "DATASET=adder STEPS=12000 BATCH=32 LR=0.005 LR_DECAY=1 COL_REPEATS=150 ROUND_DP=6 CHECKPOINT_EVERY=1000 npx --yes vite-node scripts/gen-model.ts",
     "gen:tictactoe": "DATASET=tictactoe STEPS=2000 BATCH=16 LR=0.003 ROUND_DP=6 npx --yes vite-node scripts/gen-model.ts",
     "gen:tictactoe-strong": "DATASET=tictactoe-strong EPOCHS=250 BATCH=64 LR=0.003 WD=0.01 ROUND_DP=6 CHECKPOINT_EVERY=1000 npx --yes vite-node scripts/gen-model.ts",
     "eval:tictactoe": "npx --yes vite-node scripts/eval-tictactoe.ts public/tictactoe-model.json public/tictactoe-strong-model.json",

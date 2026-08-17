@@ -12,6 +12,7 @@ import {
 } from './runHarness'
 import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
 import { Section, Callout, card } from '../explain/ui'
+import AdderSection from './AdderSection'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
 
@@ -456,6 +457,17 @@ export default function HarnessApp() {
               are <em>far</em> easier to hijack this way than this tiny one; the mechanism is identical.
             </Callout>
 
+          </Section>
+
+          <AdderSection n={5} />
+
+          <Section n={6} title="Where this leaves you">
+            <p>
+              A harness is not one thing. On this page it has done three different jobs: it{' '}
+              <b>checked</b> what the model produced, it <b>ran the tool</b> the model asked for, and — in
+              the adder — it <b>remembered</b> where the model had got to. Those are separable, and a real
+              system usually needs all three.
+            </p>
             <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-500">
               This tool-caller was trained in the browser's own engine on{' '}
               <code>instruction =&gt; tool(args) = result</code> lines (single- and two-step). See the{' '}

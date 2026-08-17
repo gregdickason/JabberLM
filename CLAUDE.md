@@ -202,6 +202,36 @@ result is fed back into the loop and hijacks the model's next call (the loop can
 instructions); the mitigation treats tool output as untrusted **typed data** (digits only), which defeats
 the tool-switch but not value-poisoning — so consequential actions still need authorisation.
 
+The harness page closes with a **REASONING LOOP** (§5, `src/harness/AdderSection.tsx`) driven by a
+fourth bundled model, `public/adder-model.json` (`DATASET=adder`/`gen:adder`, 90K params, ctx 96).
+Where §1–§4 hand the arithmetic to a **JS tool**, here the **model does every single sum** and the
+harness only holds the place — the same loop shape with the opposite division of labour. The pure
+task is **`src/data/addition.ts`**: the primitive `add 8 1 0 => 9 0` (digit+digit+carry ⇒ digit,carry
+— exactly 10×10×2 = **200 facts**, all of them trained, i.e. we teach it the addition table and the
+*reasoning* is the loop), plus `sumLine` (single pass) and `traceLine` (the model's own working),
+`columnsOf` (right-to-left digit slicing — pure string ops), `parseColumn`, and a BigInt `addOracle`.
+`src/harness/runAdder.ts` runs the loop: a **fresh, constant 13-char prompt per column**, right to
+left, keeping the model's carry as state.
+
+**INVARIANT: the harness may remember and route, but must never compute.** `runAdderWith(solve, …)`
+takes the column solver as a parameter precisely so tests can prove this — a solver wrong on one
+column yields an answer wrong in exactly that digit; a solver that always says `0 0` yields zeros.
+If the harness were secretly adding, those tests would pass wrongly. Same rule as the tic-tac-toe
+check layer.
+
+Measured on the shipped file (`scripts/` has a `verify` pattern; see the eval line in `gen-model.ts`):
+columns **200/200**; single-pass **0%** at every width; harness **100%** at 4, 6, 10, 15 and **25**
+digits. A model that cannot add two 4-digit numbers in one pass adds two 25-digit numbers perfectly
+through the loop. Two honest notes in the copy: (a) the **self-trace fails** (~10% at 4 digits) —
+to write its own working the model must find "the 3rd digit from the right", and positional counting
+is the thing this architecture is worst at, so the harness supplies **addressing** as well as memory;
+(b) loop accuracy is columns^n, so 99% per column is only ~86% over 15 digits — a chain amplifies
+per-step error, which is why steps must be individually checkable.
+`gen-model.ts` gained an opt-in **`LR_DECAY=1`** (cosine to `LR_MIN_FRAC`, default 0.05): a fixed LR
+reached ~90% columns and then oscillated in a band; the decay closed it to 200/200. Other recipes are
+untouched. NB **`scripts/` is not in the tsc project** (`tsconfig.app.json` includes only `src`), so
+errors there surface only at runtime — `npm run build` does catch `src/`.
+
 Datasets: `src/data/jabberwocky.ts` `TEXT_SAMPLES` is trimmed to **Jabber Poems / Sorting / Equations**
 plus a **Custom** option (seeds all three combined, editable). The deterministic, browser-shippable task
 corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus`, `maxLine`,
@@ -274,6 +304,8 @@ npm run gen:tictactoe # retrain the UNDERTRAINED capstone tic-tac-toe agent -> p
 npm run gen:tictactoe-strong # WELL-TRAINED tic-tac-toe agent (250 epochs, T=0.1) -> public/tictactoe-strong-model.json
                              # knobs: EPOCHS (not STEPS) · DECK=uniform|balanced|sample · TARGET_T · SEED · WD · FILE
 npm run eval:tictactoe       # exhaustive strength report + never-loses proof for both bundles
+npm run gen:adder    # reasoning-loop adder (columns + whole sums + traces) -> public/adder-model.json
+                     # knobs: COL_REPEATS · LR_DECAY=1 (cosine) · LR_MIN_FRAC
 npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json
 npm run gen:jabber   # older single-skill poem model -> public/jabber-model.json (gen:sonnets for the variant)
 ```
