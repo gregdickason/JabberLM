@@ -349,10 +349,10 @@ export default function CapstoneApp() {
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">These two agents touch every idea in the site:</p>
           <ul className="max-w-3xl space-y-1 text-[12px] text-slate-400">
             <li>• <b>Attention</b> — packing depends on the whole order; the move on the whole board → <a className="text-fuchsia-300 hover:underline" href="./learn.html">How it works</a></li>
-            <li>• <b>Generalisation</b> — the warehouse packs orders it never trained on (a learned rule, not a lookup) → <a className="text-fuchsia-300 hover:underline" href="./lab.html#advanced-grokking">grokking</a></li>
+            <li>• <b>Generalisation</b> — the warehouse packs orders it never trained on (a learned rule, not a lookup) → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=advanced-grokking">grokking</a></li>
             <li>• <b>Tools &amp; agents</b> — emitting tool calls, reading results back, the injection risk → <a className="text-fuchsia-300 hover:underline" href="./harness.html">Tools &amp; agents</a></li>
-            <li>• <b>SFT → RL</b> — imitate an expert, then improve from a verifier alone → <a className="text-fuchsia-300 hover:underline" href="./lab.html#reward-learning-rlvr">reward learning</a></li>
-            <li>• <b>Interpretability</b> — the model discovered the hidden attributes; you can read its move confidence → <a className="text-fuchsia-300 hover:underline" href="./lab.html#dictionary-sae">the lab</a></li>
+            <li>• <b>SFT → RL</b> — imitate an expert, then improve from a verifier alone → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=reward-learning-rlvr">reward learning</a></li>
+            <li>• <b>Interpretability</b> — the model discovered the hidden attributes; you can read its move confidence → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">the lab</a></li>
           </ul>
           <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
             Attention, generalisation, agents, SFT→RL, interpretability — playable, in ~130K parameters. That's

@@ -103,7 +103,7 @@ export default function AblationBoard({ model, tok, board }: { model: Model; tok
         </div>
       </div>
       <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
-        This is the lab's <a className="text-fuchsia-300 hover:underline" href="./lab.html#injury-recovery">injury &amp; recovery</a> demo, on the agent you just played: a skill can live mostly
+        This is the lab's <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=injury-recovery">injury &amp; recovery</a> demo, on the agent you just played: a skill can live mostly
         in one head, and removing it breaks that skill while leaving the rest intact.
       </p>
     </div>

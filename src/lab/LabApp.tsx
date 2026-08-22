@@ -14,13 +14,11 @@ import ForgettingSection from './ForgettingSection'
 import SpeculativeSection from './SpeculativeSection'
 import RlvrSection from './RlvrSection'
 import SiteNav from '../components/SiteNav'
+import { tabOf, tabFromUrl, tabUrl, type Tab } from './tabRoute'
 import type { SAE } from '../interp/sae'
 
-const TABS = ['neurons', 'attention heads', 'head ablation', 'injury & recovery', 'dictionary (SAE)', 'steering', 'mixture of experts', 'advanced grokking', 'distillation', 'LoRA fine-tuning', 'forgetting', 'reward learning (RLVR)', 'speculative decoding'] as const
-type Tab = (typeof TABS)[number]
-
 // The tabs grouped into a small curriculum so the lab reads as four themes,
-// not a flat feature shelf. (Ordering/hash routing below are unchanged.)
+// not a flat feature shelf. (Ordering/query routing below are unchanged.)
 const GROUPS: { label: string; blurb: string; tabs: Tab[] }[] = [
   { label: 'Observe', blurb: 'see what the trained model represents inside', tabs: ['neurons', 'attention heads', 'dictionary (SAE)'] },
   { label: 'Intervene', blurb: 'poke the circuit and watch what breaks or moves', tabs: ['head ablation', 'injury & recovery', 'steering'] },
@@ -31,31 +29,47 @@ const GROUPS: { label: string; blurb: string; tabs: Tab[] }[] = [
 const btn =
   'rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-40'
 
-// URL-addressable tabs: e.g. lab.html#injury-recovery opens the recovery tab.
-const slug = (t: string) => t.replace(/[()]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
-const tabFromHash = (): Tab => {
-  const h = typeof location !== 'undefined' ? location.hash.replace(/^#/, '').toLowerCase() : ''
-  return TABS.find((t) => slug(t) === h) ?? 'neurons'
-}
+// Routing (and why it is a query string, not a #hash) lives in ./tabRoute.
 
 export default function LabApp() {
   const [loaded, setLoaded] = useState<LoadedModel | null>(null)
   const [status, setStatus] = useState('looking for a model…')
-  const [tab, setTabState] = useState<Tab>(tabFromHash)
+  const [tab, setTabState] = useState<Tab>(() => tabFromUrl(location.search, location.hash))
   const setTab = (t: Tab) => {
     setTabState(t)
-    if (typeof history !== 'undefined') history.replaceState(null, '', `#${slug(t)}`)
+    // push, not replace: only a pushState is a navigation the analytics beacon reports.
+    if (tabFromUrl(location.search, location.hash) !== t)
+      history.pushState(null, '', tabUrl(location.pathname, t))
   }
   const [trainedSae, setTrainedSae] = useState<{ sae: SAE; layer: number; topFeature: number } | null>(
     null,
   )
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // follow the URL hash (deep links, back/forward)
+  // Canonicalise the arrival URL to ?tab=… — a legacy #hash deep link, or a bare lab.html,
+  // becomes shareable in the new form. replaceState is not a navigation, so this cannot
+  // double-count the pageview the beacon already sent on load.
   useEffect(() => {
-    const onHash = () => setTabState(tabFromHash())
+    const t = tabFromUrl(location.search, location.hash)
+    history.replaceState(null, '', tabUrl(location.pathname, t))
+  }, [])
+
+  // follow the URL (back/forward), and honour a legacy #hash link clicked on-page
+  useEffect(() => {
+    const onPop = () => setTabState(tabFromUrl(location.search, location.hash))
+    const onHash = () => {
+      const t = tabOf(location.hash.replace(/^#/, ''))
+      if (t) {
+        setTabState(t)
+        history.pushState(null, '', tabUrl(location.pathname, t))
+      }
+    }
+    window.addEventListener('popstate', onPop)
     window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      window.removeEventListener('hashchange', onHash)
+    }
   }, [])
 
   useEffect(() => {

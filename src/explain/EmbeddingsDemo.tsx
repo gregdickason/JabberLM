@@ -193,7 +193,7 @@ export default function EmbeddingsDemo() {
         </a>
         , 1,429 words × 50 numbers each), learned from co-occurrence across billions of words of text.
         JabberLM's own model builds the same kind of space in miniature — watch its digit tokens organise
-        into a <a className="text-sky-400 underline" href="./lab.html#advanced-grokking">number line</a> as
+        into a <a className="text-sky-400 underline" href="./lab.html?tab=advanced-grokking">number line</a> as
         it learns to sort.
       </p>
     </div>

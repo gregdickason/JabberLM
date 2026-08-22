@@ -116,7 +116,7 @@ export default function AttentionBoard({ model, tok, board }: { model: Model; to
               every cell but doesn't <em>attend to the danger</em>.</>
           )}
           {' '}The next panel proves which head matters by knocking it out. Same technique, deeper, in the
-          {' '}<a className="text-fuchsia-300 hover:underline" href="./lab.html#attention-heads">lab's attention-heads tab</a>.
+          {' '}<a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=attention-heads">lab's attention-heads tab</a>.
         </p>
       </div>
     </div>

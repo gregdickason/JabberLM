@@ -144,6 +144,16 @@ Turn it on in the Cloudflare dashboard → the Pages project → *Metrics / Web 
 Web Analytics → Add a site → pick the Pages project). Cloudflare injects the beacon at the edge, so
 there's nothing to add to the repo. It reports referrers (e.g. LinkedIn), top pages, and bounce.
 
+The beacon only ever reports a URL, built from **`pathname + search`** — a `#fragment` is invisible to
+it — so anything that happens *inside* a page (a tab, a section, a demo you ran) is unmeasurable by
+default. The lab's thirteen demos are the exception: they route through **`lab.html?tab=<slug>`**
+(`src/lab/tabRoute.ts`), and the beacon patches `history.pushState`, so switching tabs registers as its
+own pageview and "which demo did anyone actually open?" becomes answerable. Two rules that module's
+comments spell out, both read off the beacon source: **push** (a `replaceState` is not a navigation and
+reports nothing) and push an **absolute** path (it resolves a relative URL to the bare origin, which
+would collapse all thirteen tabs into one entry). Old `lab.html#slug` links still resolve. The other
+in-page surfaces — explain/capstone/harness sections — remain invisible; same fix would apply.
+
 **Social preview:** `og:image` is a raster **`public/og-image.png`** (1200×630) — LinkedIn and X don't
 render SVG cards. Regenerate it with `python3 scripts/gen-og.py` if the branding changes, then re-scrape
 the URL in the LinkedIn Post Inspector / X Card Validator to bust their cache.

@@ -102,7 +102,7 @@ export default function SaeBoard({ model, tok }: { model: Model; tok: CharTokeni
       <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
         Honest caveat: at ~130K params on a spatial task the features are <b>rough</b> — some are clean (a
         specific occupied cell), many are mixed. That's the reality of interpretability on a tiny model. The
-        full technique — with steering — lives in the <a className="text-fuchsia-300 hover:underline" href="./lab.html#dictionary-sae">lab's dictionary (SAE) tab</a>.
+        full technique — with steering — lives in the <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">lab's dictionary (SAE) tab</a>.
       </p>
     </div>
   )

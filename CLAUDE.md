@@ -278,6 +278,12 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
   (`+=`) into inputs' `.grad`. Then add a numerical gradient check in
   `src/engine/__tests__/grad.test.ts` — this is the correctness gate; keep it green.
 - Visualizations read plain `Matrix` snapshots from the `Trace`, never live Tensors.
+- **Deep links into a tab go in the query string, not a hash** — the lab routes through
+  `lab.html?tab=<slug>` (`src/lab/tabRoute.ts`, pure + unit-tested; legacy `#slug` still resolves).
+  Cloudflare Web Analytics' beacon reports `pathname + search` and patches `pushState`, so a `?tab=`
+  switch is a countable pageview while a fragment is invisible. Hence: **push** (not `replaceState`) on a
+  real switch, and push an **absolute** path (the beacon resolves a relative URL to the bare origin and
+  would dedupe all 13 tabs to one). In-page anchors elsewhere still use hashes (`useHashScroll`).
 - **Live-training lab sections auto-pause on convergence** via the shared `ConvergenceGate`
   (`src/lab/converged.ts`, unit-tested). Each section holds one in a ref, feeds its held-out
   "did it learn" checkpoint(s) into it on every eval (`gate.record(key, y)`), and in the rAF loop

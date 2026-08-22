@@ -275,7 +275,7 @@ export default function ExplainApp() {
                 <li>
                   <strong>Today's frontier models</strong>: sizes aren't published, but estimates run
                   from hundreds of billions to a few <strong>trillion</strong> — and many now use{' '}
-                  <a className="text-sky-300 underline" href="./lab.html#mixture-of-experts">
+                  <a className="text-sky-300 underline" href="./lab.html?tab=mixture-of-experts">
                     Mixture-of-Experts
                   </a>{' '}
                   so only a slice runs on each token.

@@ -33,7 +33,7 @@ works": it ends by asking, with earned clarity, what it *means* (Hofstadter's st
 
 ## Site gaps the book must handle
 - **Build item (only real code):** deep-linkable URLs/anchors so **Try it →** lands on the exact
-  tab/demo/example (`lab.html#head-ablation`, `harness.html?ex=total+of+6+9+2`, `index.html?dataset=sort`).
+  tab/demo/example (`lab.html?tab=head-ablation`, `harness.html?ex=total+of+6+9+2`, `index.html?dataset=sort`).
 - **Prose chapters (site doesn't demo these):** the pretraining→SFT→RLHF pipeline, prompting/context
   engineering, evaluation of generative models, jailbreaks, scaling laws/emergence. Multimodality = out of
   scope for v1. *(Tokenization/BPE, prompt injection, quantisation, embeddings & RAG now have live demos —

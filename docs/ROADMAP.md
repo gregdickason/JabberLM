@@ -87,6 +87,9 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
 - **Mobile inspector fallback:** a values-table view of heatmaps (doubles as accessibility) beyond the
   current horizontal-scroll.
 - **Analytics** on per-page entry, tour completion, and demo interaction (Cloudflare Web Analytics is in
-  use) to learn what actually teaches.
+  use) to learn what actually teaches. *Partly done:* lab tabs now route through `?tab=<slug>` with a
+  `pushState`, which the beacon reports as a pageview (`src/lab/tabRoute.ts`, README → Deploy) — so the
+  thirteen lab demos are measurable. Explain (10), capstone (7) and harness (5) sections still are not;
+  the same `?section=` + `pushState` treatment on their scroll-spy would cover them.
 - Apply the lab's 1-D **number-line / train-vs-held** treatment to the main-app grok view for
   consistency.
