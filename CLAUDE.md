@@ -65,13 +65,25 @@ higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task 
 prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
 Bundled-model facts in `src/data/modelStats.ts`.
 
-The app is **six pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+The app is **seven pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
 (`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), a **tool use &
 harness** demo (`harness.html` → `src/harness/`), and the **capstone** warehouse-agent
-(`capstone.html` → `src/capstone/`); plus a generated long-form guide (`GUIDE.md` →
-`public/guide.html`). All six share one nav component, `src/components/SiteNav.tsx` (same
-destinations/order/labels, current page marked; each page passes its `current` key + a subtitle child).
+(`capstone.html` → `src/capstone/`), and the **embeddable demo shell** (`embed.html` →
+`src/embed/`); plus a generated long-form guide (`GUIDE.md` → `public/guide.html`). The first six
+share one nav component, `src/components/SiteNav.tsx` (same destinations/order/labels, current page
+marked; each page passes its `current` key + a subtitle child).
+
+**`embed.html` is for lecturers/trainers/presenters** putting one demo into *their* site: `?demo=<id>`
+selects it (`src/embed/demos.ts` — the pure, unit-tested registry; `EmbedApp.tsx` maps id → component),
+and the frame carries **nothing but a JabberLM wordmark and the demo** — no nav, no teaching copy, no
+footer, since the host page brings its own framing. `?scale=` (default 1.25, clamped 0.75–2.5) sets the
+root font size for a projector, which works because the embedded demos are **rem-sized throughout** —
+hence `TicTacToe`'s `showBlurb` prop (the embed drops the budget-lesson paragraph, keeps every control)
+and its px→rem conversion, and why any demo added to the registry must avoid px literals (a canvas
+`LineChart` gets its size from the computed root font size). The frame posts
+`{type:'jabberlm:height'}` to the parent for auto-sizing — height only. Shipped: `tictactoe`; four more
+planned. `noindex`, and the `?demo=` query makes each embed countable in analytics.
 
 The **capstone page** opens with a **playable tic-tac-toe agent** (`src/capstone/TicTacToe.tsx`): a ~130K
 char model (`public/tictactoe-model.json`, `DATASET=tictactoe`/`gen:tictactoe`) you play against — a real
@@ -300,7 +312,7 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
 ```bash
 npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
 npm run test         # vitest: gradient checks + model/trainer/persist
-npm run build        # tsc -b && vite build (emits 7 pages: index/explain/learn/lab/harness/capstone/guide)
+npm run build        # tsc -b && vite build (8 pages: index/explain/learn/lab/harness/capstone/embed/guide)
 npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json

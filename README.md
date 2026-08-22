@@ -154,6 +154,41 @@ reports nothing) and push an **absolute** path (it resolves a relative URL to th
 would collapse all thirteen tabs into one entry). Old `lab.html#slug` links still resolve. The other
 in-page surfaces — explain/capstone/harness sections — remain invisible; same fix would apply.
 
+## Embedding a demo (for lecturers, trainers, presenters)
+
+Any JabberLM demo can be lifted out of its lesson and dropped into someone else's page — a course
+site, an internal wiki, a slide deck — as a single `<iframe>`. The embed carries **no nav, no teaching
+copy, no footer**: just a small JabberLM wordmark and the running demo. The host page supplies the
+framing; we supply the thing that works.
+
+```html
+<div style="max-width: 1100px">
+  <iframe
+    src="https://jabberlm.com/embed.html?demo=tictactoe"
+    width="100%" height="900" style="border:0"
+    title="JabberLM — play a tiny transformer at tic-tac-toe"></iframe>
+</div>
+```
+
+- **`?demo=<id>`** picks the demo — `tictactoe` today, four more planned (`src/embed/demos.ts` is the
+  registry; `embed.html` with no `demo` lists what exists). Query string, so each embedded demo is
+  countable in analytics on its own — same reason the lab's tabs use one.
+- **`&scale=1.6`** enlarges everything for a projector or a lecture theatre. Every size inside the
+  embedded demos is rem-based, so this scales the layout, not just the text (default `1.25`, clamped
+  to 0.75–2.5).
+- **Auto-height (optional).** The frame posts its content height to the parent whenever it changes, so
+  a host can size the iframe instead of guessing. Height only — nothing else crosses the frame:
+
+  ```js
+  addEventListener('message', (e) => {
+    if (e.data?.type === 'jabberlm:height') document.getElementById('ttt').height = e.data.height + 16
+  })
+  ```
+
+- Everything still runs **entirely in the visitor's browser** — the model, the training, the inference.
+  Nothing is sent anywhere, so an embed is safe on a page with no backend and no consent banner.
+- `embed.html` is `noindex`: it is a fragment of someone else's page, not a destination of its own.
+
 **Social preview:** `og:image` is a raster **`public/og-image.png`** (1200×630) — LinkedIn and X don't
 render SVG cards. Regenerate it with `python3 scripts/gen-og.py` if the branding changes, then re-scrape
 the URL in the LinkedIn Post Inspector / X Card Validator to bust their cache.

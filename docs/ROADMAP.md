@@ -84,6 +84,10 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
   decoding / KV-cache economics, tokenizer comparison, a simple RLHF/preference framing.
 - **Web-Worker training spike** — only if larger live training becomes worth the architectural change.
 - **Deep links / shareability** (`?page=…&demo=…` to land on a specific demo or tour step).
+- **Embeddable demos for lecturers/trainers** — `embed.html?demo=<id>`, one demo per frame, no nav or
+  copy, `?scale=` for a projector, auto-height postMessage (`src/embed/demos.ts`, README → Embedding).
+  *Shipped:* `tictactoe`. **Four more to pick** — candidates: the harness tool-call loop, the adder
+  reasoning loop, head ablation, the tokenizer/embeddings explainer.
 - **Mobile inspector fallback:** a values-table view of heatmaps (doubles as accessibility) beyond the
   current horizontal-scroll.
 - **Analytics** on per-page entry, tour completion, and demo interaction (Cloudflare Web Analytics is in

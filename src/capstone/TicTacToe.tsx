@@ -39,7 +39,15 @@ async function loadModel(file: string): Promise<Trainer | null> {
 type Which = 'weak' | 'strong' | 'live'
 type Pt = { x: number; y: number }
 
-export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) => void }) {
+export default function TicTacToe({
+  onLookInside,
+  showBlurb = true,
+}: {
+  onLookInside?: (b: Board) => void
+  /** The embeddable copy (embed.html?demo=tictactoe) drops the budget-lesson paragraph — a host
+   *  page brings its own framing — but keeps every control. */
+  showBlurb?: boolean
+}) {
   const [weak, setWeak] = useState<Trainer | null>(null)
   const [strong, setStrong] = useState<Trainer | null>(null)
   const [which, setWhich] = useState<Which>('weak')
@@ -157,6 +165,13 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
     stepRef.current = 0; setLiveStep(0); setStrength([])
   }
 
+  // Sizes above are rem-based so the demo scales with the root font size (embed.html's
+  // ?scale=). The chart draws to a canvas in real pixels, so give it the same factor.
+  const remPx = useMemo(
+    () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+    [],
+  )
+
   const cellColor = (c: string) => (c === 'X' ? '#38bdf8' : c === 'O' ? '#fbbf24' : 'transparent')
   const a = turn
   const reason = a?.analysis
@@ -164,7 +179,7 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
 
   const modelBtn = (w: Which, label: string, ok: boolean) => (
     <button
-      className={'rounded px-2 py-0.5 text-[11px] ' + (which === w ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300') + (ok ? '' : ' opacity-40')}
+      className={'rounded px-2 py-0.5 text-[0.6875rem] ' + (which === w ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300') + (ok ? '' : ' opacity-40')}
       onClick={() => setWhich(w)} disabled={!ok}
     >{label}</button>
   )
@@ -182,8 +197,8 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
       </div>
 
       {/* the budget lesson: same size, same architecture — the difference is how LONG it trained */}
-      {which !== 'live' && (
-        <p className="max-w-3xl rounded border border-slate-800 bg-slate-900/40 p-2 text-[11px] leading-relaxed text-slate-400">
+      {showBlurb && which !== 'live' && (
+        <p className="max-w-3xl rounded border border-slate-800 bg-slate-900/40 p-2 text-[0.6875rem] leading-relaxed text-slate-400">
           Both bundled agents are the <b>same ~130K-parameter model, same architecture</b> — the difference is the
           training <b>budget</b>. The <b className="text-slate-200">undertrained</b> one saw the game <b>14 times</b>;
           the <b className="text-emerald-300">well-trained</b> one saw every reachable position <b>~100 times</b>, with a
@@ -199,7 +214,7 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
 
       <div className="flex flex-wrap gap-6">
         <div>
-          <div className="grid grid-cols-3 gap-1" style={{ width: 198 }}>
+          <div className="grid grid-cols-3 gap-1" style={{ width: '12.5rem' }}>
             {Array.from({ length: 9 }, (_, i) => {
               const inWin = win?.includes(i)
               const yours = toMove(board) === humanMark && !result && !fumbled && !!activeModel
@@ -211,7 +226,7 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
                     (inWin ? 'border-emerald-400 bg-emerald-900/30 ' : 'border-slate-700 bg-slate-900/60 ') + flag + ' ' +
                     (yours && board[i] === '.' ? 'cursor-pointer hover:bg-slate-800 ' : 'cursor-default ')}
                   style={{ color: cellColor(board[i]) }}>
-                  {board[i] === '.' ? <span className="text-[10px] text-slate-600">{i}</span> : board[i]}
+                  {board[i] === '.' ? <span className="text-[0.625rem] text-slate-600">{i}</span> : board[i]}
                 </button>
               )
             })}
@@ -228,16 +243,16 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
           </div>
         </div>
 
-        <div className="min-w-[280px] flex-1 space-y-3">
+        <div className="min-w-[17.5rem] flex-1 space-y-3">
           {/* the harness check toggle — the key control */}
-          <label className="flex items-start gap-2 rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px]">
+          <label className="flex items-start gap-2 rounded border border-slate-700 bg-slate-900/50 p-2 text-[0.75rem]">
             <input type="checkbox" checked={validate} onChange={(e) => { setValidate(e.target.checked); if (fumbled) setTurn(null) }} className="mt-0.5" />
             <span><b>Harness legal-move check</b> <span className="text-slate-500">({validate ? 'on' : 'off'})</span>
-              <div className="text-[11px] text-slate-500">a deterministic guard over the probabilistic model. On: it rejects an illegal move and asks the model to try again. Off: the model can fumble.</div></span>
+              <div className="text-[0.6875rem] text-slate-500">a deterministic guard over the probabilistic model. On: it rejects an illegal move and asks the model to try again. Off: the model can fumble.</div></span>
           </label>
 
           {/* ALWAYS-ON per-move harness loop: observe → act → check → apply, every turn */}
-          <div className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[11px] leading-relaxed">
+          <div className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[0.6875rem] leading-relaxed">
             <div className="mb-1 font-semibold text-slate-300">the harness loop — this move</div>
             {thinking ? (
               <div className="text-sky-300">1 · harness → agent: sends the board … the agent is choosing a move</div>
@@ -286,12 +301,12 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
           {/* move-confidence strip */}
           {a && (
             <div>
-              <div className="mb-1 text-[11px] text-slate-400">the model's confidence over the 9 cells (its pick)</div>
-              <div className="grid grid-cols-3 gap-0.5" style={{ width: 132 }}>
+              <div className="mb-1 text-[0.6875rem] text-slate-400">the model's confidence over the 9 cells (its pick)</div>
+              <div className="grid grid-cols-3 gap-0.5" style={{ width: '8.3125rem' }}>
                 {a.cellProbs.map((p, i) => (
-                  <div key={i} className="relative h-9 w-[43px] overflow-hidden rounded bg-slate-800" title={`cell ${i}: ${Math.round(p * 100)}%`}>
+                  <div key={i} className="relative h-9 w-[2.6875rem] overflow-hidden rounded bg-slate-800" title={`cell ${i}: ${Math.round(p * 100)}%`}>
                     <div className="absolute bottom-0 w-full" style={{ height: `${Math.round(p * 100)}%`, background: i === a.attempts[0].move ? '#38bdf8' : '#475569' }} />
-                    <div className="absolute inset-0 flex items-center justify-center text-[9px] text-slate-300">{i}·{Math.round(p * 100)}</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-[0.5625rem] text-slate-300">{i}·{Math.round(p * 100)}</div>
                   </div>
                 ))}
               </div>
@@ -312,7 +327,7 @@ export default function TicTacToe({ onLookInside }: { onLookInside?: (b: Board) 
         </div>
         {strength.length > 1 && (
           <div className="mt-2">
-            <LineChart series={[{ label: 'optimal-move rate', color: '#34d399', points: strength }]} width={440} height={140} yLabel="%" />
+            <LineChart series={[{ label: 'optimal-move rate', color: '#34d399', points: strength }]} width={Math.round(27.5 * remPx)} height={Math.round(8.75 * remPx)} yLabel="%" />
           </div>
         )}
       </div>

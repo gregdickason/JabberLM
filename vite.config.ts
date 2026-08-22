@@ -9,8 +9,9 @@ export default defineConfig({
   base: '/',
   build: {
     rollupOptions: {
-      // multi-page: main app, interpretability lab, plain-language explainer,
-      // the "how a transformer works" guided learn page, and the tool-use/harness demo
+      // multi-page: main app, interpretability lab, plain-language explainer, the
+      // "how a transformer works" guided learn page, the tool-use/harness demo, the
+      // capstone, and `embed` — one demo on its own, for embedding in someone else's site
       input: {
         main: 'index.html',
         lab: 'lab.html',
@@ -18,6 +19,7 @@ export default defineConfig({
         learn: 'learn.html',
         harness: 'harness.html',
         capstone: 'capstone.html',
+        embed: 'embed.html',
       },
     },
   },
