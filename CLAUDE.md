@@ -82,8 +82,21 @@ root font size for a projector, which works because the embedded demos are **rem
 hence `TicTacToe`'s `showBlurb` prop (the embed drops the budget-lesson paragraph, keeps every control)
 and its px→rem conversion, and why any demo added to the registry must avoid px literals (a canvas
 `LineChart` gets its size from the computed root font size). The frame posts
-`{type:'jabberlm:height'}` to the parent for auto-sizing — height only. Shipped: `tictactoe`; four more
-planned. `noindex`, and the `?demo=` query makes each embed countable in analytics.
+`{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
+query makes each embed countable in analytics.
+
+Five demos ship: `tictactoe`, `harness-tools` (harness §1), `agent-loop` (§3), `prompt-injection` (§4)
+and `lora`. The last four declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
+use them would otherwise reflow the host page mid-demo; the box scrolls if a narrow host squeezes it)
+and a `font` (the harness page is sans, lab/capstone mono). Getting them out of their pages meant a
+refactor worth knowing about: **`src/harness/demos.tsx`** now owns the three interactive harness demos
+(`ToolCallDemo`/`AgentLoopDemo`/`InjectionDemo`, each with its own state, plus `Stage`, `InjTraceView`,
+`INJ_*`, `loadHarnessModel`), and `HarnessApp` renders them inside its `Section` headings, intro prose
+and `Callout`s — **the prose stays on the page, the demo is the shared part**. Same split via a flag in
+`LoraSection({ embed })`: the embed drops `SectionIntro`, the two explanatory paragraphs and the
+"see inside the overlay" `LoRAView`, keeping the controls, chart, comparison rows and try-your-own. The
+harness demos take `autoRun` (embeds only — a frame with no prose must show the thing working on load;
+the lesson page still waits for the reader to press Run).
 
 The **capstone page** opens with a **playable tic-tac-toe agent** (`src/capstone/TicTacToe.tsx`): a ~130K
 char model (`public/tictactoe-model.json`, `DATASET=tictactoe`/`gen:tictactoe`) you play against — a real

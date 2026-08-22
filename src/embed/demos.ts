@@ -8,7 +8,7 @@
 // This module is deliberately pure (strings in, data out) so it is testable under vitest's
 // node environment; EmbedApp maps an id to its React component.
 
-export type DemoId = 'tictactoe'
+export type DemoId = 'tictactoe' | 'harness-tools' | 'agent-loop' | 'prompt-injection' | 'lora'
 
 export interface Demo {
   id: DemoId
@@ -16,6 +16,15 @@ export interface Demo {
   title: string
   /** The full lesson this demo is lifted from, for the index page and docs. */
   source: { label: string; href: string }
+  /**
+   * Fixed box, in rem, for demos whose content appears as you use them (a trace, a second
+   * column). Without it the frame would grow mid-demo and the host page would jump under a
+   * presenter mid-sentence. rem, not px, so `?scale=` still resizes the whole thing; the box
+   * scrolls if a narrow host squeezes it. Omitted = the demo sizes itself (tic-tac-toe).
+   */
+  frame?: { w: number; h: number }
+  /** The page it comes from sets the type: the harness page is sans, the lab/capstone mono. */
+  font?: 'sans' | 'mono'
 }
 
 export const DEMOS: Demo[] = [
@@ -23,6 +32,34 @@ export const DEMOS: Demo[] = [
     id: 'tictactoe',
     title: 'Play a tiny transformer at tic-tac-toe',
     source: { label: 'Capstone', href: './capstone.html' },
+  },
+  {
+    id: 'harness-tools',
+    title: 'Watch a tool call go through the harness',
+    source: { label: 'Tools & agents §1', href: './harness.html' },
+    frame: { w: 54, h: 28 },
+    font: 'sans',
+  },
+  {
+    id: 'agent-loop',
+    title: 'Loop it — and it is an agent',
+    source: { label: 'Tools & agents §3', href: './harness.html' },
+    frame: { w: 54, h: 22 },
+    font: 'sans',
+  },
+  {
+    id: 'prompt-injection',
+    title: 'Prompt injection — the agent obeys the tool output',
+    source: { label: 'Tools & agents §4', href: './harness.html' },
+    frame: { w: 60, h: 24 },
+    font: 'sans',
+  },
+  {
+    id: 'lora',
+    title: 'LoRA — re-task a frozen model with a tiny overlay',
+    source: { label: 'Lab', href: './lab.html?tab=lora-fine-tuning' },
+    frame: { w: 68, h: 26 },
+    font: 'mono',
   },
 ]
 

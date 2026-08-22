@@ -86,8 +86,9 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
 - **Deep links / shareability** (`?page=…&demo=…` to land on a specific demo or tour step).
 - **Embeddable demos for lecturers/trainers** — `embed.html?demo=<id>`, one demo per frame, no nav or
   copy, `?scale=` for a projector, auto-height postMessage (`src/embed/demos.ts`, README → Embedding).
-  *Shipped:* `tictactoe`. **Four more to pick** — candidates: the harness tool-call loop, the adder
-  reasoning loop, head ablation, the tokenizer/embeddings explainer.
+  *Shipped:* `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora` — the last four in
+  a fixed box so a host page can't reflow mid-demo. Later candidates: the adder reasoning loop, head
+  ablation, the tokenizer/embeddings explainer.
 - **Mobile inspector fallback:** a values-table view of heatmaps (doubles as accessibility) beyond the
   current horizontal-scroll.
 - **Analytics** on per-page entry, tour completion, and demo interaction (Cloudflare Web Analytics is in

@@ -170,14 +170,29 @@ framing; we supply the thing that works.
 </div>
 ```
 
-- **`?demo=<id>`** picks the demo — `tictactoe` today, four more planned (`src/embed/demos.ts` is the
-  registry; `embed.html` with no `demo` lists what exists). Query string, so each embedded demo is
-  countable in analytics on its own — same reason the lab's tabs use one.
+- **`?demo=<id>`** picks the demo (`src/embed/demos.ts` is the registry; `embed.html` with no `demo`
+  lists what exists). Query string, so each embedded demo is countable in analytics on its own — same
+  reason the lab's tabs use one. Five ship today:
+
+  | `?demo=` | what it is | box at `scale=1` | at the default `scale=1.25` |
+  |---|---|---|---|
+  | `tictactoe` | play the ~130K agent; swap undertrained / well-trained / your own | fluid | fluid |
+  | `harness-tools` | one instruction → tool call → the harness runs the real JS (harness §1) | 864×448 | 1080×560 |
+  | `agent-loop` | the loop: tool result fed back until the model says `done` (harness §3) | 864×352 | 1080×440 |
+  | `prompt-injection` | attacker-controlled tool output hijacks the agent, side by side with the fix (harness §4) | 960×384 | 1200×480 |
+  | `lora` | freeze the base, train a tiny overlay, flip ascending ↔ descending (lab) | 1088×416 | 1360×520 |
+
+  The four lifted from a lesson have a **fixed box** (declared in rem, so `?scale=` still resizes it):
+  their content appears as you use them, and without a fixed box the host page would reflow under a
+  presenter mid-sentence. Size the iframe to the box — or if your content column is narrower, pass
+  `scale=1` (the box scrolls rather than overflowing the page). The harness demos **run themselves on
+  load**, so an embed is never a blank box with no prose to explain it.
 - **`&scale=1.6`** enlarges everything for a projector or a lecture theatre. Every size inside the
   embedded demos is rem-based, so this scales the layout, not just the text (default `1.25`, clamped
   to 0.75–2.5).
 - **Auto-height (optional).** The frame posts its content height to the parent whenever it changes, so
-  a host can size the iframe instead of guessing. Height only — nothing else crosses the frame:
+  a host can size the iframe instead of guessing (for a fixed-box demo this is a constant — that is
+  the point). Height only — nothing else crosses the frame:
 
   ```js
   addEventListener('message', (e) => {

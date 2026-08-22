@@ -47,7 +47,7 @@ async function loadBase(): Promise<Trainer | null> {
 
 type Row = { v: SortVec; asc: string; desc: string; ok: boolean }
 
-export default function LoraSection() {
+export default function LoraSection({ embed = false }: { embed?: boolean } = {}) {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
   const [status, setStatus] = useState('loading the sort model…')
   const [running, setRunning] = useState(false)
@@ -198,9 +198,13 @@ export default function LoraSection() {
     { label: 'ascending — overlay OFF (frozen base)', color: ASC, points: curveAsc },
   ]
   const btn = 'rounded border px-3 py-1.5 text-xs'
+  // The chart is a canvas in real pixels; embed.html can scale the root font size, so read it
+  // and scale to match (a no-op at the lab's own 16px root).
+  const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
 
   return (
     <div className="space-y-4">
+      {!embed && (
       <SectionIntro
         title="LoRA — re-task a frozen model with a tiny overlay"
         papers={[{ title: 'Hu et al. (2021) — LoRA: Low-Rank Adaptation of Large Language Models', url: 'https://arxiv.org/abs/2106.09685' }]}
@@ -214,6 +218,7 @@ export default function LoraSection() {
         <b>flip</b> to <span className="font-mono">9 6 2</span> — and toggle the overlay off to get the
         original ascending answer back, because the base never moved.
       </SectionIntro>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {!running ? (
@@ -245,7 +250,12 @@ export default function LoraSection() {
           <div className="mb-1 text-[11px] text-slate-400">
             held-out accuracy — the adapter learns descending while the frozen base still does ascending
           </div>
-          <LineChart series={series} width={460} height={190} yLabel="%" />
+          <LineChart
+            series={series}
+            width={Math.round(28.75 * remPx)}
+            height={Math.round(11.875 * remPx)}
+            yLabel="%"
+          />
         </div>
 
         <div>
@@ -265,12 +275,14 @@ export default function LoraSection() {
               </div>
             ))}
           </div>
+          {!embed && (
           <p className="mt-2 max-w-[460px] text-[11px] leading-relaxed text-slate-500">
             The <span style={{ color: ASC }}>base</span> keeps sorting ascending; the tiny{' '}
             <span style={{ color: DESC }}>overlay</span> makes the same model sort descending. This is how
             one big base model is cheaply adapted to many tasks — you ship the frozen base once and a
             few-MB adapter per specialty, instead of a full fine-tuned copy each time.
           </p>
+          )}
         </div>
       </div>
 
@@ -307,15 +319,17 @@ export default function LoraSection() {
             <span style={{ color: overlay ? DESC : ASC }}>{output}</span>
           </div>
         )}
+        {!embed && (
         <p className="mt-1.5 text-[10px] text-slate-500">
           Same prompt, your choice of overlay: <span style={{ color: ASC }}>off</span> = the frozen base
           sorts ascending; <span style={{ color: DESC }}>on</span> = the adapter sorts descending. Toggle and
           re-run to compare.
         </p>
+        )}
       </div>
 
       {/* see inside the overlay: A · B = ΔW is genuinely low-rank */}
-      {loraTrace && (
+      {!embed && loraTrace && (
         <div className="rounded border border-slate-700 bg-slate-900/40 p-3">
           <div className="mb-2 text-[11px] text-slate-400">
             See inside the overlay — <b>layer 0</b>'s adapters. Each learns a tall <b>A</b> (in×{RANK}) times a
