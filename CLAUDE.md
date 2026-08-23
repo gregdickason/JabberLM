@@ -114,8 +114,14 @@ line-detection it can't fully represent — capacity didn't help); it diverges a
 steps, so `gen:tictactoe` is lr 0.003 / STEPS 2000.
 
 The capstone ships **two** ~130K models — same architecture, same size, same parameter count — to teach that
-**training BUDGET, not parameter count, was the lever**. The **undertrained** `public/tictactoe-model.json` (weak
-sampler, above) is the interpretability specimen; the **well-trained** `public/tictactoe-strong-model.json`
+**training BUDGET, not parameter count, was the lever**. The **undertrained** `public/tictactoe-model.json` is
+trained for just **100 steps** (`gen:tictactoe`, 1,600 examples ≈ a third of one pass over the 4,520 states) —
+deliberately, so it is **genuinely weak**: **legal 40%**, optimal 24%, win 15%, block 18%, not-lost vs random 64%,
+vs perfect 0%. Legal-40% is the point: its top pick is an already-occupied cell in ~60% of positions, so the
+**harness check layer visibly fires** — a retry chain (`cell 8 ✗ taken → re-ask 8 ✗ → re-ask 4 ✓ — caught it`) on
+most turns, and with the check OFF the game jams within a move or two. The earlier 2,000-step bundle (64% optimal,
+**98% legal**) almost never tripped the guard, which made the check-layer demo hard to show. It is also the
+interpretability specimen; the **well-trained** `public/tictactoe-strong-model.json`
 (`DATASET=tictactoe-strong`/`gen:tictactoe-strong`) uses **shuffled exhaustive epochs** — every one of the ~4,520
 reachable decision states once per pass, reshuffled each pass (which also trains all 8 D4-symmetric variants for
 free, since they're distinct reachable states) — with a **sharpened target (T=0.1)** and a budget measured in
@@ -138,9 +144,11 @@ index-labelled encoding — its "A′"):
  • **Seeds vary a lot.** A second seed (2024) was still at 70% when seed 1337 hit 98% at the same step — so ship
    the arm you can point at, never an average (their F-27).
 
-Result vs the old bundle, over ALL 4,520 states: optimal **64.1% → 97.9%** (1,622 → **95** states wrong), win
-52→89%, block 51→92%, not-lost vs random 75→**100%**, vs perfect 4→94%, and losing lines in the exhaustive proof
-**304 → 9** (**0 as X**). Strength is measured by **`evalExhaustive(model, tok)`** (`tictactoe-agent.ts`) over all
+Result over ALL 4,520 states, shipped undertrained → shipped well-trained: optimal **23.9% → 97.9%** (3,439 →
+**95** states wrong), legal 40→**~100%**, win 15→89%, block 18→92%, not-lost vs random 64→**100%**, vs perfect
+0→94%, and losing lines in the exhaustive proof **455 → 9** (**0 as X**). (The 2,000-step bundle this replaced sat
+between them at 64.1% optimal / 98% legal — that arm's numbers are the ones the training-budget findings below
+were measured on.) Strength is measured by **`evalExhaustive(model, tok)`** (`tictactoe-agent.ts`) over all
 ~4,520 states (legal/optimal/win/block %, optimal-by-ply, + games vs random & vs perfect) and by
 **`proveNeverLoses(pick)` / `neverLosesProof(model, tok)`** — an *exhaustive* never-loses proof: the policy is
 deterministic, so the tree branches only where the OPPONENT chooses, and every legal opponent sequence is
@@ -168,10 +176,10 @@ Part-IV agent, board-aware (`src/capstone/Inspector.tsx` + `AttentionBoard`/`Abl
 mapping: cell `c`'s tokens sit at prompt positions `5+2c` (index) and `6+2c` (mark), so a head's attention at the
 move-decision position projects onto the 3×3 board. The Inspector has a **weak/strong selector** (loads both
 bundles) and a live **threat-focus comparison**: `threatFocus(model, tok, board, threat)` (AttentionBoard.tsx) =
-the strongest head's attention on your threat cell — the **well-trained model scores higher** (mean **0.657 →
+the strongest head's attention on your threat cell — the **well-trained model scores far higher** (mean **0.199 →
 0.785** over the 1,484 must-block boards: opponent threatens, we have no win of our own), the mechanistic reason
-it blocks more (51% → 92%). Re-measure with `scripts/` after any retrain — these are properties of the *shipped
-weights*, not of the recipe. That contrast is the payoff: same size, same
+it blocks more (18% → 92%). Re-measure with **`scripts/measure-threat-focus.ts`** after any retrain of either
+bundle — these are properties of the *shipped weights*, not of the recipe. That contrast is the payoff: same size, same
 architecture, longer training → the heads learn to **attend to what's at risk**. AttentionBoard's copy is
 data-driven (adapts to the selected model's measured focus). Other findings (real): heads are **specialised
 per-cell readers**; ablating the **critical head** crashes tactical play — the injury demo on the game. SAE is a
@@ -331,10 +339,12 @@ npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-mode
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
 npm run gen:sort      # retrain the sort-only model (recovery)-> public/sort-model.json
 npm run gen:warehouse # retrain the capstone warehouse agent  -> public/warehouse-model.json
-npm run gen:tictactoe # retrain the UNDERTRAINED capstone tic-tac-toe agent -> public/tictactoe-model.json
+npm run gen:tictactoe # UNDERTRAINED tic-tac-toe agent — only 100 steps, weak ON PURPOSE (legal 40%, so the
+                      # harness check-layer demo actually fires) -> public/tictactoe-model.json
 npm run gen:tictactoe-strong # WELL-TRAINED tic-tac-toe agent (250 epochs, T=0.1) -> public/tictactoe-strong-model.json
                              # knobs: EPOCHS (not STEPS) · DECK=uniform|balanced|sample · TARGET_T · SEED · WD · FILE
 npm run eval:tictactoe       # exhaustive strength report + never-loses proof for both bundles
+# scripts/measure-threat-focus.ts  # mean attention on your threat cell, both bundles (run after any retrain)
 npm run gen:adder    # reasoning-loop adder (columns + whole sums + traces) -> public/adder-model.json
                      # knobs: COL_REPEATS · LR_DECAY=1 (cosine) · LR_MIN_FRAC
 npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json

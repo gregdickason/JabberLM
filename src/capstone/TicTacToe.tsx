@@ -200,13 +200,16 @@ export default function TicTacToe({
       {showBlurb && which !== 'live' && (
         <p className="max-w-3xl rounded border border-slate-800 bg-slate-900/40 p-2 text-[0.6875rem] leading-relaxed text-slate-400">
           Both bundled agents are the <b>same ~130K-parameter model, same architecture</b> — the difference is the
-          training <b>budget</b>. The <b className="text-slate-200">undertrained</b> one saw the game <b>14 times</b>;
-          the <b className="text-emerald-300">well-trained</b> one saw every reachable position <b>~100 times</b>, with a
-          sharper target. Result, scored over <b>all 4,520</b> positions: optimal moves <b>64% → 98%</b>, blocking
-          <b> 51% → 92%</b>, and it now <b>never loses to a random opponent</b>. Nearly all of that arrived
-          <i> after</i> the point where the first model stopped training — the ceiling was never the model's size.
-          And when you <b>look inside</b> (below), its attention heads swing onto your threat much harder.
-          <span className="text-slate-500"> Not a bigger brain — a longer education.</span>
+          training <b>budget</b>. The <b className="text-slate-200">undertrained</b> one trained for <b>100 steps</b>:
+          1,600 positions, about a <b>third of one pass</b> over the game. The <b className="text-emerald-300">well-trained</b>
+          one went over every reachable position again and again, with a sharper target. Result, scored over{' '}
+          <b>all 4,520</b> positions: optimal moves <b>24% → 98%</b>, blocking <b>18% → 92%</b>, and it now{' '}
+          <b>never loses to a random opponent</b>. The ceiling was never the model's size — same brain, longer education.
+          And when you <b>look inside</b> (below), its attention heads swing onto your threat far harder
+          (<b>0.20 → 0.79</b> on the 1,484 boards where you threaten to win).
+          {which === 'weak' && <> The undertrained one is <b>barely a player</b>: in <b>60% of positions its top pick is a
+            cell that is already taken</b>. Watch the harness legal-move check catch it, turn after turn — and untick the
+            check to see what happens without it.</>}
           {which === 'strong' && <> With the well-trained model, notice the harness legal-move check <b>rarely fires</b> — its
             moves are already legal, so it needs the guard less. A better model leans on the harness less.</>}
         </p>
