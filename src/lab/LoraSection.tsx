@@ -24,7 +24,9 @@ const ALPHA = 16
 const TARGETS: ('attn' | 'mlp')[] = ['attn', 'mlp']
 const evalInterval = (s: number) => (s < 100 ? 20 : s < 600 ? 100 : 200)
 const DESC = '#34d399' // emerald — descending (overlay ON, the adapter)
-const ASC = '#64748b' // grey — ascending (overlay OFF, the frozen base)
+const ASC = '#38bdf8' // sky blue — ascending (overlay OFF, the frozen base). Blue, not grey:
+// overlay-off is a real state to compare, not absent/disabled, and one colour means one thing
+// everywhere it appears — the chart series, the held-out rows, the Run button and its output.
 const FLAGS_ON = { ...DEFAULT_FEATURE_FLAGS, lora: true }
 const FLAGS_OFF = { ...DEFAULT_FEATURE_FLAGS, lora: false }
 
@@ -60,6 +62,9 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
   const [prompt, setPrompt] = useState('sort 4 6 1 => ')
   const [overlay, setOverlay] = useState(true)
   const [output, setOutput] = useState('')
+  // which overlay state PRODUCED that output — the colour has to follow the run, not the
+  // checkbox, or flicking the toggle afterwards recolours an answer the base never gave
+  const [ranWith, setRanWith] = useState(true)
   const [loraTrace, setLoraTrace] = useState<Trace | null>(null)
   const [autoPaused, setAutoPaused] = useState<'converged' | 'cap' | null>(null)
 
@@ -187,6 +192,7 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
     const flags = { ...DEFAULT_FEATURE_FLAGS, lora: overlay }
     const out = generate(t.model, flags, t.tok, prompt, { ...DEFAULT_SAMPLE_CONFIG, temperature: 0, maxNewTokens: 8 }, new RNG(1))
     setOutput(out.split('\n')[0])
+    setRanWith(overlay)
   }
 
   if (!trainer) return <div className="text-xs text-slate-500">{status}</div>
@@ -306,17 +312,23 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
             <input type="checkbox" checked={overlay} onChange={(e) => setOverlay(e.target.checked)} />
             overlay {overlay ? 'on' : 'off'}
           </label>
+          {/* the button carries the overlay state: green = adapter applied, blue = frozen base */}
           <button
-            className="rounded border border-emerald-600 bg-emerald-900/40 px-3 py-1 text-xs text-emerald-200 hover:bg-emerald-900/70"
+            className={
+              'rounded border px-3 py-1 text-xs ' +
+              (overlay
+                ? 'border-emerald-600 bg-emerald-900/40 text-emerald-200 hover:bg-emerald-900/70'
+                : 'border-sky-600 bg-sky-900/40 text-sky-200 hover:bg-sky-900/70')
+            }
             onClick={runPrompt}
           >
-            ▶ Run
+            ▶ Run {overlay ? 'with overlay' : 'base only'}
           </button>
         </div>
         {output !== '' && (
           <div className="mt-2 font-mono text-[13px]">
             <span className="text-slate-400">{prompt}</span>
-            <span style={{ color: overlay ? DESC : ASC }}>{output}</span>
+            <span style={{ color: ranWith ? DESC : ASC }}>{output}</span>
           </div>
         )}
         {!embed && (
