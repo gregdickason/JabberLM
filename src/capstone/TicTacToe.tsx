@@ -229,7 +229,10 @@ export default function TicTacToe({
                     (inWin ? 'border-emerald-400 bg-emerald-900/30 ' : 'border-slate-700 bg-slate-900/60 ') + flag + ' ' +
                     (yours && board[i] === '.' ? 'cursor-pointer hover:bg-slate-800 ' : 'cursor-default ')}
                   style={{ color: cellColor(board[i]) }}>
-                  {board[i] === '.' ? <span className="text-[0.625rem] text-slate-600">{i}</span> : board[i]}
+                  {/* the cell INDEX — big enough to read from the back of a room (it is what the
+                      model actually emits, so an audience needs to see it), but still clearly
+                      secondary to the text-3xl X/O marks */}
+                  {board[i] === '.' ? <span className="text-xl font-normal text-slate-500">{i}</span> : board[i]}
                 </button>
               )
             })}
