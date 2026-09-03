@@ -94,8 +94,9 @@ and its px→rem conversion, and why any demo added to the registry must avoid p
 `{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
 query makes each embed countable in analytics.
 
-Five demos ship: `tictactoe`, `harness-tools` (harness §1), `agent-loop` (§3), `prompt-injection` (§4)
-and `lora`. The last four declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
+Ten demos ship: `tictactoe`, `harness-tools` (harness §1), `agent-loop` (§3), `prompt-injection` (§4),
+`lora`, `tokenizer`, `embeddings`, `adder` (harness §5), `head-ablation` and `warehouse`. All but
+`tictactoe` declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
 use them would otherwise reflow the host page mid-demo; the box scrolls if a narrow host squeezes it)
 and a `font` (the harness page is sans, lab/capstone mono). Getting them out of their pages meant a
 refactor worth knowing about: **`src/harness/demos.tsx`** now owns the three interactive harness demos
@@ -106,6 +107,17 @@ and `Callout`s — **the prose stays on the page, the demo is the shared part**.
 "see inside the overlay" `LoRAView`, keeping the controls, chart, comparison rows and try-your-own. The
 harness demos take `autoRun` (embeds only — a frame with no prose must show the thing working on load;
 the lesson page still waits for the reader to press Run).
+
+The same split, repeated for the other five: `TokenizationDemo`/`EmbeddingsDemo` needed **nothing** (their
+pages already wrapped them); `AdderSection({n, embed})` and `AblationSection({trainer, embed})` gained a
+flag that drops the section heading/intro prose/`Callout` (the adder also auto-runs on mount); and the
+warehouse demo was **extracted to `src/capstone/WarehouseDemo.tsx`** — basket presets + random held-out +
+`WarehouseGrid`, owning `basket`/`run` — with `controls` and `caption` slots the capstone page fills with
+its trained/live model toggle and its explanation, and the frame leaves empty. `loadWarehouseModel()`
+moved from `CapstoneApp` into `agent.ts` so both surfaces can reach it. Frames are **measured in the
+browser** (content height + slack), not guessed: navigate to the frame, read
+`.overflow-auto` children's height in rem. The rule that makes all of this work: **the prose stays on
+the page, the demo is the shared part** — never fork a component for the embed.
 
 The **capstone page** opens with a **playable tic-tac-toe agent** (`src/capstone/TicTacToe.tsx`): a ~130K
 char model (`public/tictactoe-model.json`, `DATASET=tictactoe`/`gen:tictactoe`) you play against — a real

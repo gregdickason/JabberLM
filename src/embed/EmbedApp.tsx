@@ -2,6 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DEMOS, demoFromUrl, rootFontPx, type Demo, type DemoId } from './demos'
 import TicTacToe from '../capstone/TicTacToe'
 import LoraSection from '../lab/LoraSection'
+import AblationSection from '../lab/AblationSection'
+import { loadBundled } from '../lab/loadModel'
+import TokenizationDemo from '../explain/TokenizationDemo'
+import EmbeddingsDemo from '../explain/EmbeddingsDemo'
+import AdderSection from '../harness/AdderSection'
+import WarehouseDemo from '../capstone/WarehouseDemo'
+import ConceptMap from '../capstone/ConceptMap'
+import { loadWarehouseModel } from '../capstone/agent'
 import { AgentLoopDemo, InjectionDemo, ToolCallDemo, loadHarnessModel } from '../harness/demos'
 import type { Trainer } from '../engine/trainer'
 
@@ -29,6 +37,37 @@ function WithHarnessModel({ children }: { children: (t: Trainer) => React.ReactN
   return trainer ? <>{children(trainer)}</> : <div className="text-slate-500">{status}</div>
 }
 
+// Generic "fetch a model, then render" wrapper — the lab and capstone frames each need one
+// model and nothing else from their page.
+function WithModel({
+  load,
+  loading,
+  missing,
+  children,
+}: {
+  load: () => Promise<Trainer | null>
+  loading: string
+  missing: string
+  children: (t: Trainer) => React.ReactNode
+}) {
+  const [trainer, setTrainer] = useState<Trainer | null>(null)
+  const [status, setStatus] = useState(loading)
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const t = await load()
+      if (cancelled) return
+      if (t) setTrainer(t)
+      else setStatus(missing)
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return trainer ? <>{children(trainer)}</> : <div className="text-slate-500">{status}</div>
+}
+
 // Every demo here renders WITHOUT its page's framing — no heading, no intro prose, no
 // callout. Those live on the lesson pages; a host page brings its own words.
 const RENDER: Record<DemoId, () => React.ReactNode> = {
@@ -38,6 +77,32 @@ const RENDER: Record<DemoId, () => React.ReactNode> = {
   'agent-loop': () => <WithHarnessModel>{(t) => <AgentLoopDemo trainer={t} autoRun />}</WithHarnessModel>,
   'prompt-injection': () => <WithHarnessModel>{(t) => <InjectionDemo trainer={t} />}</WithHarnessModel>,
   lora: () => <LoraSection embed />,
+  tokenizer: () => <TokenizationDemo />,
+  embeddings: () => <EmbeddingsDemo />,
+  adder: () => <AdderSection n={0} embed />,
+  'head-ablation': () => (
+    <WithModel
+      load={async () => (await loadBundled())?.trainer ?? null}
+      loading="loading the built-in model…"
+      missing="could not load the built-in model"
+    >
+      {(t) => <AblationSection trainer={t} embed />}
+    </WithModel>
+  ),
+  warehouse: () => (
+    <WithModel
+      load={loadWarehouseModel}
+      loading="loading the trained warehouse agent…"
+      missing="could not load the warehouse agent (public/warehouse-model.json)"
+    >
+      {(t) => (
+        <div className="space-y-3">
+          <WarehouseDemo trainer={t} ready status="" />
+          <ConceptMap model={t.model} tok={t.tok} />
+        </div>
+      )}
+    </WithModel>
+  ),
 }
 
 // A demo with a declared frame gets a fixed box so the host page never reflows mid-demo.

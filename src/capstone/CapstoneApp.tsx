@@ -3,14 +3,13 @@ import SiteNav from '../components/SiteNav'
 import LineChart from '../viz/LineChart'
 import { ConvergenceGate } from '../lab/converged'
 import { Trainer } from '../engine/trainer'
-import { deserialize, type SavedModel } from '../engine/persist'
 import { DEFAULT_FEATURE_FLAGS, DEFAULT_TRAIN_CONFIG } from '../engine/config'
 import {
   buildWarehouseCorpus, trainBaskets, heldOutBaskets, warePrompt, warehouseReward,
-  ATTR, type Basket,
+  ATTR,
 } from '../data/warehouse'
-import { CAPSTONE_CFG, runBasket, heldOutStats, type AgentRun } from './agent'
-import WarehouseGrid from './WarehouseGrid'
+import { CAPSTONE_CFG, heldOutStats, loadWarehouseModel, runBasket, type AgentRun } from './agent'
+import WarehouseDemo from './WarehouseDemo'
 import ConceptMap from './ConceptMap'
 import TicTacToe from './TicTacToe'
 import Inspector from './Inspector'
@@ -35,25 +34,12 @@ const rlReward = (prompt: string, completion: string): number => warehouseReward
 type Pt = { x: number; y: number }
 type View = 'bundled' | 'live'
 
-async function loadBundled(): Promise<Trainer | null> {
-  try {
-    const res = await fetch(import.meta.env.BASE_URL + 'warehouse-model.json')
-    if (!res.ok) return null
-    return deserialize((await res.json()) as SavedModel)
-  } catch {
-    return null
-  }
-}
-
 export default function CapstoneApp() {
   const [bundled, setBundled] = useState<Trainer | null>(null)
   const [bundledStatus, setBundledStatus] = useState('loading the trained agent…')
   const [view, setView] = useState<View>('bundled')
 
-  // demo: run a basket through the active model and animate it
-  const [basket, setBasket] = useState<Basket>(['A', 'C', 'F'])
   const [inspectBoard, setInspectBoard] = useState<Board>('XX....O..') // the position the interpretability inspector shows
-  const [run, setRun] = useState<AgentRun | null>(null)
 
   // live trainer
   const [running, setRunning] = useState(false)
@@ -88,7 +74,7 @@ export default function CapstoneApp() {
     live.current = new Trainer(buildWarehouseCorpus(60000), CAPSTONE_CFG, 7)
     setLiveReady(true)
     void (async () => {
-      const t = await loadBundled()
+      const t = await loadWarehouseModel()
       if (cancelled) return
       if (t) { setBundled(t); setBundledStatus(`trained agent loaded · ${t.model.params.reduce((n, p) => n + p.size, 0).toLocaleString()} params`) }
       else { setBundledStatus('no bundled agent found — switch to "your live model" and train one'); setView('live') }
@@ -96,13 +82,6 @@ export default function CapstoneApp() {
     return () => { cancelled = true; runningRef.current = false; cancelAnimationFrame(rafRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // run the current basket whenever the active model or basket changes
-  useEffect(() => {
-    if (!activeTrainer) { setRun(null); return }
-    setRun(runBasket(activeTrainer.model, activeTrainer.tok, basket))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, basket, bundled, liveReady])
 
   function evalNow(s: number) {
     const t = live.current
@@ -160,7 +139,6 @@ export default function CapstoneApp() {
     phaseRef.current = 'warmup'; setPhase('warmup'); stepCountRef.current = 0; lastEvalRef.current = 0
     setStep(0); setAccSft([]); setAccRl([]); setReward([]); setAttempts([])
     gateRef.current.reset(); setAutoPaused(null)
-    if (view === 'live') setRun(runBasket(live.current.model, live.current.tok, basket))
   }
 
   const accSeries = [
@@ -169,7 +147,6 @@ export default function CapstoneApp() {
   ]
   const rewardSeries = [{ label: 'RL — mean reward (verifier)', color: REW, points: reward }]
   const btn = 'rounded border px-3 py-1.5 text-xs'
-  const randomHeld = () => setBasket(heldOutBaskets()[Math.floor(Math.random() * heldOutBaskets().length)])
 
   return (
     <div className="min-h-screen font-mono text-sm text-slate-200">
@@ -235,26 +212,27 @@ export default function CapstoneApp() {
           </p>
         </section>
 
-        {/* live demo grid */}
+        {/* live demo grid — shared with embed.html?demo=warehouse (WarehouseDemo) */}
         <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-400">watch the agent pack an order:</span>
-            {(['A C F', 'A B C', 'D E F', 'E D', 'A B', 'B C D'] as const).map((b) => (
-              <button key={b} className={btn + ' border-slate-600 bg-slate-800 hover:bg-slate-700 font-mono'} onClick={() => setBasket(b.split(' '))}>{b}</button>
-            ))}
-            <button className={btn + ' border-sky-700 bg-sky-950/40 text-sky-200'} onClick={randomHeld}>🎲 random held-out</button>
-            <span className="ml-auto flex items-center gap-1">
-              <span className="text-slate-500">model:</span>
-              <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'bundled' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('bundled')} disabled={!bundled}>trained agent</button>
-              <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'live' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('live')}>your live model</button>
-            </span>
-          </div>
-          {activeReady ? <WarehouseGrid run={run} /> : <div className="text-xs text-slate-500">{bundledStatus}</div>}
-          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
-            {view === 'bundled'
-              ? `The ${bundled ? '' : '(loading) '}trained agent packs even baskets it never saw in training — proof it learned the rule, not a lookup table. Try a 🎲 random held-out order.`
-              : 'This is your from-scratch model below — untrained it packs nonsense; train it and watch these orders come right.'}
-          </p>
+          <WarehouseDemo
+            trainer={activeTrainer}
+            ready={activeReady}
+            status={bundledStatus}
+            controls={
+              <span className="ml-auto flex items-center gap-1">
+                <span className="text-slate-500">model:</span>
+                <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'bundled' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('bundled')} disabled={!bundled}>trained agent</button>
+                <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'live' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('live')}>your live model</button>
+              </span>
+            }
+            caption={
+              <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
+                {view === 'bundled'
+                  ? `The ${bundled ? '' : '(loading) '}trained agent packs even baskets it never saw in training — proof it learned the rule, not a lookup table. Try a 🎲 random held-out order.`
+                  : 'This is your from-scratch model below — untrained it packs nonsense; train it and watch these orders come right.'}
+              </p>
+            }
+          />
         </section>
 
         {/* train it yourself */}

@@ -181,12 +181,17 @@ framing; we supply the thing that works.
   | `agent-loop` | the loop: tool result fed back until the model says `done` (harness §3) | 864×352 | 1080×440 |
   | `prompt-injection` | attacker-controlled tool output hijacks the agent, side by side with the fix (harness §4) | 960×384 | 1200×480 |
   | `lora` | freeze the base, train a tiny overlay, flip ascending ↔ descending (lab) | 1088×416 | 1360×520 |
+  | `tokenizer` | real GPT-4 subword splits vs char-level — why it can't count the r's in *strawberry* | 704×288 | 880×360 |
+  | `embeddings` | nearest neighbours, king−man+woman≈queen, a 2-D map of meaning | 704×512 | 880×640 |
+  | `adder` | the reasoning loop: single pass fails, showing its working fails, one column at a time works | 864×864 | 1080×1080 |
+  | `head-ablation` | knock out attention heads and watch which skill breaks (lab) | 960×480 | 1200×600 |
+  | `warehouse` | a relational agent packs an order, and the concept map it learned unlabelled | 896×480 | 1120×600 |
 
-  The four lifted from a lesson have a **fixed box** (declared in rem, so `?scale=` still resizes it):
+  All but `tictactoe` have a **fixed box** (declared in rem, so `?scale=` still resizes it):
   their content appears as you use them, and without a fixed box the host page would reflow under a
   presenter mid-sentence. Size the iframe to the box — or if your content column is narrower, pass
-  `scale=1` (the box scrolls rather than overflowing the page). The harness demos **run themselves on
-  load**, so an embed is never a blank box with no prose to explain it.
+  `scale=1` (the box scrolls rather than overflowing the page). The harness demos and the adder **run
+  themselves on load**, so an embed is never a blank box with no prose to explain it.
 - **`&scale=1.6`** enlarges everything for a projector or a lecture theatre. Every size inside the
   embedded demos is rem-based, so this scales the layout, not just the text (default `1.25`, clamped
   to 0.75–2.5).

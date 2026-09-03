@@ -57,7 +57,7 @@ function LoopTrace({ trace }: { trace: AdderTrace }) {
   )
 }
 
-export default function AdderSection({ n }: { n: number }) {
+export default function AdderSection({ n, embed = false }: { n: number; embed?: boolean }) {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
   const [status, setStatus] = useState('loading the adder…')
   const [a, setA] = useState('23498')
@@ -91,6 +91,11 @@ export default function AdderSection({ n }: { n: number }) {
     })
   }, [trainer])
 
+  useEffect(() => {
+    if (embed && trainer) run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embed, trainer])
+
   const run = () => {
     if (!trainer || !a || !b) return
     setBusy(true)
@@ -106,8 +111,8 @@ export default function AdderSection({ n }: { n: number }) {
     }, 0)
   }
 
-  return (
-    <Section n={n} title="Reasoning in a loop — the model does the maths, the harness remembers" id="reasoning-loop">
+  const intro = (
+    <>
       <p>
         Everything above hands the hard part to a <b>tool</b>: the model says{' '}
         <code className="font-mono text-slate-300">sum(6 9 2)</code> and JavaScript computes it. This
@@ -120,6 +125,11 @@ export default function AdderSection({ n }: { n: number }) {
         carry of nothing is nine, carry nothing". That is the whole of its arithmetic. Everything else
         below is the <em>loop</em>.
       </p>
+    </>
+  )
+
+  const body = (
+    <>
       {status && <p className="text-[11px] text-amber-400">{status}</p>}
 
       {trainer && (
@@ -219,11 +229,13 @@ export default function AdderSection({ n }: { n: number }) {
             </div>
           )}
 
-          <p className="mt-4">
-            The harness slices off one column, asks the model, writes down the digit, and carries the
-            carry. <b>It never adds anything itself.</b> Every number in that answer came out of the
-            model — the harness is doing what a person does with a pencil: keeping the place.
-          </p>
+          {!embed && (
+            <p className="mt-4">
+              The harness slices off one column, asks the model, writes down the digit, and carries the
+              carry. <b>It never adds anything itself.</b> Every number in that answer came out of the
+              model — the harness is doing what a person does with a pencil: keeping the place.
+            </p>
+          )}
 
           <div className={card + ' mt-3'}>
             <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -259,16 +271,26 @@ export default function AdderSection({ n }: { n: number }) {
             </p>
           </div>
 
-          <Callout>
-            Two different jobs get muddled together as "the agent thinks". <b>Reasoning</b> is the model
-            doing a step it could not do in one go — here, every single addition. <b>Memory</b> is the
-            harness holding the place so the model never has to. This model knows only the addition table
-            and can't add two 4-digit numbers on its own, yet it adds 25-digit numbers correctly, because
-            the loop turns one big problem into many tiny ones it <em>can</em> do. When you buy an "agent",
-            ask which of those two you are getting — and what happens to the answer when one step is wrong.
-          </Callout>
+          {!embed && (
+            <Callout>
+              Two different jobs get muddled together as "the agent thinks". <b>Reasoning</b> is the model
+              doing a step it could not do in one go — here, every single addition. <b>Memory</b> is the
+              harness holding the place so the model never has to. This model knows only the addition table
+              and can't add two 4-digit numbers on its own, yet it adds 25-digit numbers correctly, because
+              the loop turns one big problem into many tiny ones it <em>can</em> do. When you buy an "agent",
+              ask which of those two you are getting — and what happens to the answer when one step is wrong.
+            </Callout>
+          )}
         </>
       )}
+    </>
+  )
+
+  if (embed) return <div className="space-y-3">{body}</div>
+  return (
+    <Section n={n} title="Reasoning in a loop — the model does the maths, the harness remembers" id="reasoning-loop">
+      {intro}
+      {body}
     </Section>
   )
 }

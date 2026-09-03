@@ -8,7 +8,17 @@
 // This module is deliberately pure (strings in, data out) so it is testable under vitest's
 // node environment; EmbedApp maps an id to its React component.
 
-export type DemoId = 'tictactoe' | 'harness-tools' | 'agent-loop' | 'prompt-injection' | 'lora'
+export type DemoId =
+  | 'tictactoe'
+  | 'harness-tools'
+  | 'agent-loop'
+  | 'prompt-injection'
+  | 'lora'
+  | 'tokenizer'
+  | 'embeddings'
+  | 'adder'
+  | 'head-ablation'
+  | 'warehouse'
 
 export interface Demo {
   id: DemoId
@@ -59,6 +69,41 @@ export const DEMOS: Demo[] = [
     title: 'LoRA — re-task a frozen model with a tiny overlay',
     source: { label: 'Lab', href: './lab.html?tab=lora-fine-tuning' },
     frame: { w: 68, h: 26 },
+    font: 'mono',
+  },
+  {
+    id: 'tokenizer',
+    title: 'Why it cannot count the letters in strawberry',
+    source: { label: 'New to AI', href: './explain.html' },
+    frame: { w: 44, h: 18 },
+    font: 'sans',
+  },
+  {
+    id: 'embeddings',
+    title: 'Word vectors — nearest neighbours, analogies, and a 2-D map',
+    source: { label: 'New to AI', href: './explain.html' },
+    frame: { w: 44, h: 32 },
+    font: 'sans',
+  },
+  {
+    id: 'adder',
+    title: 'A reasoning loop — the model does every sum, the harness holds the place',
+    source: { label: 'Tools & agents §5', href: './harness.html' },
+    frame: { w: 54, h: 54 },
+    font: 'sans',
+  },
+  {
+    id: 'head-ablation',
+    title: 'Ablate an attention head and watch a skill collapse',
+    source: { label: 'Lab', href: './lab.html?tab=head-ablation' },
+    frame: { w: 60, h: 30 },
+    font: 'mono',
+  },
+  {
+    id: 'warehouse',
+    title: 'A relational agent — packing depends on the whole basket',
+    source: { label: 'Capstone', href: './capstone.html' },
+    frame: { w: 56, h: 30 },
     font: 'mono',
   },
 ]

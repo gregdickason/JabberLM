@@ -87,8 +87,9 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
 - **Embeddable demos for lecturers/trainers** — `embed.html?demo=<id>`, one demo per frame, no nav or
   copy, `?scale=` for a projector, auto-height postMessage (`src/embed/demos.ts`, README → Embedding,
   and the `/teachers` page, whose table is generated from the registry so it can't drift).
-  **Shipped (5):** `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora` — the last
-  four in a fixed box so a host page can't reflow mid-demo.
+  **Shipped (10):** `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora`,
+  `tokenizer`, `embeddings`, `adder`, `head-ablation`, `warehouse` — all but `tictactoe` in a fixed
+  box (measured from the rendered content in the browser) so a host page can't reflow mid-demo.
 
   The pattern is now cheap to repeat: register the demo, render it without its page's framing, measure
   its expanded box in the browser, set `frame`/`font`. The cost is *not* the embed — it is how tangled
@@ -98,7 +99,7 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
   **(c) assembled inline in its page** (the warehouse agent, harness §5) — needs the same extraction
   the harness §1/§3/§4 demos got: interactive part into a shared component, prose stays on the page.
 
-  **Next five, in this order:**
+  **The next five, now done** (kept as a record of what each cost):
   1. `tokenizer` — explain's `TokenizationDemo`. Shape (a). Real GPT-4 subword splits vs char-level:
      the "why it can't count the r's in strawberry" lesson. No model to fetch, instant, fine on a
      phone — the strongest demo for a non-technical audience and the cheapest to ship.
@@ -113,7 +114,7 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
      `CapstoneApp` assembles grid + run + concept map inline. Pays for it by being the one demo that
      shows a model discovering a concept nobody labelled.
 
-  **After that, roughly in value order** — `flaky-harness` (harness §2, pairs with `harness-tools`),
+  **Next up, roughly in value order** — `flaky-harness` (harness §2, pairs with `harness-tools`),
   `rag` and `quantisation` (both shape (a); the two questions corporate audiences always ask),
   `injury-recovery` and `grokking` (the best "watch it learn" moments, but each needs minutes of live
   training — workshop material, not a 5-minute slot; both auto-pause on convergence), then the rest of

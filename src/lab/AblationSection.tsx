@@ -9,7 +9,16 @@ import { genLine, poemLoss, sortAccuracy, randomSortVectors } from '../interp/ab
 // it and sorting collapses while poems survive); poems lean on the output layer;
 // layer 0 is a shared foundation (ablating it breaks everything). A hands-on look
 // at specialisation — and polysemanticity — in a real model.
-export default function AblationSection({ trainer }: { trainer: Trainer }) {
+export default function AblationSection({
+  trainer,
+  embed = false,
+}: {
+  trainer: Trainer
+  /** the frame (embed.html?demo=head-ablation) drops the intro prose — a host page brings its
+   *  own framing — but keeps the "click a head" instruction and the try-it hint, which tell a
+   *  viewer what to DO with a grid of buttons */
+  embed?: boolean
+}) {
   const model = trainer.model
   const tok = trainer.tok
   const { nLayers, nHeads } = model.cfg
@@ -88,12 +97,14 @@ export default function AblationSection({ trainer }: { trainer: Trainer }) {
 
   return (
     <div className="space-y-4 text-xs">
-      <p className="max-w-2xl leading-relaxed text-slate-300">
-        The built-in model does three things — write poems, sort numbers, and "solve" equations. Where
-        does each ability live? <span className="text-fuchsia-300">Knock out attention heads</span>{' '}
-        below (zero their output) and watch what breaks. Sorting is concentrated in one layer; poems
-        lean on another; some heads are shared by everything.
-      </p>
+      {!embed && (
+        <p className="max-w-2xl leading-relaxed text-slate-300">
+          The built-in model does three things — write poems, sort numbers, and "solve" equations. Where
+          does each ability live? <span className="text-fuchsia-300">Knock out attention heads</span>{' '}
+          below (zero their output) and watch what breaks. Sorting is concentrated in one layer; poems
+          lean on another; some heads are shared by everything.
+        </p>
+      )}
 
       {/* head grid */}
       <div>

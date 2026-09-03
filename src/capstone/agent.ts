@@ -2,6 +2,8 @@
 // basket, parse its plan, score it. Kept out of src/data/warehouse.ts so that module
 // stays engine-free (it's the training-corpus source of truth).
 import { Model } from '../engine/model'
+import { Trainer } from '../engine/trainer'
+import { deserialize, type SavedModel } from '../engine/persist'
 import { CharTokenizer } from '../engine/tokenizer'
 import { generate } from '../engine/generate'
 import { RNG } from '../engine/random'
@@ -14,6 +16,17 @@ import {
 // The from-scratch model the "train it yourself" panel builds — matches the bundled
 // warehouse-model.json config. ctx 96: shorter contexts can't reliably copy the basket
 // multiset into the plan; 96 is the proven config (held-out ~90%).
+/** The bundled trained warehouse agent (public/warehouse-model.json), or null if absent. */
+export async function loadWarehouseModel(): Promise<Trainer | null> {
+  try {
+    const res = await fetch(import.meta.env.BASE_URL + 'warehouse-model.json')
+    if (!res.ok) return null
+    return deserialize((await res.json()) as SavedModel)
+  } catch {
+    return null
+  }
+}
+
 export const CAPSTONE_CFG: ModelConfig = {
   vocabSize: 0, dModel: 32, nHeads: 2, nLayers: 2, contextLen: 96, dFF: 96, activation: 'gelu', weightTying: true,
 }
