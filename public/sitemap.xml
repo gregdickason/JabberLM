@@ -5,5 +5,7 @@
   <url><loc>https://jabberlm.com/learn</loc><priority>0.8</priority></url>
   <url><loc>https://jabberlm.com/harness</loc><priority>0.7</priority></url>
   <url><loc>https://jabberlm.com/lab</loc><priority>0.7</priority></url>
+  <url><loc>https://jabberlm.com/capstone</loc><priority>0.7</priority></url>
+  <url><loc>https://jabberlm.com/teachers</loc><priority>0.6</priority></url>
   <url><loc>https://jabberlm.com/guide.html</loc><priority>0.5</priority></url>
 </urlset>

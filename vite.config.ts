@@ -19,6 +19,7 @@ export default defineConfig({
         learn: 'learn.html',
         harness: 'harness.html',
         capstone: 'capstone.html',
+        teachers: 'teachers.html',
         embed: 'embed.html',
       },
     },

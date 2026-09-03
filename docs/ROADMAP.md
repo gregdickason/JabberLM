@@ -85,10 +85,41 @@ generalising), and algebra is the hallucination lesson — the contrast is the t
 - **Web-Worker training spike** — only if larger live training becomes worth the architectural change.
 - **Deep links / shareability** (`?page=…&demo=…` to land on a specific demo or tour step).
 - **Embeddable demos for lecturers/trainers** — `embed.html?demo=<id>`, one demo per frame, no nav or
-  copy, `?scale=` for a projector, auto-height postMessage (`src/embed/demos.ts`, README → Embedding).
-  *Shipped:* `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora` — the last four in
-  a fixed box so a host page can't reflow mid-demo. Later candidates: the adder reasoning loop, head
-  ablation, the tokenizer/embeddings explainer.
+  copy, `?scale=` for a projector, auto-height postMessage (`src/embed/demos.ts`, README → Embedding,
+  and the `/teachers` page, whose table is generated from the registry so it can't drift).
+  **Shipped (5):** `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora` — the last
+  four in a fixed box so a host page can't reflow mid-demo.
+
+  The pattern is now cheap to repeat: register the demo, render it without its page's framing, measure
+  its expanded box in the browser, set `frame`/`font`. The cost is *not* the embed — it is how tangled
+  the demo is with its page. Three shapes, in rising order of work:
+  **(a) zero-arg component** (`TokenizationDemo()`, `EmbeddingsDemo()`, `GrokSection()`) — drop it in;
+  **(b) needs a model** (`AblationSection({trainer})`) — wrap in a loader like `WithHarnessModel`;
+  **(c) assembled inline in its page** (the warehouse agent, harness §5) — needs the same extraction
+  the harness §1/§3/§4 demos got: interactive part into a shared component, prose stays on the page.
+
+  **Next five, in this order:**
+  1. `tokenizer` — explain's `TokenizationDemo`. Shape (a). Real GPT-4 subword splits vs char-level:
+     the "why it can't count the r's in strawberry" lesson. No model to fetch, instant, fine on a
+     phone — the strongest demo for a non-technical audience and the cheapest to ship.
+  2. `embeddings` — explain's `EmbeddingsDemo`. Shape (a), fetches `word-vectors.json` (~200 KB).
+     Nearest neighbours, king−man+woman≈queen, the 2-D map. The classic lecture moment.
+  3. `adder` — harness §5 (`AdderSection`). Shape (c), small: it takes `n` and renders its own heading.
+     The reasoning loop — a model that cannot add two 4-digit numbers in one pass adds two 25-digit
+     numbers perfectly through the loop. The best single argument for harnesses on the site.
+  4. `head-ablation` — lab's `AblationSection`. Shape (b), needs the lab's `autoLoadModel`. Break a
+     head, watch a learned skill collapse. Instant payoff, no waiting — unlike the training demos.
+  5. `warehouse` — the capstone's relational agent + `ConceptMap`. Shape (c), the most work here:
+     `CapstoneApp` assembles grid + run + concept map inline. Pays for it by being the one demo that
+     shows a model discovering a concept nobody labelled.
+
+  **After that, roughly in value order** — `flaky-harness` (harness §2, pairs with `harness-tools`),
+  `rag` and `quantisation` (both shape (a); the two questions corporate audiences always ask),
+  `injury-recovery` and `grokking` (the best "watch it learn" moments, but each needs minutes of live
+  training — workshop material, not a 5-minute slot; both auto-pause on convergence), then the rest of
+  the lab (`sae`, `steering`, `moe`, `distillation`, `forgetting`, `rlvr`, `speculative`), which are
+  all shape (a)/(b) and near-free once the earlier ones exist. The playground itself is the biggest
+  prize and the most work — it needs a slimmed-down layout, not just a frame.
 - **Mobile inspector fallback:** a values-table view of heatmaps (doubles as accessibility) beyond the
   current horizontal-scroll.
 - **Analytics** on per-page entry, tour completion, and demo interaction (Cloudflare Web Analytics is in

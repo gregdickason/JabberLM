@@ -2,7 +2,7 @@
 // and where they currently are. Replaces the bespoke, per-page header link sets that
 // varied in which links they showed, their order, and their labels.
 
-export type NavKey = 'playground' | 'explain' | 'learn' | 'harness' | 'lab' | 'capstone'
+export type NavKey = 'playground' | 'explain' | 'learn' | 'harness' | 'lab' | 'capstone' | 'teachers'
 
 const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'playground', label: 'Playground', href: './' },
@@ -11,10 +11,13 @@ const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'harness', label: 'Tools & agents', href: './harness.html' },
   { key: 'lab', label: 'Lab', href: './lab.html' },
   { key: 'capstone', label: 'Capstone', href: './capstone.html' },
+  { key: 'teachers', label: 'For teachers', href: './teachers.html' },
 ]
 
 // The recommended learning sequence (distinct from the display order above), with a
 // rough time per stop — powers the "Next →" affordance so every page suggests where to go.
+// `teachers` is deliberately absent: it is a reference for whoever is RUNNING the session,
+// not a stop on the learner's path, so it never appears as anyone's "Next".
 const ORDER: NavKey[] = ['explain', 'learn', 'playground', 'harness', 'lab', 'capstone']
 const MINUTES: Record<NavKey, string> = {
   explain: '10 min',
@@ -23,6 +26,7 @@ const MINUTES: Record<NavKey, string> = {
   harness: '10 min',
   lab: 'explore',
   capstone: '10 min',
+  teachers: 'reference',
 }
 
 /**

@@ -65,14 +65,23 @@ higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task 
 prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
 Bundled-model facts in `src/data/modelStats.ts`.
 
-The app is **seven pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+The app is **eight pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
 (`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), a **tool use &
 harness** demo (`harness.html` → `src/harness/`), and the **capstone** warehouse-agent
-(`capstone.html` → `src/capstone/`), and the **embeddable demo shell** (`embed.html` →
-`src/embed/`); plus a generated long-form guide (`GUIDE.md` → `public/guide.html`). The first six
-share one nav component, `src/components/SiteNav.tsx` (same destinations/order/labels, current page
+(`capstone.html` → `src/capstone/`), a **For teachers** reference (`teachers.html` →
+`src/teachers/`), and the **embeddable demo shell** (`embed.html` → `src/embed/`); plus a generated
+long-form guide (`GUIDE.md` → `public/guide.html`). All but `embed` share one nav component,
+`src/components/SiteNav.tsx` (same destinations/order/labels, current page
 marked; each page passes its `current` key + a subtitle child).
+
+**`teachers.html` is the one page aimed at whoever is RUNNING the session** rather than the learner:
+three session plans (15 min / 50 min / 2-3 hr), a per-page "the moment to point at" table, the embed
+reference, live-delivery notes (preload models; a loaded page survives a dropped connection), an
+"is this a real one?" section that answers both halves honestly, and MIT/credit. Its embed table is
+**generated from `src/embed/demos.ts`**, so adding a demo updates the teacher docs automatically —
+keep it that way. It is in `SiteNav`'s `LINKS` but deliberately **not** in its `ORDER`, so it never
+becomes a learner's "Next →" step (a `MINUTES` entry is still required — the type demands one).
 
 **`embed.html` is for lecturers/trainers/presenters** putting one demo into *their* site: `?demo=<id>`
 selects it (`src/embed/demos.ts` — the pure, unit-tested registry; `EmbedApp.tsx` maps id → component),
@@ -333,7 +342,8 @@ corpora live in **`src/data/tasks.ts`** (`buildSortCorpus`, `buildEquationCorpus
 ```bash
 npm run dev          # vite dev server (also renders GUIDE.md -> public/guide.html)
 npm run test         # vitest: gradient checks + model/trainer/persist
-npm run build        # tsc -b && vite build (8 pages: index/explain/learn/lab/harness/capstone/embed/guide)
+npm run build        # tsc -b && vite build (9 pages: index/explain/learn/lab/harness/capstone/
+                     #                          teachers/embed/guide)
 npm run gen:multitask # retrain the bundled three-skill model -> public/multitask-model.json
 npm run gen:moe       # retrain the Mixture-of-Experts model  -> public/moe-model.json
 npm run gen:harness   # retrain the tool-calling model        -> public/harness-model.json
