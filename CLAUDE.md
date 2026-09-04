@@ -71,9 +71,18 @@ The app is **eight pages** (each its own `main.tsx`): the live playground (`inde
 harness** demo (`harness.html` → `src/harness/`), and the **capstone** warehouse-agent
 (`capstone.html` → `src/capstone/`), a **For teachers** reference (`teachers.html` →
 `src/teachers/`), and the **embeddable demo shell** (`embed.html` → `src/embed/`); plus a generated
-long-form guide (`GUIDE.md` → `public/guide.html`). All but `embed` share one nav component,
+long-form guide (`GUIDE.md` → `public/guide.html`) whose §1-5 cover the playground and §6-11 walk
+through each of the other pages (explain / learn / harness / lab / capstone / teachers+embeds). All but `embed` share one nav component,
 `src/components/SiteNav.tsx` (same destinations/order/labels, current page
 marked; each page passes its `current` key + a subtitle child).
+
+**`teachers.html` also carries a written LESSON per embeddable demo** at `teachers.html?lesson=<id>`
+(`src/teachers/lessons.tsx`, a `Record<DemoId, Lesson>`; the demo table links to each as "how to
+teach"). Every lesson has the same five parts — **the model** (size, corpus, what it was actually
+taught), **what this demonstrates**, a numbered **walkthrough** (do → see), **the mechanism**, and
+**what students ask**. The first part is the one that matters: "the harness caught an illegal move"
+is not a result to a class that does not know the model was never told which cells are legal. Adding
+a demo to the registry requires a lesson — the `Record<DemoId, …>` type fails the build without one.
 
 **`teachers.html` is the one page aimed at whoever is RUNNING the session** rather than the learner:
 three session plans (15 min / 50 min / 2-3 hr), a per-page "the moment to point at" table, the embed

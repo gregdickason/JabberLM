@@ -1,8 +1,11 @@
 # JabberLM — A Hands-On Guide
 
-This guide walks you through the whole app: a full training run, a full inference + inspection
-session, what every tab shows, and what every parameter does. It assumes no prior transformer
-knowledge — just curiosity. Follow along in the app as you read.
+This guide walks you through the whole site: a full training run, a full inference + inspection
+session, what every tab shows, what every parameter does, and a walkthrough of each of the other
+pages. It assumes no prior transformer knowledge. Follow along in the app as you read.
+
+Sections 1-5 cover the playground. Sections 6-10 cover the other pages, one section each. Section 11
+covers embedding any demo in your own teaching material.
 
 ---
 
@@ -46,19 +49,18 @@ Both panels share **one** model. Train on the left, then inspect that same model
 
 ### The rest of the site
 
-This guide is about the **playground** (the main page). Four more pages go wider — links are in the
-header:
+Six more pages sit behind the header links. Each has its own section below.
 
-- **New to AI →** (`explain.html`) — a no-maths explainer of how these models answer, why they vary,
-  what they cost, and where they go wrong, for people who *use* AI at work.
-- **How it works →** (`learn.html`) — a guided walk that follows one example through a real model:
-  tokens → vectors → attention → next-character guess, then watches it grok.
-- **Tool use ↗** (`harness.html`) — a tiny model that can't do arithmetic learns to **call a
-  calculator** (and other tools), and chains two calls into a working **agent loop**. The capstone of
-  the site's arc: memorise → hallucinate → generalise → use tools → agents.
-- **Lab ↗** (`lab.html`) — the interpretability lab: neurons, attention heads, **head ablation**
-  (switch off the head that does the sorting and watch the skill die), dictionary learning (SAE),
-  steering, **Mixture of Experts**, and a live **advanced grokking** demo.
+| page | what it is | section |
+|---|---|---|
+| **New to AI** (`explain.html`) | a no-maths explainer for people who *use* AI at work | [6](#6-new-to-ai--explainhtml) |
+| **How it works** (`learn.html`) | one example followed through a real model, step by step | [7](#7-how-it-works--learnhtml) |
+| **Tools & agents** (`harness.html`) | a model that calls tools, loops, gets hijacked, and reasons | [8](#8-tools--agents--harnesshtml) |
+| **Lab** (`lab.html`) | thirteen interpretability and training demos | [9](#9-the-lab--labhtml) |
+| **Capstone** (`capstone.html`) | two agents you play with, then look inside | [10](#10-the-capstone--capstonehtml) |
+| **For teachers** (`teachers.html`) | session plans and embeddable demos | [11](#11-teaching-with-it--teachershtml) |
+
+The site's arc runs: memorise → hallucinate → generalise → use tools → loop → agent.
 
 ---
 
@@ -298,35 +300,208 @@ Now use the trained model (right panel).
 
 ---
 
-## 6. Fine-tuning with LoRA
 
-Big models are rarely retrained from scratch — they're **fine-tuned**: a small set of extra weights is
-trained on new data while the original model stays frozen. **LoRA** (Low-Rank Adaptation) is the most
-common way to do this, and JabberLM lets you watch it happen on the built-in model.
+## 6. New to AI — `explain.html`
 
-**The idea.** For a frozen weight matrix `W`, LoRA learns a *low-rank* update `ΔW = A·B` (where `A` is
-`in×r` and `B` is `r×out`, with the rank `r` small — e.g. 8). The model uses `W + (α/r)·A·B`. Only `A`
-and `B` train; `W` never moves. `B` starts at **zero**, so `ΔW` starts at zero and the model begins
-exactly as it was — then fine-tuning grows the overlay.
+Ten sections, no maths. Several run on real precomputed data rather than the in-browser model: the
+token splits come from OpenAI's `cl100k_base` tokenizer, and the word vectors are a 1,429-word slice
+of GloVe. Nothing on the page requires you to train anything.
 
-**Do it:**
+Walk it in order. The sections build on each other.
 
-1. Make sure a model is loaded (the built-in one is fine). In the Training panel's **Fine-tune (LoRA)**
-   card, pick a built-in pack — **Summon the Snark** (teaches one distinctive refrain) or **Go
-   nautical** (drifts toward sea-words) — or paste your own short text.
-2. Optionally set **rank** (size of the overlay), **alpha** (its strength), and which weights to adapt
-   (**attn** and/or **mlp**). Press **✦ Start fine-tuning**. The card shows how few weights are now
-   trainable (a few thousand out of the model's ~90,000) — the whole point of LoRA.
-3. Press **▶ Play**. Only the adapters move; the base is frozen. Watch the loss fall.
-4. In the Inference panel, type a prompt and **Run**. Toggle the **LoRA overlay** checkbox:
-   - **On** → the model uses base + adapter (after a little training on *Summon the Snark*, it keeps
-     producing "the Snark").
-   - **Off** → the original base model (the Snark is gone). Same weights underneath — you're just
-     adding or removing the overlay.
-5. Open the **LoRA** inspector tab to see the adapter itself: the `A` and `B` matrices and the product
-   `ΔW = A·B` for each adapted weight. Right after **Start**, `ΔW` is blank (because `B`=0); as you
-   train, it fills in — that coloured `ΔW` *is* everything the fine-tune learned.
+1. **It predicts the next piece of text.** The bundled model's probability for every possible next
+   character, given what you typed. Type a few characters of a poem line and watch the distribution
+   sharpen. This is the whole objective: one distribution over the next token, sampled, appended,
+   repeated.
+2. **Why the same question gives different answers.** Two runs side by side. Run A is temperature 0
+   and identical every click. Run B uses your temperature and a fresh seed. Variation is a sampling
+   choice, not a property of the weights.
+3. **What it can see, and why it forgets.** Highlights which earlier characters the model attended to
+   when predicting the next one. Attention outside the context window is not weak — it does not exist.
+4. **Why it makes things up.** The model produces fluent output whether or not it has anything real to
+   say. Ask the bundled model for algebra working and read the answer: the form is right, the
+   arithmetic is invented.
+5. **Tokens, and why letters trip it up.** The pivotal demo for a general audience. `strawberry` is
+   **three** tokens to GPT-3.5/4 — `str`, `aw`, `berry` — and **ten** to a character-level model. A
+   model that never sees individual letters is guessing when you ask it to count them. Same cause for
+   multi-digit arithmetic and string reversal.
+6. **Words as coordinates.** Nearest neighbours by cosine similarity, live analogies
+   (`king − man + woman ≈ queen`, 0.86), and a 2-D projection of the 50-dimensional vectors. Meaning
+   is stored as direction.
+7. **Giving it real facts — retrieval (RAG).** A tiny document store the model was never trained on.
+   Exact lookup, then semantic retrieval over the same GloVe vectors, then a knowledge graph that
+   answers multi-hop questions flat chunk retrieval cannot compose.
+8. **What it costs to run.** Text in, tokens out, an illustrative price, and how it scales with answer
+   length and volume.
+9. **Inference economics.** Three demos measuring real in-browser generation speed: model size against
+   latency, KV-cache prefill against recompute, and a specialist model against a generalist doing the
+   same job. The quantisation sweep runs here too — 32-bit down to 2-bit on the bundled sort model,
+   re-measuring accuracy at each step. The curve holds to 4-bit and collapses at 3.
+10. **What you can't see.** The questions to ask a vendor, and which of them the demos above have just
+    shown you how to answer.
 
-> Notes: fine-tuning uses the base model's vocabulary, so any characters in your text that the model
-> has never seen are skipped. Auto-save is paused while fine-tuning — use **JSON Save** to keep an
-> adapted model (it stores the base **and** the adapter; **JSON Load** brings both back).
+## 7. How it works — `learn.html`
+
+One example, followed through a real model, in eleven steps. The page uses the bundled three-skill
+model, so every matrix shown is a matrix that model actually holds.
+
+The steps in order:
+
+1. **One token's journey** — the map of what follows.
+2. **Text becomes numbers.** Character-level tokenization. The vocabulary is the distinct characters
+   in the training text.
+3. **Each number becomes a vector.** The embedding table. One row per vocabulary entry.
+4. **Letting tokens look at each other.** Attention. Q, K and V for the example prompt, the
+   attention matrix, and the causal mask that stops a position seeing the future.
+5. **Each token does its own thinking.** The MLP.
+6. **Turning the last vector into a guess.** Logits, then softmax.
+7. **How it learns** — the loss and the gradient step.
+8. **Loss, gradients, and held-out data.** Why the held-out curve is the one that matters.
+9. **Grokking.** Held-out accuracy sits flat, then leaps. The digits arrange themselves into a
+   number line as it happens — the internal change that makes the external jump.
+10. **Scale and practicalities.**
+11. **Bigger models, emergent features, and fine-tuning.**
+
+Read section 9 twice. The number line is the clearest evidence on the site that a model builds
+structure nobody asked it for: nothing in the training data says 2 is between 1 and 3.
+
+## 8. Tools & agents — `harness.html`
+
+The model on this page is ~88K parameters, trained on lines of the form
+`instruction => tool(args) = result`. It never learns arithmetic. It learns to name a tool.
+
+**§1 — one call.** Type `total of 6 9 2` and press Run. Three stages appear: the model emits
+`sum(6 9 2) = 16`, the harness parses the call, and the harness runs the real JavaScript `sum` and
+gets `17`. Untick **use the harness** and the answer becomes `16` — the model's own guess, wrong. The
+same weights are right or wrong depending on whether a tool ran. Execution is what a harness makes
+authoritative.
+
+**§2 — the harness has to be robust.** Click *Simulate a flaky model* to feed the harness garbled
+output: a missing bracket, a mistyped tool name, missing arguments, a valid call buried in chatter. It
+recovers or refuses; it never runs a bad call.
+
+**§3 — the loop.** Ask for `sort 6 9 2 then reverse it`. The harness runs `sort`, feeds `2 6 9` back
+into the context, and the model reads that result and emits `reverse(2 6 9)`. Two steps, then `done`.
+A single call is function calling. The loop is what makes it an agent.
+
+**§4 — prompt injection.** The same two-step job, but the first tool's result is attacker-controlled.
+The naive loop reads the planted text as its next instruction and calls the wrong tool. The mitigation
+treats tool output as untrusted typed data — digits only — which defeats the tool switch and does
+**not** defeat a poisoned value. An agent cannot distinguish data from instructions. Consequential
+actions need authorisation, not just sanitisation.
+
+**§5 — reasoning in a loop.** A different model, 90K parameters, taught exactly 200 facts: the
+addition table, in the form `add 8 1 0 => 9 0`. Enter two numbers and it runs three ways at once.
+Asked for the whole answer in one pass, it is wrong at every width. Asked to show its working, it is
+wrong past four digits — writing "the third digit from the right" requires positional counting, which
+this architecture is worst at. Asked one column at a time, with the harness holding the carry, it is
+correct at 4, 6, 10, 15 and 25 digits. The model does every sum. The harness does no arithmetic at
+all; it slices columns and remembers the carry.
+
+**§6 — where this leaves you.** The harness did three separable jobs on this page: it checked output,
+it ran tools, and it held state. Most systems need all three.
+
+## 9. The lab — `lab.html`
+
+Thirteen tabs, grouped into four themes. Each is addressable: `lab.html?tab=head-ablation` opens that
+tab directly. Sections that train do so live, on the main thread, and stop themselves when the
+held-out curve converges.
+
+**Observe.**
+
+- **Neurons** — individual MLP activations across a text, and what makes each one fire.
+- **Attention heads** — every head's attention matrix for a prompt you type.
+- **Dictionary (SAE)** — a sparse autoencoder trained on the residual stream, decomposing activations
+  into features. At this size the features are low-level: spaces, letter pairs, capitals.
+
+**Intervene.**
+
+- **Head ablation** — zero a head's output and re-measure two skills. The bundled model does three
+  things; ablating a middle-layer head collapses sorting while poems continue. Ablating a layer-0 head
+  breaks everything, because the first layer is shared.
+- **Injury & recovery** — ablate the critical head, then retrain with it still switched off. The skill
+  comes back as other heads take over. Re-scanning afterwards shows the critical head has moved.
+- **Steering** — clamp a direction into the residual stream and watch the output bend.
+
+**Adapt.**
+
+- **Distillation** — the bundled sort model as a teacher, a smaller student trained on the teacher's
+  full probability distribution rather than hard labels. The student reaches the teacher's accuracy
+  and groks 2-3× faster than an identical student trained on labels.
+- **LoRA fine-tuning** — the sorting model sorts ascending at ~97%. Freeze all 87,456 parameters,
+  attach a rank-8 adapter of 10,368 weights (~12% of the base), and train only the adapter on
+  descending sort. The overlay checkbox flips the output between `2 6 9` and `9 6 2`. With the overlay
+  off, ascending accuracy is untouched, because the base never moved. `ΔW = A·B` starts blank and
+  fills in as you train.
+- **Forgetting** — teach the model a second verb two ways. Plain fine-tuning on the new task collapses
+  the old one from ~96% to ~4%. Adding a self-distillation loss against a frozen snapshot of the old
+  model keeps both.
+- **Reward learning (RLVR)** — a brief supervised warm-up to ~55%, then policy-gradient training that
+  climbs past 90% from a verifier's yes/no alone. No labelled answers.
+
+**Scale & serve.**
+
+- **Mixture of experts** — four expert FFNs and a gate. Training is dense; inference can be sparse
+  top-k. The gate's routing is visible per token.
+- **Advanced grokking** — the delayed-generalisation jump, with train and held-out curves side by
+  side.
+- **Speculative decoding** — a 17K draft model proposes K tokens, a 90K target verifies all K in one
+  forward pass. Greedy decoding makes the output bit-for-bit identical to running the target alone,
+  with ~2.3× fewer target forward passes at K=4.
+
+## 10. The capstone — `capstone.html`
+
+Two agents. Play them, then look inside them.
+
+**Tic-tac-toe.** A ~130K-parameter character model plays you. The board is index-labelled
+(`0X1O2.…`), so choosing a move is copying an empty cell's index rather than counting positions. The
+model was trained by distilling a minimax oracle's per-cell values into a soft policy.
+
+Two bundles ship, identical in architecture and parameter count, differing only in training budget:
+
+| | legal moves | optimal | blocks | vs random |
+|---|---|---|---|---|
+| undertrained (100 steps) | 40% | 24% | 18% | 64% not-lost |
+| well-trained | ~100% | 98% | 92% | never loses |
+
+Play the undertrained one first. Its top pick is an already-occupied cell in 60% of positions, so the
+harness legal-move check fires on most turns: it rejects the move, re-asks the model, and shows the
+retry chain. Untick the check and the illegal move stands — the game jams. The harness contains no
+game intelligence. It checks legality and nothing else.
+
+Then switch to the well-trained model and watch the check go quiet. A better model needs the guard
+less. It still never becomes optional: the exhaustive proof finds nine losing lines for the
+well-trained model as O, at 98% optimal play.
+
+**The inspector.** The same interpretability tools from the lab, projected onto the board. Attention
+per head at the move-decision position, ablation of a head, and an SAE. Switch between the two models
+on a board where you threaten to win: mean attention on the threatened cell is 0.20 for the
+undertrained model and 0.79 for the well-trained one, across all 1,484 must-block positions. That
+difference is the mechanism behind 18% blocking becoming 92%.
+
+**The warehouse.** A ~24K-parameter agent packs orders of one to three SKUs. Packing is relational: a
+fragile item needs padding only if a heavy item shares the basket, and a chemical goes in box 2 only
+if food shares it. Correct action requires attending across the whole order, which is the honest
+reason to use a transformer. No SKU's attribute is ever a token — the model infers it. The concept map
+projects the learned SKU embeddings to 2-D, where they cluster by the attribute nobody labelled.
+
+## 11. Teaching with it — `teachers.html`
+
+Session plans, a per-page "moment to point at", and the embed reference.
+
+Any demo can be lifted out of its page and dropped into a course site, wiki, LMS page or deck as one
+iframe:
+
+```html
+<iframe src="https://jabberlm.com/embed?demo=adder"
+        width="100%" height="1080" style="border:0"></iframe>
+```
+
+Ten demos are embeddable: `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora`,
+`tokenizer`, `embeddings`, `adder`, `head-ablation`, `warehouse`. Add `&scale=1.6` to enlarge
+everything for a lecture theatre. The frame carries no navigation and no teaching copy — the host page
+supplies the words. Each demo has a written lesson on the teachers page covering what the model is,
+what is being tested, and how to walk a class through it.
+
+Everything runs in the visitor's browser. No accounts, no API keys, no per-student cost, and nothing
+leaves the machine.

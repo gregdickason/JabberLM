@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
-import { DEMOS } from '../embed/demos'
+import { DEMOS, demoOf, type Demo } from '../embed/demos'
+import { LESSONS } from './lessons'
 
 // The one page on this site aimed at the person AT THE FRONT of the room rather than the
 // learner: what to show, in what order, how long each part takes, and how to lift a demo out
@@ -108,8 +110,100 @@ const PAGES = [
   },
 ]
 
+/** teachers.html?lesson=<id> — the written lesson for one embeddable demo. */
+function LessonPage({ demo }: { demo: Demo }) {
+  const l = LESSONS[demo.id]
+  useEffect(() => {
+    document.title = `Teaching ${demo.id} — JabberLM`
+  }, [demo])
+  return (
+    <div className="min-h-screen font-sans text-sm text-slate-200">
+      <SiteNav current="teachers">
+        <span className="hidden text-xs text-slate-400 sm:inline">Lesson</span>
+      </SiteNav>
+
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <a className={a + ' text-[12px]'} href="./teachers.html#embeds">
+          ← all lessons
+        </a>
+        <h1 className="mt-3 text-2xl font-bold text-slate-100">{demo.title}</h1>
+        <p className="mt-3 text-base leading-relaxed text-slate-200">{l.headline}</p>
+        <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
+          <a
+            className="rounded border border-sky-800 bg-sky-950/40 px-2 py-1 text-sky-200 hover:bg-sky-900/50"
+            href={`./embed.html?demo=${demo.id}`}
+            target="_blank"
+            rel="noopener"
+          >
+            open the demo ↗
+          </a>
+          <a
+            className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-300 hover:bg-slate-800"
+            href={demo.source.href}
+          >
+            in context: {demo.source.label}
+          </a>
+          <span className="rounded border border-slate-800 px-2 py-1 font-mono text-slate-500">
+            ?demo={demo.id}
+          </span>
+        </div>
+      </div>
+
+      <Sec>
+        <H id="model" n={1}>The model</H>
+        <p className="text-slate-300">{l.model}</p>
+      </Sec>
+
+      <Sec>
+        <H id="tests" n={2}>What this demonstrates</H>
+        <p className="text-slate-300">{l.tests}</p>
+      </Sec>
+
+      <Sec>
+        <H id="walkthrough" n={3}>Walk a class through it</H>
+        <ol className="space-y-3">
+          {l.steps.map((st, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="mt-0.5 shrink-0 font-mono text-xs text-fuchsia-400">{i + 1}</span>
+              <span>
+                <b className="text-slate-200">{st.do}</b>{' '}
+                <span className="text-slate-300">{st.see}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </Sec>
+
+      {l.mechanism && (
+        <Sec>
+          <H id="mechanism" n={4}>The mechanism</H>
+          <p className="text-slate-300">{l.mechanism}</p>
+        </Sec>
+      )}
+
+      <Sec>
+        <H id="questions" n={l.mechanism ? 5 : 4}>What students ask</H>
+        <dl className="space-y-3">
+          {l.questions.map((qa, i) => (
+            <div key={i}>
+              <dt className="font-semibold text-slate-200">{qa.q}</dt>
+              <dd className="mt-0.5 text-slate-300">{qa.a}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-6 text-[12px] text-slate-500">
+          <a className={a} href="./teachers.html#embeds">← all lessons</a> ·{' '}
+          <a className={a} href="./guide.html">the long-form guide</a> covers every page of the site.
+        </p>
+      </Sec>
+    </div>
+  )
+}
+
 export default function TeachersApp() {
   useHashScroll(true)
+  const lesson = typeof location !== 'undefined' ? demoOf(new URLSearchParams(location.search).get('lesson')) : undefined
+  if (lesson) return <LessonPage demo={lesson} />
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
       <SiteNav current="teachers">
@@ -207,6 +301,7 @@ export default function TeachersApp() {
                 <th className={th}>what it shows</th>
                 <th className={th}>box</th>
                 <th className={th}>from</th>
+                <th className={th}>lesson</th>
               </tr>
             </thead>
             <tbody>
@@ -222,14 +317,20 @@ export default function TeachersApp() {
                     {d.frame ? `${d.frame.w * 20}×${d.frame.h * 20}` : 'fluid'}
                   </td>
                   <td className={td + ' whitespace-nowrap text-slate-400'}>{d.source.label}</td>
+                  <td className={td + ' whitespace-nowrap'}>
+                    <a className={a} href={`./teachers.html?lesson=${d.id}`}>
+                      how to teach →
+                    </a>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p className="mt-2 text-[12px] text-slate-500">
-          Box sizes are pixels at the default <code className="font-mono">scale=1.25</code>. The four
-          lifted from a lesson use a fixed box so your page cannot reflow mid-demo; if your content
+          Every demo has a written lesson: what the model is, how it was trained, what the demo tests,
+          a step-by-step walkthrough, and the questions students ask. Box sizes are pixels at the default <code className="font-mono">scale=1.25</code>. Every demo but
+          tic-tac-toe uses a fixed box so your page cannot reflow mid-demo; if your content
           column is narrower, add <code className="font-mono text-fuchsia-300">&amp;scale=1</code> and it
           shrinks to 80% of those numbers.
         </p>
