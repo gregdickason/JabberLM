@@ -35,8 +35,39 @@ const STYLE = `
   .home { display: inline-block; margin-bottom: 12px; color: #38bdf8; }
 `
 
+// marked emits <h2>Title</h2> with no id, so a link to #a-heading lands nowhere. Give every
+// heading a GitHub-style slug id: lowercase, punctuation dropped, each space becomes a hyphen
+// (spaces are NOT collapsed, so "Tools & agents" -> "tools--agents", matching GitHub).
+const slug = (text) =>
+  text
+    .toLowerCase()
+    .trim()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s/g, '-')
+
+marked.use({
+  renderer: {
+    heading({ tokens, depth }) {
+      const text = this.parser.parseInline(tokens)
+      return `<h${depth} id="${slug(this.parser.parseInline(tokens, this.parser.textRenderer))}">${text}</h${depth}>\n`
+    },
+  },
+})
+
 const md = readFileSync(new URL('../GUIDE.md', import.meta.url), 'utf8')
 const body = marked.parse(md)
+
+// Every in-page link must resolve to an id that exists. A dead #anchor is invisible in a
+// build log and obvious to a reader, so fail here instead of shipping it.
+const ids = new Set([...body.matchAll(/id="([^"]+)"/g)].map((m) => m[1]))
+const dead = [...body.matchAll(/href="#([^"]+)"/g)].map((m) => m[1]).filter((h) => !ids.has(h))
+if (dead.length) {
+  console.error(`[build-guide] ${dead.length} dead in-page link(s) in GUIDE.md:`)
+  for (const d of dead) console.error(`  #${d}`)
+  console.error(`  headings available: ${[...ids].join(', ')}`)
+  process.exit(1)
+}
 
 const doc = `<!doctype html>
 <html lang="en">
