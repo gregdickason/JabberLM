@@ -77,7 +77,7 @@ export default function GraphDemo() {
           .map((e) => (
             <g key={key(e.t)}>
               <path d={e.d} fill="none" stroke={e.hot ? HOT : '#334155'} strokeWidth={e.hot ? 2 : 1} />
-              <text x={e.lx} y={e.ly} fontSize={7} fill={e.hot ? HOT : '#64748b'} textAnchor="middle">
+              <text x={e.lx} y={e.ly} fontSize={10} fill={e.hot ? HOT : '#94a3b8'} textAnchor="middle">
                 {e.t.r}
               </text>
             </g>
@@ -87,7 +87,7 @@ export default function GraphDemo() {
           return (
             <g key={n}>
               <circle cx={x} cy={y} r={hot ? 5 : 4} fill={hot ? HOT : '#0b0f17'} stroke={hot ? HOT : '#475569'} />
-              <text x={x} y={y - 8} fontSize={9} fill={hot ? '#6ee7b7' : '#cbd5e1'} textAnchor="middle" className="font-mono">
+              <text x={x} y={y - 8} fontSize={11} fill={hot ? '#6ee7b7' : '#cbd5e1'} textAnchor="middle" className="font-mono">
                 {n}
               </text>
             </g>
@@ -97,11 +97,11 @@ export default function GraphDemo() {
 
       <div className="mt-2 font-mono text-[12px]">
         <span className="text-slate-400">{chain}</span>
-        <span className="ml-2 text-slate-500">→ answer:</span>{' '}
+        <span className="ml-2 text-slate-400">→ answer:</span>{' '}
         <span className="font-semibold text-emerald-300">{res.answer.join(', ') || '—'}</span>
       </div>
 
-      <p className="mt-2 max-w-[560px] text-[11px] leading-relaxed text-slate-500">
+      <p className="mt-2 max-w-[560px] text-[11px] leading-relaxed text-slate-400">
         Semantic RAG would hand the model the whole "royalty" passage and hope it works out the answer; the
         graph <b>walks the exact edges</b> and composes it — and can chain hops (prince → father → what he
         rules). It's also a natural home for <b>memory</b>: add one fact (a new triple) and it's instantly

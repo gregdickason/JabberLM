@@ -195,7 +195,7 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
     setRanWith(overlay)
   }
 
-  if (!trainer) return <div className="text-xs text-slate-500">{status}</div>
+  if (!trainer) return <div className="text-xs text-slate-400">{status}</div>
 
   const base = counts.total - counts.trainable
   const pct = base ? ((100 * counts.trainable) / base).toFixed(0) : '—'
@@ -239,7 +239,7 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
         <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>
           ↺ Reset adapter
         </button>
-        <span className="text-slate-500">
+        <span className="text-slate-400">
           step {step} · rank {RANK}, α {ALPHA}, {TARGETS.join('+')} · base frozen
         </span>
         {autoPaused && (
@@ -271,18 +271,18 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
               <div key={r.v.join(',')} className="flex flex-wrap items-center gap-x-2">
                 <span className="text-slate-400">sort {r.v.join(' ')} =&gt;</span>
                 <span title="overlay OFF — the frozen base">
-                  <span className="text-slate-500">off</span> <span style={{ color: ASC }}>{r.asc || '…'}</span>
+                  <span className="text-slate-400">off</span> <span style={{ color: ASC }}>{r.asc || '…'}</span>
                 </span>
-                <span className="text-slate-600">·</span>
+                <span className="text-slate-500">·</span>
                 <span title="overlay ON — the LoRA adapter">
-                  <span className="text-slate-500">on</span>{' '}
+                  <span className="text-slate-400">on</span>{' '}
                   <span style={{ color: r.ok ? DESC : '#f87171' }}>{r.desc || '…'}</span> {r.ok ? '✓' : ''}
                 </span>
               </div>
             ))}
           </div>
           {!embed && (
-          <p className="mt-2 max-w-[460px] text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-2 max-w-[460px] text-[11px] leading-relaxed text-slate-400">
             The <span style={{ color: ASC }}>base</span> keeps sorting ascending; the tiny{' '}
             <span style={{ color: DESC }}>overlay</span> makes the same model sort descending. This is how
             one big base model is cheaply adapted to many tasks — you ship the frozen base once and a
@@ -332,7 +332,7 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
           </div>
         )}
         {!embed && (
-        <p className="mt-1.5 text-[10px] text-slate-500">
+        <p className="mt-1.5 text-[11px] text-slate-400">
           Same prompt, your choice of overlay: <span style={{ color: ASC }}>off</span> = the frozen base
           sorts ascending; <span style={{ color: DESC }}>on</span> = the adapter sorts descending. Toggle and
           re-run to compare.

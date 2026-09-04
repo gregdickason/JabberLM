@@ -39,7 +39,7 @@ export default function HallucinationDemo({ trainer }: { trainer: Trainer }) {
           {out}
         </pre>
       )}
-      <div className="mt-2 text-[11px] text-slate-500">
+      <div className="mt-2 text-[11px] text-slate-400">
         It produces something that <em>looks</em> like writing but means nothing — it has no facts to
         draw on, so it fills the gap with plausible-shaped text. Large models do the same thing far more
         convincingly, which is exactly why a fluent answer is not evidence of a correct one.

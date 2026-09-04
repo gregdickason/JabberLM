@@ -119,7 +119,7 @@ export default function LabApp() {
         <span className="text-slate-400">model:</span>
         <span className="text-slate-200">{status}</span>
         {cfg && (
-          <span className="text-slate-500">
+          <span className="text-slate-400">
             · d_model {cfg.dModel} · {cfg.nHeads}×{cfg.nLayers} heads/layers · d_ff {cfg.dFF} · vocab{' '}
             {cfg.vocabSize}
           </span>
@@ -148,7 +148,7 @@ export default function LabApp() {
       </div>
 
       {!loaded ? (
-        <div className="p-8 text-center text-xs text-slate-500">
+        <div className="p-8 text-center text-xs text-slate-400">
           <p className="mx-auto max-w-xl leading-relaxed">
             This lab demonstrates <span className="text-slate-300">mechanistic interpretability</span> —
             techniques for reverse-engineering what a trained transformer has actually learned, rather
@@ -162,7 +162,7 @@ export default function LabApp() {
             {GROUPS.map((g) => (
               <div key={g.label} className="flex flex-wrap items-center gap-1">
                 <span
-                  className="w-24 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
+                  className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400"
                   title={g.blurb}
                 >
                   {g.label}

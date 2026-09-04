@@ -110,7 +110,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded border border-slate-800 bg-slate-900 p-2">
       <div className="text-base font-bold text-emerald-300">{value}</div>
-      <div className="text-[10px] text-slate-500">{label}</div>
+      <div className="text-[11px] text-slate-400">{label}</div>
     </div>
   )
 }

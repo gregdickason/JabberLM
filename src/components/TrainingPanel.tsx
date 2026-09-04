@@ -480,7 +480,7 @@ export default function TrainingPanel() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
-        <span className="text-slate-500">model:</span>
+        <span className="text-slate-400">model:</span>
         <button className={btn} onClick={saveToStorage} disabled={!modelBuilt}>
           Save
         </button>
@@ -501,7 +501,7 @@ export default function TrainingPanel() {
       </div>
 
       {!modelBuilt && (
-        <div className="rounded border border-dashed border-slate-700 p-3 text-center text-[11px] text-slate-500">
+        <div className="rounded border border-dashed border-slate-700 p-3 text-center text-[11px] text-slate-400">
           Press ▶ Play to build a fresh model for the current text &amp; architecture and start
           training.
         </div>
@@ -530,12 +530,12 @@ export default function TrainingPanel() {
         />
         {store.trainConfig.validationFraction > 0 &&
           (valHistory.length === 0 && step > store.trainConfig.validationEverySteps ? (
-            <div className="mt-1 text-[10px] text-amber-400">
+            <div className="mt-1 text-[11px] text-amber-400">
               held-out region is too small to validate at this context length — lower context len,
               raise held-out %, or use a longer text.
             </div>
           ) : (
-            <div className="mt-1 text-[10px] text-slate-500">
+            <div className="mt-1 text-[11px] text-slate-400">
               train falling while val flattens or rises ⇒ overfitting (memorising, not generalising).
             </div>
           ))}
@@ -551,7 +551,7 @@ export default function TrainingPanel() {
               held-out: {grok.accHist.at(-1)?.acc ?? 0}%
             </span>
           </div>
-          <div className="mb-1 text-[10px] text-slate-400">
+          <div className="mb-1 text-[11px] text-slate-400">
             Prediction first: will held-out accuracy climb steadily, or sit flat then suddenly jump? Press
             ▶ Play and watch (~1–2 min on the tiny preset).
           </div>
@@ -567,10 +567,10 @@ export default function TrainingPanel() {
           />
           <div className="mt-2 flex flex-wrap items-start gap-3">
             <div>
-              <div className="mb-1 text-[10px] text-slate-400">digit embeddings → "number line" (PCA)</div>
+              <div className="mb-1 text-[11px] text-slate-400">digit embeddings → "number line" (PCA)</div>
               <Scatter points={grok.pca} labels={DIGITS} />
             </div>
-            <p className="max-w-[15rem] text-[10px] leading-relaxed text-slate-500">
+            <p className="max-w-[15rem] text-[11px] leading-relaxed text-slate-400">
               Held-out accuracy sits near zero, then <span className="text-fuchsia-300">suddenly jumps</span>{' '}
               — the model <em>groks</em> the rule. Around the same time the digits 1–9 line up in order: it
               has learned the <em>concept</em> of order, which is why it now sorts lists it never trained on.
@@ -599,7 +599,7 @@ export default function TrainingPanel() {
               .map((g) => {
                 const max = Math.max(...gradNorms.map((x) => x.norm), 1e-9)
                 return (
-                  <div key={g.label} className="flex items-center gap-1 text-[10px]">
+                  <div key={g.label} className="flex items-center gap-1 text-[11px]">
                     <span className="w-20 shrink-0 truncate text-slate-400">{g.label}</span>
                     <div className="h-2.5 flex-1 overflow-hidden rounded-sm bg-slate-800">
                       <div
@@ -607,7 +607,7 @@ export default function TrainingPanel() {
                         style={{ width: `${(g.norm / max) * 100}%` }}
                       />
                     </div>
-                    <span className="w-12 shrink-0 text-slate-500">{g.norm.toExponential(1)}</span>
+                    <span className="w-14 shrink-0 whitespace-nowrap text-slate-400">{g.norm.toExponential(1)}</span>
                   </div>
                 )
               })}

@@ -23,7 +23,7 @@ import Governance from './Governance'
 // so the lesson copy renders immediately instead of a blank page behind "loading…".
 function DemoLoading() {
   return (
-    <div className="my-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-slate-800 text-[11px] text-slate-500">
+    <div className="my-3 flex h-24 items-center justify-center rounded-lg border border-dashed border-slate-800 text-[11px] text-slate-400">
       loading the model…
     </div>
   )
@@ -44,7 +44,7 @@ function ContentsNav() {
         <div className="grid gap-2 sm:grid-cols-3">
           {TOC.map((g) => (
             <div key={g.group}>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{g.group}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{g.group}</div>
               <ul className="mt-0.5 space-y-0.5">
                 {g.items.map(([id, label]) => (
                   <li key={id}>
@@ -100,23 +100,27 @@ export default function ExplainApp() {
           people who <span className="text-fuchsia-300">use</span> these tools at work.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
-          Everything below is driven by a tiny model that predicts the next <em>character</em> of text.
-          The large models you use at work do the very same thing with <em>tokens</em> — word-pieces rather
-          than single characters (more on that below) — trained on a huge slice of the internet, running on{' '}
-          <strong>the same core prediction mechanism</strong>, at vastly larger scale. The mechanics you can
-          see here, and the catches they cause, carry over. You can poke every demo yourself.
+          Every demo below runs on a tiny model that predicts the next <em>character</em> of text.
+          Production models predict the next <em>token</em> — a word-piece rather than a character — after
+          training on a large slice of the internet. The prediction mechanism is{' '}
+          <strong>the same mechanism</strong>. So are the failures it produces.
         </p>
-        <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
+        <p className="mt-3 text-[11px] text-slate-400">running on: {status}</p>
         {loaded?.source.includes('three-skill') && (
-          <>
-            <p className="mt-1 text-[11px] text-slate-600">
-              This built-in model — just {MODEL_STATS.paramsLabel} parameters — was trained in about{' '}
-              {MODEL_STATS.minutes} minutes of {MODEL_STATS.runtime} on a {MODEL_STATS.machine} to do three
-              things: write poems, sort numbers, and "solve" equations (watch the maths go wrong). It sorts
-              unseen lists ~{MODEL_STATS.sortAccuracy}% of the time. No data centre, no GPU.
+          <details className="group mt-2 rounded border border-slate-800 bg-slate-900/40 px-2 py-1.5">
+            <summary className="cursor-pointer select-none list-none text-[12px] text-slate-400 hover:text-slate-200 [&::-webkit-details-marker]:hidden">
+              <span className="mr-1 font-mono text-slate-400 group-open:hidden">+</span>
+              <span className="mr-1 hidden font-mono text-slate-400 group-open:inline">−</span>
+              how this model was trained, and how the {MODEL_STATS.sortAccuracy}% was measured
+            </summary>
+            <p className="mt-2 text-[12px] leading-relaxed text-slate-300">
+              {MODEL_STATS.paramsLabel} parameters, trained in about {MODEL_STATS.minutes} minutes of{' '}
+              {MODEL_STATS.runtime} on a {MODEL_STATS.machine}. It does three things: write poems, sort
+              numbers, and "solve" equations. It sorts unseen lists ~{MODEL_STATS.sortAccuracy}% of the
+              time. No data centre, no GPU.
             </p>
-            <p className="mt-1 text-[10px] text-slate-600/80">{MODEL_METHOD}</p>
-          </>
+            <p className="mt-2 text-[12px] leading-relaxed text-slate-400">{MODEL_METHOD}</p>
+          </details>
         )}
       </div>
 
@@ -124,48 +128,47 @@ export default function ExplainApp() {
           <ContentsNav />
           <Section n={1} id="prediction" title="It predicts the next piece of text">
             <p>
-              At heart, a language model is very advanced autocomplete. Given the text so far, it
-              estimates how likely <em>every</em> possible next piece of text is, then picks one. It
-              isn't looking anything up — it's predicting what tends to come next.
+              A language model estimates how likely <em>every</em> possible next piece of text is, then
+              picks one. It looks nothing up. It predicts what tends to follow.
             </p>
             {loaded ? <NextTokenDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
-              A fluent, confident answer is a prediction, not a fact or a citation. It's excellent for a
-              first draft — a clause, a summary, a memo — but the authority has to come from you checking
-              it.
+              A fluent answer is a prediction. It is not a fact and not a citation. Authority comes from
+              the source you check it against.
             </Callout>
           </Section>
 
           <Section n={2} id="randomness" title="Why the same question gives different answers">
             <p>
-              Models usually add a little randomness when choosing the next piece, controlled by a
-              setting called <em>temperature</em>. Turn it down for consistency; turn it up for variety.
+              Sampling adds randomness to the choice of next piece. The <em>temperature</em> setting
+              controls how much. Low temperature repeats. High temperature varies.
             </p>
             {loaded ? <RandomnessDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
-              For anything that must be consistent or auditable — policy answers, figures, standard
-              wording — use a low temperature, record the model version, and keep the output. Never
-              assume two runs of the same prompt will match.
+              For output that must be consistent or auditable — policy answers, figures, standard
+              wording — set a low temperature, record the model version, and keep the output. Two runs of
+              the same prompt do not have to match.
             </Callout>
           </Section>
 
           <Section n={3} id="context" title="What it can 'see' — and why it forgets">
             <p>
-              A model only reads a limited amount of text at once: its <em>context window</em>. When it
-              chooses the next piece it leans more on some earlier parts than others (its "attention").
+              A model reads a fixed amount of text at once: the <em>context window</em>. Inside it,
+              attention decides how much each earlier piece influences the next choice. Outside it, text
+              has no influence at all.
             </p>
             {loaded ? <ContextDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
-              Long contracts, policies, or filings can exceed the window or get truncated, so a key
-              clause buried deep can simply be missed. Put the critical instruction and facts up front,
-              and break very long documents into chunks.
+              A long contract, policy or filing can exceed the window and be truncated. A clause that
+              falls outside the window has no effect on the answer. Put critical instructions and facts
+              first. Split long documents into chunks.
             </Callout>
           </Section>
 
           <Section n={4} id="hallucination" title="Why it sometimes makes things up">
             <p>
-              Because it always predicts plausible-looking text, a model will produce a confident answer
-              even when it has nothing real to go on. That's a "hallucination".
+              The model predicts plausible text. With nothing real to draw on, it still predicts
+              plausible text. That output is a hallucination.
             </p>
             <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
               <summary className="cursor-pointer select-none text-slate-400">
@@ -173,92 +176,87 @@ export default function ExplainApp() {
                 Will it solve a new one correctly?
               </summary>
               <p className="mt-2">
-                No. It learned the <em>shape</em> of the working, so it writes confident, fluent steps — but
-                the arithmetic is invented (a tiny model can't actually compute). Fluent ≠ correct: that's the
-                whole lesson.
+                No. It learned the <em>shape</em> of the working and writes fluent steps. The arithmetic is
+                invented. A model this size cannot compute.
               </p>
             </details>
             {loaded ? <HallucinationDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
-              Treat every fact, number, quotation, citation, and case name as unverified until you've
-              checked the source. The risk is highest exactly where it matters most — legal references,
-              financial figures, names and dates.
+              Every fact, number, quotation, citation and name is unverified until checked against a
+              source. Legal references, financial figures, names and dates carry the highest risk.
             </Callout>
           </Section>
 
           <Section n={5} id="tokens" title="How it reads text — tokens, and why letters trip it up">
             <p>
-              A model doesn't read letters. Text is first chopped into <em>tokens</em> — and real models
-              use <strong>subword chunks</strong>, not single characters. That one design choice explains a
-              whole class of famous failures: counting letters, spelling, and digit-by-digit arithmetic.
+              A model does not read letters. Text is cut into <em>tokens</em> before the model sees it,
+              and production models use <strong>subword chunks</strong>. Counting letters, spelling and
+              digit-by-digit arithmetic fail for that reason.
             </p>
             <TokenizationDemo />
             <Callout>
-              When a model miscounts letters, botches a spelling, or fumbles a long number, it's often not
-              "dumb" — it literally never saw the characters, only the chunks. For letter- or digit-exact
-              work (codes, IDs, string edits), give it tools or verify the output; don't trust it to see
-              inside a word.
+              A model that miscounts letters never received the letters. It received chunks. For
+              letter-exact or digit-exact work — codes, IDs, string edits — give it a tool or verify the
+              output.
             </Callout>
           </Section>
 
           <Section n={6} id="embeddings" title="Words as coordinates — how meaning becomes maths">
             <p>
-              Before any of the above, every word is turned into a list of numbers — an{' '}
-              <em>embedding</em> — positioned so that words with similar meaning sit close together. The
-              model isn't told what "king" means; it places the word from the company it keeps. Search,
-              recommendations, and the retrieval below all run on this one idea.
+              Every token becomes a list of numbers: an <em>embedding</em>. Tokens with similar meaning
+              end up close together. Nothing defines "king" for the model; its position is learned from
+              the words it appears near. Search, recommendation and the retrieval below all run on this.
             </p>
             <EmbeddingsDemo />
             <Callout>
-              This is why an AI search can find the right document even when it shares <em>no words</em> with
-              your query — it matches meaning, not spelling. It's also why bias in the training text becomes
-              bias in the geometry: the associations are learned, not designed.
+              Semantic search finds a document that shares <em>no words</em> with the query, because it
+              matches position rather than spelling. Bias in the training text becomes bias in the
+              geometry. The associations are learned, not designed.
             </Callout>
           </Section>
 
           <Section n={7} id="rag" title="Giving it real facts — retrieval (RAG)">
             <p>
-              A model only knows what was in its training text, and it will confidently fill gaps by making
-              things up (§4). The standard fix isn't a bigger model — it's <strong>retrieval</strong>: find
-              the relevant text and paste it into the context, so the answer is grounded in a real source you
-              can point to. This is "RAG", and it's how most business chatbots answer from <em>your</em>{' '}
-              documents.
+              A model knows what was in its training text. It fills the gaps with plausible invention
+              (§4). <strong>Retrieval</strong> closes the gap: find the relevant text, put it in the
+              context, and the answer comes from a source you can quote. This is RAG, and it is how a
+              chatbot answers from <em>your</em> documents.
             </p>
             <RagDemo />
             <p className="mt-4">
-              <strong>Two shapes of context.</strong> Above, retrieval finds the most relevant <em>chunk of
-              text</em>. But context can also be <em>structured</em> — facts and how they connect, as a{' '}
-              <strong>knowledge graph</strong>. That lets you answer <em>relational</em> questions by walking
-              the connections (even several hops), which chunk-retrieval fumbles — and it's the natural way to
-              give a model persistent, updatable <strong>memory</strong>:
+              <strong>Two shapes of context.</strong> Retrieval above finds the most relevant{' '}
+              <em>chunk of text</em>. Context can also be <em>structured</em>: facts and the connections
+              between them, as a <strong>knowledge graph</strong>. A graph answers relational questions by
+              walking connections across several hops, which chunk retrieval cannot compose. It also
+              stores <strong>memory</strong> that can be updated in place:
             </p>
             <GraphDemo />
             <Callout>
-              For anything private or current — your policies, this quarter's numbers, a specific contract —
-              a retrieval system that quotes the source beats a bigger model guessing from memory. Ask any
-              vendor: <em>where does the answer come from, and can it show me the passage?</em> For questions
-              that span many connected facts, ask whether they use a <em>knowledge graph</em> too — and how
-              the model's <em>memory</em> is stored and updated.
+              For anything private or current — your policies, this quarter's numbers, a specific
+              contract — retrieval that quotes the source beats a larger model recalling from training.
+              Ask a vendor where the answer comes from and whether the system can show the passage. For
+              questions spanning many connected facts, ask whether they use a knowledge graph, and how
+              memory is stored and updated.
             </Callout>
           </Section>
 
           <div className="mx-auto max-w-2xl border-t border-slate-800 px-4 pt-6">
             <div className="rounded-lg border border-sky-900/60 bg-sky-950/20 px-3 py-2 text-[12px] text-sky-100">
               <span className="font-semibold text-sky-300">For product &amp; technical decision-makers</span> —
-              the last three sections go deeper on what these tools <em>cost</em> to run and what to ask
-              before you buy or build. Skip them if you just wanted the how-it-works tour above.
+              the last three sections cover what these systems cost to run and what to ask before buying or
+              building.
             </div>
           </div>
 
           <Section n={8} id="cost" title="What it costs to run">
             <p>
-              You pay by the <em>token</em> — roughly a few characters of text — for what goes in
-              <strong> and</strong> what comes out. Cost scales with document length, answer length, how
-              often you re-run, and how capable a model you choose.
+              You pay by the <em>token</em> — a few characters of text — for what goes in
+              <strong> and</strong> what comes out. Cost scales with document length, answer length,
+              re-runs, and the capability of the model.
             </p>
             <div className="mt-3 rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-[12px] leading-relaxed">
-              <strong>Just how big is "capable"?</strong> A model's size is counted in{' '}
-              <em>parameters</em> — the adjustable numbers it learns. The scale gap is staggering:
+              <strong>How big is "capable"?</strong> Model size is counted in <em>parameters</em>, the
+              adjustable numbers it learns. The gap spans six orders of magnitude:
               <ul className="mt-1.5 list-disc space-y-0.5 pl-5">
                 <li>
                   <strong>JabberLM</strong> (this page's built-in model): about{' '}
@@ -284,24 +282,24 @@ export default function ExplainApp() {
             </div>
             <CostsDemo />
             <p className="mt-4">
-              Cost isn't the only trade-off — <strong>bigger models are also slower</strong>. Here's the
-              same work at three sizes, timed live in your browser:
+              <strong>Bigger models are also slower.</strong> The same work at three sizes, timed in your
+              browser:
             </p>
             <SpeedDemo />
             <Callout>
-              Forecast from token volume; manage by <em>business outcome</em>. Track input, output, caching,
-              retries, tool calls, and human rework by product or workflow — the useful measure is cost per{' '}
-              <strong>successfully completed task</strong>, not simply cost per request. Summarising or
-              repeatedly querying large documents is where spend accumulates, and a more capable model can
-              cost several times more per token — so pick the smallest model that clears the bar.
+              Forecast from token volume. Manage by outcome. Track input, output, caching, retries, tool
+              calls and human rework per workflow, and measure cost per{' '}
+              <strong>successfully completed task</strong> rather than per request. Spend accumulates on
+              summarising and repeatedly querying large documents. A more capable model costs several times
+              more per token. Pick the smallest model that clears the bar.
             </Callout>
           </Section>
 
           <Section n={9} id="inference" title="Inference economics — the same answer can cost very different amounts">
             <p>
-              Two levers move the bill far more than the price-per-token headline: <strong>which model</strong>{' '}
-              you run for a task, and <strong>how you handle the context</strong> (the KV cache). Both are
-              becoming the main reason products are designed the way they are.
+              Two levers move the bill more than the headline price per token:{' '}
+              <strong>which model</strong> runs a task, and <strong>how the context is handled</strong>{' '}
+              (the KV cache).
             </p>
             <p className="mt-3 font-semibold text-slate-200">1. Run the smallest model that does the job.</p>
             <SpecialistCostDemo />
@@ -310,10 +308,9 @@ export default function ExplainApp() {
             <p className="mt-4 font-semibold text-slate-200">3. Shrink the weights themselves.</p>
             <QuantizationDemo />
             <Callout>
-              The cheapest token is the one you don't recompute. For high-volume tasks, weigh a small
-              fine-tuned or distilled model over a big generalist, cache long prompts you reuse, and remember
-              output tokens cost more than input — so terse, well-structured answers are cheaper than rambling
-              ones.
+              A token you do not recompute costs nothing. For high-volume tasks, compare a small
+              fine-tuned or distilled model against a large generalist. Cache long prompts you reuse.
+              Output tokens cost more than input tokens, so terse answers are cheaper than long ones.
             </Callout>
           </Section>
 
@@ -321,10 +318,10 @@ export default function ExplainApp() {
             <Governance />
           </Section>
 
-          <footer className="mx-auto max-w-2xl border-t border-slate-800 px-4 py-8 text-[11px] text-slate-500">
-            Want to see the actual maths — attention, training, gradients? Open the{' '}
+          <footer className="mx-auto max-w-2xl border-t border-slate-800 px-4 py-8 text-[11px] text-slate-400">
+            The maths — attention, training, gradients — is in the{' '}
             <a className="text-sky-400 hover:underline" href="./">
-              technical playground
+              playground
             </a>
             . Built by{' '}
             <a

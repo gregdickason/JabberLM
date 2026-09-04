@@ -97,14 +97,14 @@ export default function WarehouseGrid({ run }: { run: AgentRun | null }) {
         {/* packing station: the agent returns to the middle; a box on each side (1 and 2) fills
             with the items it packs, so it's clear there are TWO boxes to sort into */}
         <rect x={cx(PACK[0]) - 12} y={cy(PACK[1]) - 12} width={24} height={24} rx={4} fill="none" stroke="#475569" strokeDasharray="3 2" />
-        <text x={cx(PACK[0])} y={cy(PACK[1]) + 3} textAnchor="middle" fontSize={7} fill="#64748b">pack</text>
+        <text x={cx(PACK[0])} y={cy(PACK[1]) + 3} textAnchor="middle" fontSize={10} fill="#94a3b8">pack</text>
         {([1, 2] as const).map((n) => {
           const col = PACK[0] + (n === 1 ? -1 : 1)
           const items = n === 1 ? box1 : box2
           return (
             <g key={n}>
               <rect x={cx(col) - 17} y={cy(PACK[1]) - 17} width={34} height={34} rx={4} fill="#1e293b" stroke="#6366f1" strokeWidth={1.5} />
-              <text x={cx(col)} y={cy(PACK[1]) - 7} textAnchor="middle" fontSize={8} fill="#93c5fd">box {n}</text>
+              <text x={cx(col)} y={cy(PACK[1]) - 7} textAnchor="middle" fontSize={10} fill="#93c5fd">box {n}</text>
               <text x={cx(col)} y={cy(PACK[1]) + 9} textAnchor="middle" fontSize={11} fontWeight="bold" fill="#e0e7ff">
                 {items.map((a) => a.sku).join(' ') || ''}
               </text>
@@ -122,7 +122,7 @@ export default function WarehouseGrid({ run }: { run: AgentRun | null }) {
                 fill={done ? '#064e3b' : inOrder ? '#3f3f16' : '#0f172a'}
                 stroke={inOrder ? '#eab308' : '#334155'} strokeWidth={inOrder ? 2 : 1}
               />
-              <text x={cx(cell[0])} y={cy(cell[1]) + 5} textAnchor="middle" fontSize={14} fontWeight="bold" fill={inOrder ? '#fde68a' : '#64748b'}>{sku}</text>
+              <text x={cx(cell[0])} y={cy(cell[1]) + 5} textAnchor="middle" fontSize={14} fontWeight="bold" fill={inOrder ? '#fde68a' : '#94a3b8'}>{sku}</text>
             </g>
           )
         })}
@@ -167,10 +167,10 @@ export default function WarehouseGrid({ run }: { run: AgentRun | null }) {
 function Box({ label, items, basket }: { label: string; items: { sku: string; pad: boolean; box: 1 | 2 }[]; basket: Basket }) {
   return (
     <div className="rounded border border-slate-700 bg-slate-800/40 p-2">
-      <div className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mb-1 text-[11px] uppercase tracking-wide text-slate-400">{label}</div>
       <div className="flex flex-wrap gap-1 font-mono">
         {items.length === 0 ? (
-          <span className="text-slate-600">empty</span>
+          <span className="text-slate-400">empty</span>
         ) : (
           items.map((a, i) => {
             const padOk = a.pad === padFor(a.sku, basket)

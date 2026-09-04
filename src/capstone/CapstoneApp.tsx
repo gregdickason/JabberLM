@@ -159,14 +159,12 @@ export default function CapstoneApp() {
         <section className="space-y-3">
           <h1 className="text-lg font-bold text-sky-200">Play a tiny transformer — then look inside it</h1>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
-            This is the finale. Start by <b>playing a game</b> against a ~130K-parameter transformer trained to
-            play tic-tac-toe. It's a real <b>agent loop</b>: you move, the harness feeds it the new board, it
-            <b> reads the board and responds</b>, until someone wins. It runs inside a <b>harness</b> that
-            <b> checks every move is legal</b> — a deterministic guard that catches the model's occasional
-            illegal (hallucinated) move. Toggle that check off to watch it fumble. Switch the opponent between an
-            <b> undertrained</b> and a <b>well-trained</b> agent — <b>same size, same architecture</b>, only the
-            training <b>data</b> differs — then look inside to see <em>why</em> one plays better. Everything else on
-            this page unpacks how an agent like this is built.
+            The opponent is a ~130K-parameter transformer trained to play tic-tac-toe. Each turn is a closed{' '}
+            <b>agent loop</b>: you move, the harness sends it the new board, it <b>reads the board and
+            responds</b>. A <b>harness</b> around it <b>checks every move is legal</b> — a deterministic guard
+            over a probabilistic model. Switch that check off and an illegal move stands. Switch the opponent
+            between the <b>undertrained</b> and <b>well-trained</b> agent: <b>same size, same architecture</b>,
+            different training budget.
           </p>
           <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <TicTacToe onLookInside={setInspectBoard} />
@@ -177,14 +175,13 @@ export default function CapstoneApp() {
         <section className="space-y-3 rounded-lg border border-fuchsia-900/40 bg-slate-900/40 p-4">
           <h2 className="text-base font-bold text-fuchsia-200">Now look inside the agent you just played</h2>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
-            It's beatable — so let's find out <em>why</em>, with the same interpretability tools the{' '}
-            <a className="text-fuchsia-300 hover:underline" href="./lab.html">lab</a> uses, here projected onto the
-            board: watch its <b>attention</b> (what does each head look at when it decides?), <b>ablate a head</b>{' '}
-            and watch its play break, and pull its activations apart with a <b>dictionary (SAE)</b>. Switch between
-            the <b>undertrained</b> and <b>well-trained</b> model and watch the difference on a threat: the
-            well-trained one's heads <b>swing onto the cell you're about to win on</b> — the mechanistic reason
-            better data makes a better player. This is the whole site's interpretability thread, applied to the
-            agent in your hands.
+            The same interpretability tools the{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./lab.html">lab</a> uses, projected onto the
+            board. Read each head's <b>attention</b> at the moment it chose a move, <b>ablate a head</b> and
+            watch the play break, and decompose its activations with a <b>dictionary (SAE)</b>. Switch between
+            the <b>undertrained</b> and <b>well-trained</b> model on a board where you threaten to win: the
+            well-trained model's heads <b>land on the cell you are about to win on</b>. That difference in
+            attention is the mechanism behind the difference in blocking.
           </p>
           <Inspector board={inspectBoard} onBoard={setInspectBoard} />
         </section>
@@ -193,22 +190,22 @@ export default function CapstoneApp() {
         <section className="space-y-2 border-t border-slate-800 pt-6">
           <h2 className="text-base font-bold text-sky-200">A second agent: relational reasoning in a warehouse</h2>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
-            The tic-tac-toe agent shows the <em>loop</em>. This one shows the <em>reasoning</em>: a{' '}
-            ~24K-parameter agent learns to pack orders where the right action depends on the whole basket.</p>
+            The tic-tac-toe agent shows the <em>loop</em>. This one shows the <em>reasoning</em>: a
+            ~24K-parameter agent packs orders where the right action depends on the whole basket.</p>
         </section>
         {/* intro */}
         <section className="space-y-2">
           <h2 className="text-sm font-semibold text-slate-300">The warehouse task</h2>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
-            An order is a basket of items (SKUs <span className="font-mono">A–F</span>). The agent must walk the
-            warehouse, pick each item, and pack it — but packing is <b>relational</b>: whether an item needs
+            An order is a basket of items (SKUs <span className="font-mono">A–F</span>). The agent walks the
+            warehouse, picks each item and packs it. Packing is <b>relational</b>: whether an item needs
             padding, and which box it goes in, depends on <em>what else is in the basket</em>. A{' '}
             <span style={{ color: '#f472b6' }}>fragile</span> item needs <b>padding</b> only if something{' '}
             <span style={{ color: '#60a5fa' }}>heavy</span> is in the same order; a{' '}
             <span style={{ color: '#fbbf24' }}>chemical</span> item goes in <b>box 2</b> only if there's{' '}
-            <span style={{ color: '#34d399' }}>food</span> in the order. That "look at the whole order" decision
-            is the honest reason to use a transformer — it has to <b>attend across the basket</b>. And the model
-            is never told which SKU is fragile or heavy; it has to <b>infer the attributes</b> from the job.
+            <span style={{ color: '#34d399' }}>food</span> in the order. Deciding one item's action requires
+            reading the others, so the model must <b>attend across the basket</b>. No SKU's attribute is ever
+            a token: the model <b>infers the attributes</b> from the packing decisions.
           </p>
         </section>
 
@@ -220,13 +217,13 @@ export default function CapstoneApp() {
             status={bundledStatus}
             controls={
               <span className="ml-auto flex items-center gap-1">
-                <span className="text-slate-500">model:</span>
+                <span className="text-slate-400">model:</span>
                 <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'bundled' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('bundled')} disabled={!bundled}>trained agent</button>
                 <button className={'rounded px-2 py-0.5 text-[11px] ' + (view === 'live' ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => setView('live')}>your live model</button>
               </span>
             }
             caption={
-              <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
+              <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
                 {view === 'bundled'
                   ? `The ${bundled ? '' : '(loading) '}trained agent packs even baskets it never saw in training — proof it learned the rule, not a lookup table. Try a 🎲 random held-out order.`
                   : 'This is your from-scratch model below — untrained it packs nonsense; train it and watch these orders come right.'}
@@ -245,7 +242,7 @@ export default function CapstoneApp() {
               <button className={btn + ' border-amber-600 bg-amber-900/40 text-amber-200'} onClick={pause}>⏸ Pause</button>
             )}
             <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>↺ Reset</button>
-            <span className="text-slate-500">step {step} · phase <span style={{ color: phase === 'warmup' ? SFT : RL }}>{phase === 'warmup' ? 'SFT (imitate the expert)' : 'RL (reward only)'}</span></span>
+            <span className="text-slate-400">step {step} · phase <span style={{ color: phase === 'warmup' ? SFT : RL }}>{phase === 'warmup' ? 'SFT (imitate the expert)' : 'RL (reward only)'}</span></span>
             {autoPaused && <span className="text-emerald-300">{autoPaused === 'converged' ? '✓ converged — auto-paused (Reset to run again)' : 'reached step cap — paused'}</span>}
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
@@ -262,16 +259,16 @@ export default function CapstoneApp() {
             <div className="mb-1 text-[11px] text-slate-400">its attempts on a fresh sample of unseen orders each eval — <span style={{ color: RL }}>correct</span> / <span style={{ color: '#f87171' }}>wrong</span></div>
             <div className="space-y-0.5 font-mono text-[12px]">
               {attempts.length === 0 ? (
-                <div className="text-[11px] text-slate-500">press Train — held-out attempts appear as it learns</div>
+                <div className="text-[11px] text-slate-400">press Train — held-out attempts appear as it learns</div>
               ) : attempts.map((a, i) => (
                 <div key={i} className="flex flex-wrap items-center gap-x-1">
-                  <span className="text-slate-500">order {a.basket.join(' ')} =&gt;</span>
+                  <span className="text-slate-400">order {a.basket.join(' ')} =&gt;</span>
                   <span style={{ color: a.correct ? RL : '#f87171' }}>{a.planText || '…'} {a.correct ? '✓' : '✗'}</span>
                 </div>
               ))}
             </div>
           </div>
-          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
+          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
             <b>SFT</b> imitates a scripted expert until it packs unseen orders correctly (the accuracy climb —
             that generalisation is the proof it learned the <em>rule</em>, not a lookup). Then <b>RL</b> takes
             over: it samples its <em>own</em> attempts on unseen orders, a verifier says right/wrong, and it
@@ -297,7 +294,7 @@ export default function CapstoneApp() {
                 {view === 'live' && ' Train the model above and watch these clusters sharpen.'}
               </p>
             </div>
-            <div className="text-[10px] text-slate-600">hidden attribute key (for reference — not shown to the model): {Object.entries(ATTR).map(([s, a]) => `${s}=${a}`).join(' · ')}</div>
+            <div className="text-[11px] text-slate-400">hidden attribute key (for reference — not shown to the model): {Object.entries(ATTR).map(([s, a]) => `${s}=${a}`).join(' · ')}</div>
           </section>
         )}
 
@@ -305,16 +302,14 @@ export default function CapstoneApp() {
         <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="text-sm font-semibold text-slate-200">Output now, input next — the two halves of a harness</h2>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
-            Both agents use the harness for <b>output</b>: the model emits a tool call (a packing action, a move)
-            and the harness runs it — and, as the tic-tac-toe check shows, <b>validates</b> it, catching an
-            illegal move a probabilistic model will sometimes produce. The other half is <b>input</b>: a full
-            agent <b>reads a tool's result back</b> into its context and decides what to do next — the
-            "observe → act → observe → act" loop. The tic-tac-toe agent already does this (it reads the new board
-            each turn); a warehouse agent could too — instead of <em>inferring</em> an item's nature (the concept
-            map), it could call a <span className="font-mono">scan</span> tool and <em>read</em> the answer back.
-            That read-back is powerful and dangerous: because the loop feeds a result straight into the context
-            with no boundary between data and instructions, whoever controls a result can plant the model's next
-            command — <b>prompt injection</b>. See both live on the{' '}
+            Both agents use the harness for <b>output</b>: the model emits a tool call — a packing action, a
+            move — and the harness runs it and <b>validates</b> it. The other half is <b>input</b>: an agent{' '}
+            <b>reads a tool's result back</b> into its context and chooses the next action. The tic-tac-toe
+            agent does this every turn when it reads the new board. A warehouse agent could call a{' '}
+            <span className="font-mono">scan</span> tool and read an item's nature instead of inferring it.
+            Read-back carries the risk: the loop writes a result into the context with no boundary between
+            data and instructions, so whoever controls a result can plant the next command —{' '}
+            <b>prompt injection</b>. Both are live on the{' '}
             <a className="text-fuchsia-300 hover:underline" href="./harness.html#loop-it-and-its-an-agent">agent loop</a>{' '}
             and the{' '}
             <a className="text-fuchsia-300 hover:underline" href="./harness.html#the-catch-prompt-injection">injection demo</a>.
@@ -332,10 +327,9 @@ export default function CapstoneApp() {
             <li>• <b>SFT → RL</b> — imitate an expert, then improve from a verifier alone → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=reward-learning-rlvr">reward learning</a></li>
             <li>• <b>Interpretability</b> — the model discovered the hidden attributes; you can read its move confidence → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">the lab</a></li>
           </ul>
-          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
-            Attention, generalisation, agents, SFT→RL, interpretability — playable, in ~130K parameters. That's
-            the argument of the whole site in miniature: it's all next-token prediction, small enough to see
-            through.
+          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
+            Attention, generalisation, agents, SFT→RL and interpretability, in ~130K parameters. All of it is
+            next-token prediction at a size you can see through.
           </p>
         </section>
       </div>

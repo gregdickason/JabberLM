@@ -57,18 +57,18 @@ export default function HarnessApp() {
 
       <div className="mx-auto max-w-2xl px-4 py-8">
         <p className="text-lg leading-relaxed text-slate-200">
-          The frontier of using AI is the <span className="text-sky-300">harness</span> — the code
-          <em> around</em> the model that lets it use <b>tools</b>. Here a tiny model doesn't try to
-          compute the answer; it learns to emit a <b>tool call</b>, and a little JavaScript harness parses
-          it, runs a real function, and hands back the result.
+          A <span className="text-sky-300">harness</span> is the code <em>around</em> a model that lets
+          it use <b>tools</b>. The model on this page does not compute answers. It emits a{' '}
+          <b>tool call</b>. A JavaScript harness parses that call, runs a real function, and returns the
+          result.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
-          The punchline: the same tiny model that <b>hallucinates arithmetic</b> elsewhere on this site
-          becomes <b>always right at maths here</b> — because it doesn't do the maths. It just says{' '}
-          <code className="font-mono text-slate-300">sum(6&nbsp;9&nbsp;2)</code> and the harness computes{' '}
-          <code className="font-mono text-slate-300">17</code> in plain JS.
+          The same model that <b>hallucinates arithmetic</b> elsewhere on this site is <b>exact</b> here,
+          because it does no arithmetic. It emits{' '}
+          <code className="font-mono text-slate-300">sum(6&nbsp;9&nbsp;2)</code>. JavaScript computes{' '}
+          <code className="font-mono text-slate-300">17</code>.
         </p>
-        <p className="mt-3 text-[11px] text-slate-500">{status || 'model loaded — try an instruction below'}</p>
+        <p className="mt-3 text-[11px] text-slate-400">{status || 'model loaded — try an instruction below'}</p>
       </div>
 
       {trainer && (
@@ -76,21 +76,18 @@ export default function HarnessApp() {
           <Section n={1} title="Ask it to do something — watch the harness work">
             <ToolCallDemo trainer={trainer} onRun={() => setFlaky(null)} />
             <Callout>
-              A fluent answer from a model is a <em>guess</em>. Wrapping it in a harness — parse the intent,
-              call a real tool, use the tool's result — makes the <em>execution</em> authoritative: for
-              anything a tool actually does (maths, lookups, code, search), you get the tool's real answer
-              instead of the model's guess. That removes the hallucination for that step — but not every risk:
-              the model can still misread the intent, and the tool's data, permissions, and inputs can be
-              wrong or hostile (see §4). Reliability comes from the harness engineering around the call, not
-              from the wrapper alone. That's why every serious AI product is mostly harness.
+              A model's answer is a guess. A tool's output is a computation. Parsing the intent, calling
+              a real tool and using the tool's result makes the execution authoritative for anything a
+              tool does: maths, lookups, code, search. The hallucination is removed from that step only.
+              The model can still misread the intent, and the tool's data, permissions and inputs can be
+              wrong or hostile (§4). Reliability comes from the engineering around the call.
             </Callout>
           </Section>
 
           <Section n={2} title="Why harnesses need to be robust">
             <p>
-              The model is tiny and <b>flaky</b> — sometimes its output is a <b>malformed</b> call. The
-              harness can't trust it blindly; it validates and recovers. Click to feed the harness some
-              garbled model output and watch it cope — each click is a different failure:
+              The model is small and its output is sometimes a <b>malformed</b> call. The harness
+              validates before it dispatches. Each click feeds it a different failure:
             </p>
             <div className="mt-2">
               <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={flakyStep}>
@@ -101,7 +98,7 @@ export default function HarnessApp() {
               <div className={card + ' mt-3 space-y-1.5 text-[12px]'}>
                 <div>
                   <span className="text-fuchsia-300">🧠 the model emitted</span>{' '}
-                  <span className="text-slate-500">({flaky.note}):</span>
+                  <span className="text-slate-400">({flaky.note}):</span>
                   <div className="mt-0.5 font-mono text-[13px] text-fuchsia-200">{flaky.raw}</div>
                 </div>
                 <div>
@@ -117,43 +114,41 @@ export default function HarnessApp() {
               </div>
             )}
             <Callout>
-              Parsing, validating, retrying, sandboxing tool calls, and managing what the model sees — that
-              is <b>harness engineering</b>, and it's where most of the reliability of an "AI agent" actually
-              comes from. An unreliable model + a robust harness = a reliable system.
+              Parsing, validating, retrying, sandboxing calls and managing what the model sees is{' '}
+              <b>harness engineering</b>. Most of an agent's reliability comes from there rather than from
+              the weights.
             </Callout>
           </Section>
 
           <Section n={3} title="Loop it — and it's an agent">
             <p>
-              A single call is <b>function calling</b> — the atom. An <b>agent</b> adds the <b>loop</b>: the
-              harness runs the tool, <b>feeds the result back</b>, and the model reads it to decide the{' '}
-              <em>next</em> call — until it says <code>done</code>. Give it a two-step job and watch the loop:
+              A single call is <b>function calling</b>. An <b>agent</b> adds the <b>loop</b>: the harness
+              runs the tool, <b>writes the result back into the context</b>, and the model reads it to
+              choose the <em>next</em> call, until it emits <code>done</code>. Give it a two-step job:
             </p>
             <AgentLoopDemo trainer={trainer} />
             <Callout>
-              That's an agent: observe → act → observe → act → finish. Nothing here is special to a big
-              model — it's the same loop whether the "brain" is 88 thousand parameters (this one) or a
-              trillion. The scaffolding is what turns a next-token predictor into something that gets work
-              done.
+              An agent is observe → act → observe → act → finish. The loop is identical at 88 thousand
+              parameters and at a trillion. The scaffolding is what turns a next-token predictor into a
+              system that completes tasks.
             </Callout>
           </Section>
 
           <Section n={4} title="The catch — prompt injection">
             <p>
-              The loop has a dangerous blind spot: it feeds the tool's <b>output</b> straight back into the
-              context, with <b>no line between "data" and "instructions"</b>. So whoever controls what a tool{' '}
-              <em>returns</em> — a web page a search tool fetched, a document a lookup pulled — can plant text
-              that the model reads as its <em>next command</em>. Here the first tool's result is
-              attacker-controlled. Watch the agent obey it:
+              The loop writes the tool's <b>output</b> back into the context with{' '}
+              <b>no boundary between data and instructions</b>. Whoever controls what a tool{' '}
+              <em>returns</em> — a fetched web page, a retrieved document — controls text the model reads
+              as its <em>next command</em>. The first tool's result below is attacker-controlled:
             </p>
             <InjectionDemo trainer={trainer} />
             <Callout>
-              An agent can't tell <b>data</b> from <b>instructions</b> — so tool output is an attack surface,
-              exactly like user input. Marking it as untrusted, typed data stops planted <em>instructions</em>{' '}
-              (the tool-switch above), but it can't make a poisoned <em>value</em> trustworthy — so you still
-              <b> validate and authorise consequential actions</b> (a payment, a delete, an email) rather than
-              letting the model's tool output trigger them directly. Real models trained on natural language
-              are <em>far</em> easier to hijack this way than this tiny one; the mechanism is identical.
+              An agent cannot separate <b>data</b> from <b>instructions</b>. Tool output is an attack
+              surface, like user input. Typed, untrusted output stops a planted <em>instruction</em> — the
+              tool switch above — and cannot make a poisoned <em>value</em> true.{' '}
+              <b>Authorise consequential actions</b> — a payment, a deletion, an email — instead of letting
+              tool output trigger them. Models trained on natural language are easier to hijack this way
+              than this one. The mechanism is the same.
             </Callout>
 
           </Section>
@@ -162,12 +157,11 @@ export default function HarnessApp() {
 
           <Section n={6} title="Where this leaves you">
             <p>
-              A harness is not one thing. On this page it has done three different jobs: it{' '}
-              <b>checked</b> what the model produced, it <b>ran the tool</b> the model asked for, and — in
-              the adder — it <b>remembered</b> where the model had got to. Those are separable, and a real
-              system usually needs all three.
+              A harness does three separable jobs, all three on this page: it <b>checked</b> what the
+              model produced, it <b>ran the tool</b> the model asked for, and in the adder it{' '}
+              <b>held the state</b> the model could not. Most systems need all three.
             </p>
-            <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-500">
+            <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-400">
               This tool-caller was trained in the browser's own engine on{' '}
               <code>instruction =&gt; tool(args) = result</code> lines (single- and two-step). See the{' '}
               <a className="text-sky-400 hover:underline" href="./learn.html">how-it-works</a> page for the

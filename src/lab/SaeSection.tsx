@@ -126,17 +126,15 @@ export default function SaeSection({
           { title: 'Scaling Monosemanticity', url: 'https://transformer-circuits.pub/2024/scaling-monosemanticity/' },
         ]}
       >
-        Because neurons are polysemantic, Anthropic decomposes activations into a larger set of cleaner
-        units. A sparse autoencoder learns to rebuild a layer's activations from a few active features
+        Because neurons are polysemantic, activations are decomposed into a larger set of cleaner units. A sparse autoencoder learns to rebuild a layer's activations from a few active features
         out of many — here {nFeatures} features from a {sweep?.dModel ?? '?'}-dimensional residual
         stream. The L1 penalty forces sparsity, which pushes each feature toward a single meaning. {CAVEAT}{' '}
-        The features were <em>learned</em> by a model trained on all three skills; below we simply{' '}
-        <em>probe</em> them on clean <span className="font-mono">sort … =&gt; …</span> inputs so each one
-        reads clearly.
+        The features were <em>learned</em> by a model trained on all three skills. The probes below use clean{' '}
+        <span className="font-mono">sort … =&gt; …</span> inputs so each feature reads clearly.
       </SectionIntro>
 
       {!sweep ? (
-        <div className="text-xs text-slate-500">collecting activations…</div>
+        <div className="text-xs text-slate-400">collecting activations…</div>
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3 text-xs text-slate-400">
@@ -186,14 +184,14 @@ export default function SaeSection({
               {training ? `training… ${step}/${TOTAL_STEPS}` : 'Train SAE'}
             </button>
             {metrics && (
-              <span className="text-slate-500">
+              <span className="text-slate-400">
                 recon MSE {metrics.mse.toFixed(4)} · avg {metrics.l0.toFixed(1)} active features/token
               </span>
             )}
           </div>
 
           {!featMatrix ? (
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-400">
               Train the autoencoder to learn a feature dictionary, then browse the features below.
             </div>
           ) : (
@@ -228,16 +226,16 @@ export default function SaeSection({
                     const ctx = contextAround(ids, (id) => trainer.tok.label(id), pos, 22)
                     return (
                       <div key={pos} className="flex items-center gap-2 text-[11px]">
-                        <span className="w-12 shrink-0 text-right text-slate-500">{value.toFixed(2)}</span>
+                        <span className="w-12 shrink-0 whitespace-nowrap text-right text-slate-400">{value.toFixed(2)}</span>
                         <span className="whitespace-pre rounded bg-slate-800 px-1 py-0.5">
-                          <span className="text-slate-500">{ctx.before}</span>
+                          <span className="text-slate-400">{ctx.before}</span>
                           <span className="rounded bg-fuchsia-600 px-0.5 text-white">{ctx.charLabel}</span>
                         </span>
                       </div>
                     )
                   })}
                 </div>
-                <div className="mt-2 max-w-md text-[11px] text-slate-500">
+                <div className="mt-2 max-w-md text-[11px] text-slate-400">
                   Compare these to the raw neurons in the first tab — features tend to fire on a more
                   consistent pattern. There are far more features than residual dimensions, which is the
                   point: superposition, unpacked.

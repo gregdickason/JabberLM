@@ -138,7 +138,7 @@ export default function MoeSection() {
     })
   }
 
-  if (!trainer) return <div className="text-xs text-slate-500">{status}</div>
+  if (!trainer) return <div className="text-xs text-slate-400">{status}</div>
 
   const expertLabels = Array.from({ length: E }, (_, e) => `E${e}`)
 
@@ -155,10 +155,9 @@ export default function MoeSection() {
         <b>gate</b> that routes <em>each token</em> to them. Attention is unchanged — only the MLP is
         split — so every head tool in the other tabs works here identically; the new thing to inspect is
         the <b>router</b>. This model has {E} experts per layer, trained on three tasks (sort, max,
-        reverse). Two honesty notes: it's trained <b>dense</b> (every expert runs, weighted by the gate)
-        for clarity, whereas production MoE trains <b>sparse</b> top-k with a load-balancing loss; and at
-        this scale experts specialise by <b>token/position</b> (digits, the answer region), not neatly
-        one-expert-per-task.
+        reverse). Two limits. Training here is <b>dense</b> — every expert runs, weighted by the gate — where production
+        MoE trains <b>sparse</b> top-k with a load-balancing loss. At this scale experts specialise by{' '}
+        <b>token and position</b> (digits, the answer region) rather than one expert per task.
       </SectionIntro>
 
       {/* routing viz */}
@@ -209,7 +208,7 @@ export default function MoeSection() {
             <input type="checkbox" checked={top1} onChange={(e) => setTop1(e.target.checked)} />
             sparse routing (top-1 only)
           </label>
-          <span className="text-[11px] text-slate-500">
+          <span className="text-[11px] text-slate-400">
             keep only the winning expert per token → far less compute, and the answers barely change.
             That's the efficiency win MoE is built for.
           </span>
@@ -227,7 +226,7 @@ export default function MoeSection() {
           <div className="inline-block rounded border border-slate-800 p-2">
             {Array.from({ length: nLayers }, (_, l) => (
               <div key={l} className="flex items-center gap-1">
-                <span className="w-12 shrink-0 text-[10px] text-slate-500">layer {l}</span>
+                <span className="w-12 shrink-0 text-[11px] text-slate-400">layer {l}</span>
                 {Array.from({ length: E }, (_, e) => {
                   const k = `${l}.${e}`
                   const on = ablate.has(k)
@@ -236,7 +235,7 @@ export default function MoeSection() {
                       key={k}
                       onClick={() => toggle(k)}
                       className={
-                        'm-0.5 h-8 w-10 rounded border text-[10px] ' +
+                        'm-0.5 h-8 w-10 rounded border text-[11px] ' +
                         (on
                           ? 'border-red-500 bg-red-900/60 text-red-200 line-through'
                           : 'border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700')
@@ -260,11 +259,11 @@ export default function MoeSection() {
             const color = Math.abs(delta) < 3 ? 'text-slate-300' : delta < 0 ? 'text-red-300' : 'text-emerald-300'
             return (
               <div key={t.op} className="rounded border border-slate-800 bg-slate-900/40 p-2">
-                <div className={'text-[10px] uppercase tracking-wide text-slate-500'}>{t.label} held-out</div>
-                <div className={'text-lg font-bold ' + (busy ? 'text-slate-500' : color)}>
+                <div className={'text-[11px] uppercase tracking-wide text-slate-400'}>{t.label} held-out</div>
+                <div className={'text-lg font-bold ' + (busy ? 'text-slate-400' : color)}>
                   {busy || c == null ? '…' : `${c}%`}
                 </div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[11px] text-slate-400">
                   baseline {b == null ? '—' : `${b}%`}
                   {!busy && c != null && b != null && Math.abs(delta) >= 3 && (
                     <span className={color}> · {delta >= 0 ? '+' : ''}{delta}</span>
@@ -290,8 +289,8 @@ export default function MoeSection() {
         </div>
       </div>
 
-      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500">
-        Try it: ablate one expert and only some tasks/tokens degrade — that's the router having handed
+      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-400">
+        Ablate one expert and only some tasks and tokens degrade: the router had handed
         different work to different experts (the MoE analogue of the head-ablation tab). Toggle top-1 and
         the accuracy barely moves: most tokens only really needed their top expert. Remember attention
         and its heads are untouched by all of this — load this JSON in the main lab (Upload) to inspect

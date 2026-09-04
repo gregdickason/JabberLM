@@ -69,7 +69,7 @@ export default function WarehouseDemo({
         </button>
         {controls}
       </div>
-      {ready ? <WarehouseGrid run={run} /> : <div className="text-xs text-slate-500">{status}</div>}
+      {ready ? <WarehouseGrid run={run} /> : <div className="text-xs text-slate-400">{status}</div>}
       {caption}
     </>
   )

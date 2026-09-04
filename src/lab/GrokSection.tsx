@@ -229,7 +229,7 @@ export default function GrokSection() {
         <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>
           ↺ Reset
         </button>
-        <span className="text-slate-500">
+        <span className="text-slate-400">
           step {step} · loss {loss ? loss.toFixed(3) : '—'} · {stepsRef.current} steps/frame
         </span>
         {latest && (
@@ -282,7 +282,7 @@ export default function GrokSection() {
             height={170}
             yLabel="sort accuracy %"
           />
-          <div className="mt-1 max-w-[400px] text-[11px] leading-relaxed text-slate-500">
+          <div className="mt-1 max-w-[400px] text-[11px] leading-relaxed text-slate-400">
             {GAP_CAPTION}
           </div>
         </div>
@@ -295,7 +295,7 @@ export default function GrokSection() {
         <SeqPanel title="sort" color={COLORS.sort} result={latest?.sort} />
       </div>
 
-      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500">
+      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-400">
         Typically <b>max</b> clicks first (it only has to find one number), then <b>reverse</b>, then{' '}
         <b>sort</b>. Only <b>sort</b> shows the classic grokking gap on the right — it memorises its
         training lists before it generalises — while max and reverse jump straight to the rule. Same
@@ -323,7 +323,7 @@ function Legend({ items }: { items: { label: string; color: string }[] }) {
 function Cell({ top, val, cls }: { top?: string; val: React.ReactNode; cls: string }) {
   return (
     <div className={'flex h-8 w-8 flex-col items-center justify-center rounded border text-[11px] ' + cls}>
-      {top && <span className="text-[7px] uppercase leading-none text-slate-500">{top}</span>}
+      {top && <span className="text-[7px] uppercase leading-none text-slate-400">{top}</span>}
       <span className="font-mono leading-tight">{val}</span>
     </div>
   )
@@ -341,7 +341,7 @@ function MaxPanel({ result }: { result?: TaskResult }) {
     <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
       <div className="mb-2 text-[11px]">
         <span style={{ color: COLORS.max }}>max</span> — is it picking the biggest?{' '}
-        {result && <span className="text-slate-500">({result.acc}%)</span>}
+        {result && <span className="text-slate-400">({result.acc}%)</span>}
       </div>
       <div className="space-y-1.5">
         {result?.examples.map((ex, i) => {
@@ -374,7 +374,7 @@ function SeqPanel({ title, color, result }: { title: string; color: string; resu
     <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
       <div className="mb-2 text-[11px]">
         <span style={{ color }}>{title}</span> — right in every position?{' '}
-        {result && <span className="text-slate-500">({result.acc}%)</span>}
+        {result && <span className="text-slate-400">({result.acc}%)</span>}
       </div>
       <div className="space-y-1.5">
         {result?.examples.map((ex, i) => (
@@ -382,7 +382,7 @@ function SeqPanel({ title, color, result }: { title: string; color: string; resu
             {ex.v.map((val, idx) => (
               <Cell key={'in' + idx} val={val} cls={NEUTRAL} />
             ))}
-            <span className="px-0.5 text-slate-600">→</span>
+            <span className="px-0.5 text-slate-500">→</span>
             {ex.expected.map((e, idx) => {
               const p = ex.pred[idx]
               const has = Number.isFinite(p)

@@ -62,10 +62,9 @@ export default function SteeringSection({
           { title: 'Scaling Monosemanticity (Golden Gate Claude)', url: 'https://transformer-circuits.pub/2024/scaling-monosemanticity/' },
         ]}
       >
-        A feature isn't just something you can read — you can turn it. We add a direction into the
-        residual stream during generation and compare against an unsteered run from the same seed. If
-        the output shifts, the direction is <span className="text-slate-100">causal</span>, not just
-        correlated. {CAVEAT} Effects here are character-level (more spaces, certain letters, repeated
+        A feature can be written as well as read. A direction is added into the residual stream during
+        generation and compared against an unsteered run from the same seed. A shift in the output makes the
+        direction <span className="text-slate-100">causal</span> rather than correlated. {CAVEAT} Effects here are character-level (more spaces, certain letters, repeated
         fragments), not topics.
       </SectionIntro>
 

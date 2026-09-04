@@ -13,7 +13,7 @@ export default function TokenizerView({ trace, tok }: { trace: Trace; tok: CharT
             className="flex flex-col items-center rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5"
           >
             <span className="text-xs text-slate-100">{tok.label(id)}</span>
-            <span className="text-[9px] text-slate-500">{id}</span>
+            <span className="text-[11px] text-slate-400">{id}</span>
           </div>
         ))}
       </div>

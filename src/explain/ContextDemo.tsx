@@ -57,7 +57,7 @@ export default function ContextDemo({ trainer }: { trainer: Trainer }) {
           </span>
         ))}
       </div>
-      <div className="mt-3 text-[11px] text-slate-500">
+      <div className="mt-3 text-[11px] text-slate-400">
         This model can only look at the last {model.cfg.contextLen} characters — its "context window".
         Real models have far larger windows, but the limit is the same idea: text beyond it is simply
         not seen.

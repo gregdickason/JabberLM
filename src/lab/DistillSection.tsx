@@ -150,7 +150,7 @@ export default function DistillSection() {
     evalBoth(0) // step-0 baseline
   }
 
-  if (!teacher) return <div className="text-xs text-slate-500">{status}</div>
+  if (!teacher) return <div className="text-xs text-slate-400">{status}</div>
 
   const tParams = teacher.model.params.reduce((n, p) => n + p.size, 0)
   const sParams = (studentA.current?.model.params.reduce((n, p) => n + p.size, 0) ?? 0)
@@ -175,9 +175,8 @@ export default function DistillSection() {
         <b>teacher</b>'s <em>whole answer distribution</em> — not just the single right token, but how much
         probability it put on every option. That extra signal ("dark knowledge") lets the student learn the
         skill from far fewer examples. Here a <b>{(sParams / 1000).toFixed(0)}K</b> student learns to sort
-        from the <b>{(tParams / 1000).toFixed(0)}K</b> teacher (≈<b>{shrink}× smaller</b>). We train two
-        students side by side — one <span style={{ color: DISTILL }}>distilled from the teacher</span>, one{' '}
-        <span style={{ color: LABELS }}>from the plain answers</span> — and watch which learns faster.
+        from the <b>{(tParams / 1000).toFixed(0)}K</b> teacher (≈<b>{shrink}× smaller</b>). Two students train side by side: one <span style={{ color: DISTILL }}>distilled from the teacher</span>,
+        one <span style={{ color: LABELS }}>from the plain answers</span>.
       </SectionIntro>
 
       <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -193,7 +192,7 @@ export default function DistillSection() {
         <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>
           ↺ Reset
         </button>
-        <span className="text-slate-500">
+        <span className="text-slate-400">
           step {step} · {stepsRef.current} steps/frame
         </span>
         {curveA.length > 0 && (
@@ -216,7 +215,7 @@ export default function DistillSection() {
           held-out sort accuracy — both students are the same tiny size; only the teaching signal differs
         </div>
         <LineChart series={series} width={460} height={190} yLabel="sort %" />
-        <p className="mt-1 max-w-[460px] text-[11px] leading-relaxed text-slate-500">
+        <p className="mt-1 max-w-[460px] text-[11px] leading-relaxed text-slate-400">
           Both students reach the teacher's level (a <b>{shrink}× smaller</b> model captures the skill) — but
           the <span style={{ color: DISTILL }}>distilled</span> one usually gets there <b>faster</b>, because
           the teacher's soft probabilities tell it not just the right answer but <em>how close</em> the other

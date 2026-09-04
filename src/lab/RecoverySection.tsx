@@ -217,7 +217,7 @@ export default function RecoverySection() {
     setBefore(await sweep(t))
   }
 
-  if (!trainer) return <div className="text-xs text-slate-500">{status}</div>
+  if (!trainer) return <div className="text-xs text-slate-400">{status}</div>
 
   const { nLayers, nHeads } = trainer.model.cfg
   const latestAcc = curve.at(-1)?.acc ?? baseline
@@ -247,11 +247,10 @@ export default function RecoverySection() {
         ]}
       >
         In the head-ablation tab you can knock out the attention head a skill depends on and watch the
-        skill die. Here we go further: <b>keep training with that head permanently off</b> and watch the
-        model <b>recover</b> — it reroutes the sorting circuit through other heads. Then re-scan and see
-        that the head the skill now depends on has <b>moved</b>. It's the mechanistic echo of the brain
-        remapping a lost function after injury (with retraining/time) — and why models are robust to some
-        damage. Recovery may be partial, and the injured head stays dead throughout.
+        skill die. Here the head stays <b>permanently off while training continues</b>. The model <b>recovers</b> by
+        rerouting the sorting circuit through other heads. A re-scan afterwards shows the head the skill depends
+        on has <b>moved</b>. This is the same shape as functional remapping after an injury, and the reason a
+        model tolerates some damage. Recovery is often partial. The injured head stays dead throughout.
       </SectionIntro>
 
       {/* status line */}
@@ -266,7 +265,7 @@ export default function RecoverySection() {
           <span className="text-slate-400">
             · injured head <span className="font-mono text-red-300">{dead}</span> · now{' '}
             <span className="font-mono text-emerald-300">{latestAcc}%</span>
-            {step > 0 && <span className="text-slate-500"> (+{step} steps)</span>}
+            {step > 0 && <span className="text-slate-400"> (+{step} steps)</span>}
           </span>
         )}
         {autoPaused && (
@@ -288,7 +287,7 @@ export default function RecoverySection() {
           <div className="inline-block rounded border border-slate-800 p-2">
             {Array.from({ length: nLayers }, (_, l) => (
               <div key={l} className="flex items-center gap-1">
-                <span className="w-12 shrink-0 text-[10px] text-slate-500">layer {l}</span>
+                <span className="w-12 shrink-0 text-[11px] text-slate-400">layer {l}</span>
                 {Array.from({ length: nHeads }, (_, h) => {
                   const k = `${l}.${h}`
                   const isDead = k === dead
@@ -307,21 +306,21 @@ export default function RecoverySection() {
                       onClick={() => injure(k)}
                       title={imp != null ? `sort ${imp}% if ${k} is ablated` : k}
                       className={
-                        'm-0.5 flex h-9 w-12 flex-col items-center justify-center rounded border text-[10px] disabled:cursor-default ' +
+                        'm-0.5 flex h-9 w-12 flex-col items-center justify-center rounded border text-[11px] disabled:cursor-default ' +
                         bg +
                         (critNow ? ' ring-2 ring-amber-400' : '') +
                         (phase === 'healthy' ? ' hover:bg-slate-700' : '')
                       }
                     >
                       <span className={isDead ? 'text-red-200 line-through' : 'text-slate-200'}>h{h}</span>
-                      {imp != null && <span className="text-[8px] text-slate-500">{imp}%</span>}
+                      {imp != null && <span className="text-[8px] text-slate-400">{imp}%</span>}
                     </button>
                   )
                 })}
               </div>
             ))}
           </div>
-          <div className="mt-1 max-w-xs text-[11px] text-slate-500">
+          <div className="mt-1 max-w-xs text-[11px] text-slate-400">
             {phase === 'healthy' ? (
               <>
                 The ringed head is the <b>most critical</b> for sorting. Click it (or any head) to{' '}
@@ -374,7 +373,7 @@ export default function RecoverySection() {
           <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={() => void reset()}>
             ↺ Reset (heal)
           </button>
-          <div className="text-[10px] text-slate-500">{stepsRef.current} steps/frame</div>
+          <div className="text-[11px] text-slate-400">{stepsRef.current} steps/frame</div>
         </div>
       </div>
 
@@ -386,7 +385,7 @@ export default function RecoverySection() {
               recovery — held-out sort accuracy while retraining with {dead} ablated
             </div>
             <LineChart series={series} width={440} height={180} yLabel="sort %" />
-            <div className="mt-1 max-w-[440px] text-[11px] leading-relaxed text-slate-500">
+            <div className="mt-1 max-w-[440px] text-[11px] leading-relaxed text-slate-400">
               The dashed grey line is the pre-injury level. Accuracy drops to near zero the moment the head
               is ablated, then climbs back as the remaining heads relearn the job — <b>with the injured
               head still switched off</b>. That's the model routing the function around the damage.
@@ -404,7 +403,7 @@ export default function RecoverySection() {
             <div className="space-y-1">
               {examples.map((ex, i) => (
                 <div key={i} className="flex items-center gap-1 font-mono text-[12px]">
-                  <span className="text-slate-500">sort {ex.v.join(' ')} =&gt;</span>
+                  <span className="text-slate-400">sort {ex.v.join(' ')} =&gt;</span>
                   <span className={ex.ok ? 'text-emerald-300' : 'text-red-300'}>{ex.out || '—'}</span>
                   <span className={'ml-1 ' + (ex.ok ? 'text-emerald-400' : 'text-red-400')}>
                     {ex.ok ? '✓' : '✗'}
@@ -412,7 +411,7 @@ export default function RecoverySection() {
                 </div>
               ))}
             </div>
-            <div className="mt-1 max-w-[280px] text-[11px] leading-relaxed text-slate-500">
+            <div className="mt-1 max-w-[280px] text-[11px] leading-relaxed text-slate-400">
               {!dead
                 ? 'The healthy model sorts these correctly.'
                 : phase === 'injured'

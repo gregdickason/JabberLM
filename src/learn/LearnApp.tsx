@@ -114,23 +114,21 @@ export default function LearnApp() {
       {/* hero / intro */}
       <div className="mx-auto max-w-2xl px-4 py-8">
         <p className="text-lg leading-relaxed text-slate-200">
-          A transformer is not magic and not a database — it's a stack of simple, repeated steps that
-          turn text into a guess at the next character. Here we follow{' '}
-          <span className="font-mono text-fuchsia-300">one real example</span> through{' '}
-          <em>every</em> step of a real (tiny) model, then watch it actually <em>learn</em>.
+          A transformer is a stack of repeated steps that turn text into a guess at the next character. This
+          page follows <span className="font-mono text-fuchsia-300">one real example</span> through{' '}
+          <em>every</em> step of a real model, then watches that model <em>learn</em>.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
-          No equations to memorise. Everything on this page is computed live by the same{' '}
-          {MODEL_STATS.paramsLabel}-parameter model that ships with the site — the matrices below are its
-          actual numbers, hover any cell to read it. We'll use one running example,{' '}
-          <code className="font-mono text-slate-300">{EXAMPLE.trim()}</code>, because sorting is something
-          this little model genuinely <em>learns</em> (more on that in Act 2).
+          Everything on this page is computed live by the {MODEL_STATS.paramsLabel}-parameter model that ships
+          with the site. The matrices below hold its actual numbers; hover any cell to read one. The running
+          example is <code className="font-mono text-slate-300">{EXAMPLE.trim()}</code>, because sorting is a task
+          this model genuinely <em>learns</em> (Act 2).
         </p>
-        <p className="mt-3 text-[11px] text-slate-500">running on: {status}</p>
+        <p className="mt-3 text-[11px] text-slate-400">running on: {status}</p>
       </div>
 
       {!trace || !tok || !model ? (
-        <div className="px-4 pb-16 text-center text-xs text-slate-500">{status}</div>
+        <div className="px-4 pb-16 text-center text-xs text-slate-400">{status}</div>
       ) : (
         <>
           {/* ───────────────────────── ACT 1 ───────────────────────── */}
@@ -142,9 +140,9 @@ export default function LearnApp() {
 
           <Section n={1} title="Text becomes numbers (tokenize)">
             <p>
-              A model can't read letters, only numbers. So the first step is to map every character to an
-              integer id — its row number in a fixed vocabulary. That's <em>all</em> a "token" is here:
-              one character. (Big models use word-pieces, but the idea is identical.)
+              A model reads numbers, not letters. The first step maps every character to an integer id: its row
+              number in a fixed vocabulary. A "token" here is one character. Production models use word-pieces by the
+              same mechanism.
             </p>
             <Viz>
               <TokenizerView trace={trace} tok={tok} />
@@ -153,11 +151,10 @@ export default function LearnApp() {
 
           <Section n={2} title="Each number becomes a vector (embed)">
             <p>
-              Each token id looks up a learned row of numbers — a <em>vector</em>. This is where meaning
-              starts to live: over training the model <em>tends</em> to give characters that behave alike
-              similar vectors (it learns this from the data — nothing forces it). This grid of vectors,{' '}
-              <em>plus</em> a position signal added on top, becomes the <strong>residual stream</strong> — the
-              train track every later step reads from and writes back to.
+              Each token id looks up a learned row of numbers: a <em>vector</em>. Over training, characters that
+              behave alike acquire similar vectors. Nothing enforces this; it comes from the data. That grid of
+              vectors, <em>plus</em> a position signal, is the <strong>residual stream</strong>, which every later
+              step reads from and writes back to.
             </p>
             <Viz>
               <EmbeddingView trace={trace} tok={tok} />
@@ -166,11 +163,10 @@ export default function LearnApp() {
 
           <Section n={3} title="Letting tokens look at each other (attention)">
             <p>
-              On its own, each vector knows nothing about the others. <strong>Attention</strong> fixes
-              that: every position emits a <em>query</em> ("what am I looking for?") and a <em>key</em>{' '}
-              ("what do I offer?"); comparing them decides who reads from whom, and a <em>value</em> is
-              what actually gets passed along. That's the famous Q, K, V. Attention is the <em>only</em>{' '}
-              step where information moves <em>between</em> characters.
+              Each vector starts with no information about the others. <strong>Attention</strong> moves it. Every
+              position emits a <em>query</em> ("what am I looking for") and a <em>key</em> ("what do I offer").
+              Comparing them decides who reads from whom. A <em>value</em> is what passes along. These are Q, K and
+              V. Attention is the <em>only</em> step where information moves <em>between</em> characters.
             </p>
             <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
               <summary className="cursor-pointer select-none text-slate-400">
@@ -178,8 +174,8 @@ export default function LearnApp() {
                 look at?
               </summary>
               <p className="mt-2">
-                The three digits it has to sort. In the "attention weights" grid below, the brightest cells
-                in the last rows tend to sit over the input digits — it's gathering the numbers it needs.
+                The three digits it has to sort. In the attention-weights grid below, the brightest cells in the last
+                rows sit over the input digits.
               </p>
             </details>
             <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-400">
@@ -211,7 +207,7 @@ export default function LearnApp() {
                   ))}
                 </select>
               </label>
-              <span className="text-slate-500">different heads learn different jobs — try a few.</span>
+              <span className="text-slate-400">different heads learn different jobs — try a few.</span>
             </div>
             <Viz>
               <AttentionView trace={trace} tok={tok} layer={layer} head={head} />
@@ -272,20 +268,19 @@ export default function LearnApp() {
               way to nudge it to make the loss a little smaller. Repeat millions of times.
             </p>
             <p>
-              The catch: a model can lower its loss by simply <em>memorising</em> the examples. So we hold
-              back data it never trains on. If it does well on those <strong>unseen</strong> cases, it has
-              learned something general — not just rote-memorised the answers.
+              A model can lower its loss by <em>memorising</em> the examples. Some data is therefore held back and
+              never trained on. Accuracy on those <strong>unseen</strong> cases measures what generalised rather than
+              what was memorised.
             </p>
           </Section>
 
           <Section n={7} title="Grokking: the moment it 'gets it'">
             <p>
-              Here's the surprise. Train this tiny model on sorting and for a long time it looks hopeless on
-              unseen lists — then accuracy <em>suddenly leaps</em>. It stops memorising and starts to{' '}
-              <em>generalise</em> — an algorithm for <em>order</em> rather than a lookup table. The real proof
-              is that jump on lists it never saw; the picture below shows <em>how</em>: the model's 9 digit
-              vectors, projected to 2-D, arrange themselves into a <strong>number line</strong> —{' '}
-              <span className="font-mono">1…9</span> in order — all on its own.
+              Train this model on sorting and held-out accuracy stays near zero for a long time, then{' '}
+              <em>leaps</em>. Memorisation gives way to <em>generalisation</em>: an algorithm for <em>order</em>
+              rather than a lookup table. The jump on unseen lists is the evidence. The picture below is the
+              mechanism: the model's 9 digit vectors, projected to 2-D, arrange themselves into a{' '}
+              <strong>number line</strong>, <span className="font-mono">1…9</span> in order, unprompted.
             </p>
             <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
               <summary className="cursor-pointer select-none text-slate-400">
@@ -369,7 +364,7 @@ export default function LearnApp() {
             </Callout>
           </Section>
 
-          <footer className="mx-auto max-w-2xl border-t border-slate-800 px-4 py-8 text-[11px] text-slate-500">
+          <footer className="mx-auto max-w-2xl border-t border-slate-800 px-4 py-8 text-[11px] text-slate-400">
             Built by{' '}
             <a
               className="text-sky-400 hover:underline"

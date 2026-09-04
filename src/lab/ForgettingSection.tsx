@@ -182,7 +182,7 @@ export default function ForgettingSection() {
     evalAll(0)
   }
 
-  if (!ready) return <div className="text-xs text-slate-500">{status}</div>
+  if (!ready) return <div className="text-xs text-slate-400">{status}</div>
 
   const lastStep = Math.max(step, 1)
   const newSeries = [
@@ -240,7 +240,7 @@ export default function ForgettingSection() {
         <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>
           ↺ Reset
         </button>
-        <span className="text-slate-500">step {step} · λ {LAMBDA}, T {TEMPERATURE}</span>
+        <span className="text-slate-400">step {step} · λ {LAMBDA}, T {TEMPERATURE}</span>
         {autoPaused && (
           <span className="text-emerald-300">
             {autoPaused === 'converged'
@@ -271,17 +271,17 @@ export default function ForgettingSection() {
           {rows.map((r) => (
             <div key={r.v.join(',')} className="flex flex-wrap items-center gap-x-2">
               <span className="text-slate-400">sort {r.v.join(' ')} =&gt;</span>
-              <span><span className="text-slate-500">SFT</span>{' '}
+              <span><span className="text-slate-400">SFT</span>{' '}
                 <span style={{ color: r.sft === r.want ? REPLAY : SFT }}>{r.sft || '…'}</span>{r.sft === r.want ? '' : ' ✗'}</span>
-              <span className="text-slate-600">·</span>
-              <span><span className="text-slate-500">Replay</span>{' '}
+              <span className="text-slate-500">·</span>
+              <span><span className="text-slate-400">Replay</span>{' '}
                 <span style={{ color: r.rep === r.want ? REPLAY : SFT }}>{r.rep || '…'}</span>{r.rep === r.want ? ' ✓' : ' ✗'}</span>
             </div>
           ))}
         </div>
       )}
 
-      <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-500">
+      <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-400">
         <span style={{ color: SFT }}>SFT</span> learns "<span className="font-mono">tros</span>" but its{' '}
         "<span className="font-mono">sort</span>" accuracy <b>collapses</b> — nothing protected the old skill, so
         the new task overwrote it. <span style={{ color: REPLAY }}>Replay / self-distillation</span> keeps{' '}

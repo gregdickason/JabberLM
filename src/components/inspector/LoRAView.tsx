@@ -8,7 +8,7 @@ export default function LoRAView({ trace, layer }: { trace: Trace; layer: number
   const lt = trace.layers[layer]
   if (!lt?.lora || lt.lora.length === 0) {
     return (
-      <div className="rounded border border-dashed border-slate-700 p-4 text-center text-[11px] text-slate-500">
+      <div className="rounded border border-dashed border-slate-700 p-4 text-center text-[11px] text-slate-400">
         No LoRA adapters on this layer. Start fine-tuning in the Training panel to attach them.
       </div>
     )

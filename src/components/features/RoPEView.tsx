@@ -118,7 +118,7 @@ export default function RoPEView({
         height={260}
         className="rounded border border-slate-700 bg-slate-900/60"
       />
-      <div className="text-[10px] text-slate-500">
+      <div className="text-[11px] text-slate-400">
         Lower pairs rotate fast (short-range), higher pairs rotate slowly (long-range) — that spread
         of frequencies is how one head encodes positions at many scales.
       </div>

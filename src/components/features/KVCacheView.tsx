@@ -52,7 +52,7 @@ export default function KVCacheView({
       </div>
 
       <div>
-        <div className="mb-1 text-[10px] text-slate-500">per-position status</div>
+        <div className="mb-1 text-[11px] text-slate-400">per-position status</div>
         <div className="flex flex-wrap gap-0.5">
           {Array.from({ length: seq }, (_, i) => {
             const isNew = i === seq - 1 && generatedSteps > 0
@@ -60,7 +60,7 @@ export default function KVCacheView({
               <span
                 key={i}
                 className={
-                  'rounded px-1 text-[10px] ' +
+                  'rounded px-1 text-[11px] ' +
                   (isNew ? 'bg-amber-500 text-black' : 'bg-emerald-700/70 text-emerald-50')
                 }
                 title={isNew ? 'computed this step' : 'reused from cache'}
@@ -70,7 +70,7 @@ export default function KVCacheView({
             )
           })}
         </div>
-        <div className="mt-1 text-[10px] text-slate-500">
+        <div className="mt-1 text-[11px] text-slate-400">
           <span className="text-amber-400">amber</span> = computed this step ·{' '}
           <span className="text-emerald-400">green</span> = reused from cache
         </div>
@@ -97,7 +97,7 @@ export default function KVCacheView({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-slate-500">{label}</span>
+      <span className="text-slate-400">{label}</span>
       <span className="text-slate-100">{value}</span>
     </div>
   )

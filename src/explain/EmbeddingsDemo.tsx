@@ -59,7 +59,7 @@ export default function EmbeddingsDemo() {
     return analogy(wv, a, b, c, 3)
   }, [wv, ana])
 
-  if (!wv) return <div className={card + ' text-xs text-slate-500'}>{status}</div>
+  if (!wv) return <div className={card + ' text-xs text-slate-400'}>{status}</div>
 
   const inputCls =
     'rounded border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-xs text-slate-100 focus:border-fuchsia-500 focus:outline-none'
@@ -90,7 +90,7 @@ export default function EmbeddingsDemo() {
             <button
               key={w}
               onClick={() => setWord(w)}
-              className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700"
+              className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-300 hover:bg-slate-700"
             >
               {w}
             </button>
@@ -104,7 +104,7 @@ export default function EmbeddingsDemo() {
                 <div key={n.word} className="flex items-center gap-2 text-[11px]">
                   <span className="w-20 shrink-0 font-mono text-slate-200">{n.word}</span>
                   <Bar sim={n.sim} />
-                  <span className="w-9 shrink-0 text-right font-mono text-slate-500">
+                  <span className="w-9 shrink-0 text-right font-mono text-slate-400">
                     {n.sim.toFixed(2)}
                   </span>
                 </div>
@@ -113,7 +113,7 @@ export default function EmbeddingsDemo() {
             {map && (
               <div>
                 <Scatter points={map.pts} labels={map.words} colors={map.colors} width={280} height={180} />
-                <p className="mt-1 text-[10px] text-slate-500">
+                <p className="mt-1 text-[11px] text-slate-400">
                   the same words on a 2-D map (their 50 numbers squashed to 2) —{' '}
                   <span className="text-fuchsia-300">{word}</span> and its neighbours land close together
                 </p>
@@ -122,7 +122,7 @@ export default function EmbeddingsDemo() {
           </div>
         )}
         {!known && (
-          <div className="mt-3 rounded border border-dashed border-slate-700 p-3 text-[11px] text-slate-500">
+          <div className="mt-3 rounded border border-dashed border-slate-700 p-3 text-[11px] text-slate-400">
             This 1,429-word demo set doesn't include “{word || '…'}”. Pick one of the words above to see its
             nearest neighbours and 2-D map.
           </div>
@@ -142,7 +142,7 @@ export default function EmbeddingsDemo() {
             onChange={(e) => setAna([e.target.value.trim().toLowerCase(), ana[1], ana[2]])}
             spellCheck={false}
           />
-          <span className="text-slate-500">−</span>
+          <span className="text-slate-400">−</span>
           <input
             list="wordlist"
             className={inputCls + ' w-24'}
@@ -150,7 +150,7 @@ export default function EmbeddingsDemo() {
             onChange={(e) => setAna([ana[0], e.target.value.trim().toLowerCase(), ana[2]])}
             spellCheck={false}
           />
-          <span className="text-slate-500">+</span>
+          <span className="text-slate-400">+</span>
           <input
             list="wordlist"
             className={inputCls + ' w-24'}
@@ -158,7 +158,7 @@ export default function EmbeddingsDemo() {
             onChange={(e) => setAna([ana[0], ana[1], e.target.value.trim().toLowerCase()])}
             spellCheck={false}
           />
-          <span className="text-slate-500">≈</span>
+          <span className="text-slate-400">≈</span>
           {anaResult.length ? (
             <span className="rounded bg-fuchsia-900/50 px-2 py-1 text-fuchsia-200">
               {anaResult[0].word}{' '}
@@ -173,20 +173,20 @@ export default function EmbeddingsDemo() {
             <button
               key={a + b + c}
               onClick={() => setAna([a, b, c])}
-              className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700"
+              className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-300 hover:bg-slate-700"
             >
               {a} − {b} + {c} → {expect}
             </button>
           ))}
         </div>
         {anaResult.length > 1 && (
-          <div className="mt-2 text-[10px] text-slate-500">
+          <div className="mt-2 text-[11px] text-slate-400">
             runners-up: {anaResult.slice(1).map((r) => `${r.word} (${r.sim.toFixed(2)})`).join(', ')}
           </div>
         )}
       </div>
 
-      <p className="text-[11px] leading-relaxed text-slate-500">
+      <p className="text-[11px] leading-relaxed text-slate-400">
         These are <strong>real, pre-trained embeddings</strong> (a small slice of{' '}
         <a className="text-sky-400 underline" href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener noreferrer">
           GloVe

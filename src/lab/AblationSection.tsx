@@ -99,10 +99,10 @@ export default function AblationSection({
     <div className="space-y-4 text-xs">
       {!embed && (
         <p className="max-w-2xl leading-relaxed text-slate-300">
-          The built-in model does three things — write poems, sort numbers, and "solve" equations. Where
-          does each ability live? <span className="text-fuchsia-300">Knock out attention heads</span>{' '}
-          below (zero their output) and watch what breaks. Sorting is concentrated in one layer; poems
-          lean on another; some heads are shared by everything.
+          The built-in model does three things: write poems, sort numbers, and "solve" equations.{' '}
+          <span className="text-fuchsia-300">Knocking out an attention head</span> zeroes its output and
+          leaves every other weight untouched, so whatever changes is attributable to that head. Sorting
+          concentrates in one layer. Poems lean on another. Some heads are shared by everything.
         </p>
       )}
 
@@ -119,7 +119,7 @@ export default function AblationSection({
         <div className="inline-block rounded border border-slate-800 p-2">
           {Array.from({ length: nLayers }, (_, l) => (
             <div key={l} className="flex items-center gap-1">
-              <span className="w-12 shrink-0 text-[10px] text-slate-500">layer {l}</span>
+              <span className="w-12 shrink-0 text-[11px] text-slate-400">layer {l}</span>
               {Array.from({ length: nHeads }, (_, h) => {
                 const k = `${l}.${h}`
                 const on = ablate.has(k)
@@ -128,7 +128,7 @@ export default function AblationSection({
                     key={k}
                     onClick={() => toggle(k)}
                     className={
-                      'm-0.5 h-8 w-12 rounded border text-[10px] ' +
+                      'm-0.5 h-8 w-12 rounded border text-[11px] ' +
                       (on
                         ? 'border-red-500 bg-red-900/60 text-red-200 line-through'
                         : 'border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700')
@@ -195,8 +195,8 @@ export default function AblationSection({
         </pre>
       </div>
 
-      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-500">
-        Try it: ablating a <span className="text-slate-300">middle-layer</span> head tends to wreck
+      <p className="max-w-2xl text-[11px] leading-relaxed text-slate-400">
+        Ablating a <span className="text-slate-300">middle-layer</span> head tends to wreck
         sorting while poems carry on — that's a specialised "sorting" circuit. Ablating a{' '}
         <span className="text-slate-300">layer-0</span> head breaks everything, because the first layer
         is a shared foundation every skill builds on (a small example of polysemanticity —
@@ -231,11 +231,11 @@ function Metric({
   const color = Math.abs(delta) < (good === 'up' ? 1 : 0.02) ? 'text-slate-300' : degraded ? 'text-red-300' : 'text-emerald-300'
   return (
     <div className="rounded border border-slate-800 bg-slate-900/40 p-2">
-      <div className="text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
-      <div className={'text-lg font-bold ' + (busy ? 'text-slate-500' : color)}>
+      <div className="text-[11px] uppercase tracking-wide text-slate-400">{label}</div>
+      <div className={'text-lg font-bold ' + (busy ? 'text-slate-400' : color)}>
         {busy ? '…' : fmt(cur)}
       </div>
-      <div className="text-[10px] text-slate-500">
+      <div className="text-[11px] text-slate-400">
         baseline {fmt(base)}
         {!busy && cur != null && base != null && Math.abs(delta) >= (good === 'up' ? 1 : 0.005) && (
           <span className={color}> · {delta >= 0 ? '+' : ''}{delta.toFixed(decimals)}</span>

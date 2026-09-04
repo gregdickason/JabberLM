@@ -44,7 +44,7 @@ export default function Inspector({ board, onBoard }: { board: Board; onBoard: (
     strong: strong && threat.length ? threatFocus(strong.model, strong.tok, board, threat) : null,
   }), [weak, strong, board, threat.join(',')])
 
-  if (!weak && !strong) return <div className="text-xs text-slate-500">{status}</div>
+  if (!weak && !strong) return <div className="text-xs text-slate-400">{status}</div>
 
   const t = sel === 'weak' ? weak : strong
   const note = win.length ? `the agent (${mk}) can win at ${win.join('/')}` : threat.length ? `you threaten to win at ${threat.join('/')} — the agent (${mk}) must block` : `the agent (${mk}) to move`
@@ -56,14 +56,14 @@ export default function Inspector({ board, onBoard }: { board: Board; onBoard: (
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-slate-500">inspect which model:</span>
+        <span className="text-slate-400">inspect which model:</span>
         {modelBtn('weak', 'undertrained', !!weak)}
         {modelBtn('strong', 'well-trained', !!strong)}
-        <span className="ml-3 text-slate-500">inspect a position:</span>
+        <span className="ml-3 text-slate-400">inspect a position:</span>
         {PRESETS.map((p) => (
           <button key={p.label} className={'rounded px-2 py-0.5 text-[11px] ' + (board === p.board ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')} onClick={() => onBoard(p.board)}>{p.label}</button>
         ))}
-        <span className="ml-2 text-slate-500 font-mono">{note}</span>
+        <span className="ml-2 text-slate-400 font-mono">{note}</span>
       </div>
 
       {/* the headline contrast: how hard each model looks at YOUR threat (same board, same size) */}
@@ -71,9 +71,9 @@ export default function Inspector({ board, onBoard }: { board: Board; onBoard: (
         <div className="flex flex-wrap items-center gap-3 rounded border border-slate-800 bg-slate-900/40 p-2 text-[11px]">
           <span className="text-slate-400">attention on your threat cell (cell {threat.join('/')}):</span>
           <span className="text-amber-300">undertrained <b>{Math.round(focus.weak * 100)}%</b></span>
-          <span className="text-slate-600">vs</span>
+          <span className="text-slate-400">vs</span>
           <span className="text-emerald-300">well-trained <b>{Math.round(focus.strong * 100)}%</b></span>
-          <span className="text-slate-500">— same 130K model; better training taught the heads to look at the danger.</span>
+          <span className="text-slate-400">— same 130K model; better training taught the heads to look at the danger.</span>
         </div>
       )}
 

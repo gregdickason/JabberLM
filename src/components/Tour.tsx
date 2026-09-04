@@ -107,13 +107,13 @@ export default function Tour({ steps, onClose }: { steps: TourStep[]; onClose: (
       >
         <div className="mb-1 flex items-center justify-between">
           <span className="text-[11px] font-bold text-fuchsia-300">{step.title}</span>
-          <span className="text-[10px] text-slate-500">
+          <span className="text-[11px] text-slate-400">
             {i + 1}/{steps.length}
           </span>
         </div>
         <div className="leading-relaxed text-slate-300">{step.body}</div>
         <div className="mt-3 flex items-center justify-between">
-          <button className="text-[11px] text-slate-500 hover:text-slate-300" onClick={onClose}>
+          <button className="text-[11px] text-slate-400 hover:text-slate-300" onClick={onClose}>
             Skip tour
           </button>
           <span className="flex gap-2">

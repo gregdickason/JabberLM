@@ -14,14 +14,14 @@ export default function ArchitectureMap({
   inspect: InspectSelection
   onSelect: (s: Partial<InspectSelection>) => void
 }) {
-  const stage = 'rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-center text-[10px] text-slate-300'
+  const stage = 'rounded border border-slate-700 bg-slate-800/60 px-2 py-1 text-center text-[11px] text-slate-300'
   return (
-    <div className="flex flex-col items-stretch gap-1 text-[10px]">
+    <div className="flex flex-col items-stretch gap-1 text-[11px]">
       <div className={stage}>tokens → embeddings</div>
-      <div className="text-center text-slate-600">↓</div>
+      <div className="text-center text-slate-500">↓</div>
       {Array.from({ length: nLayers }, (_, l) => (
         <div key={l} className="rounded border border-slate-700 p-1">
-          <div className="mb-1 text-center text-[10px] text-slate-400">layer {l}</div>
+          <div className="mb-1 text-center text-[11px] text-slate-400">layer {l}</div>
           <div className="flex flex-wrap justify-center gap-1">
             {Array.from({ length: nHeads }, (_, h) => {
               const active = inspect.layer === l && inspect.head === h
@@ -41,10 +41,10 @@ export default function ArchitectureMap({
               )
             })}
           </div>
-          <div className="mt-1 text-center text-[9px] text-slate-600">+ MLP</div>
+          <div className="mt-1 text-center text-[11px] text-slate-400">+ MLP</div>
         </div>
       ))}
-      <div className="text-center text-slate-600">↓</div>
+      <div className="text-center text-slate-500">↓</div>
       <div className={stage}>final norm → logits</div>
     </div>
   )

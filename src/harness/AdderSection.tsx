@@ -41,13 +41,13 @@ function LoopTrace({ trace }: { trace: AdderTrace }) {
     <div className="mt-2 space-y-1 font-mono text-[11px]">
       {trace.steps.map((s) => (
         <div key={s.col} className="flex flex-wrap items-center gap-2">
-          <span className="w-16 shrink-0 text-slate-500">col {s.col}</span>
+          <span className="w-16 shrink-0 whitespace-nowrap text-slate-400">col {s.col}</span>
           <span className="rounded bg-slate-950 px-1.5 py-0.5 text-slate-300">{s.prompt.trim()}</span>
-          <span className="text-slate-600">→</span>
+          <span className="text-slate-500">→</span>
           <span className={'rounded px-1.5 py-0.5 ' + (s.ok ? 'bg-emerald-950 text-emerald-300' : 'bg-rose-950 text-rose-300')}>
             {s.raw.trim() || '(nothing)'}
           </span>
-          <span className="text-slate-500">
+          <span className="text-slate-400">
             keep <b className="text-slate-300">{s.digit ?? '?'}</b>, carry{' '}
             <b className="text-slate-300">{s.carryOut ?? '?'}</b>
           </span>
@@ -140,7 +140,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
                 first number
                 <input className={inputCls + ' mt-1 block'} value={a} onChange={(e) => setA(clean(e.target.value))} />
               </label>
-              <span className="pb-2 text-lg text-slate-500">+</span>
+              <span className="pb-2 text-lg text-slate-400">+</span>
               <label className="text-[11px] text-slate-400">
                 second number
                 <input className={inputCls + ' mt-1 block'} value={b} onChange={(e) => setB(clean(e.target.value))} />
@@ -150,7 +150,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
               </button>
             </div>
             <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-              <span className="text-slate-500">try:</span>
+              <span className="text-slate-400">try:</span>
               {[
                 ['23498', '94321'],
                 ['7', '8'],
@@ -185,7 +185,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
                   <Verdict ok={out.single.correct}>
                     {out.single.correct ? 'right' : `wrong — the answer is ${out.single.expected}`}
                   </Verdict>
-                  <span className="ml-2 text-slate-500">
+                  <span className="ml-2 text-slate-400">
                     one forward pass, no working — it has to hold every carry at once.
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
                     <Verdict ok={out.self.correct}>
                       {out.self.correct ? 'right' : 'it cannot reliably do this'}
                     </Verdict>
-                    <span className="ml-2 text-slate-500">
+                    <span className="ml-2 text-slate-400">
                       to write "the rightmost digits are 8 and 1" it must <em>find</em> them by counting
                       along the number — and counting positions is something tiny models are bad at.
                     </span>
@@ -217,11 +217,11 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
                 </div>
                 <LoopTrace trace={out.loop} />
                 <div className="mt-2 font-mono text-sm">
-                  <span className="text-slate-500">= </span>
+                  <span className="text-slate-400">= </span>
                   <span className={out.loop.correct ? 'text-emerald-300' : 'text-rose-300'}>{out.loop.answer}</span>
                   {!out.loop.correct && <span className="ml-2 text-[11px] text-rose-300">(should be {out.loop.expected})</span>}
                 </div>
-                <div className="mt-1 text-[11px] text-slate-500">
+                <div className="mt-1 text-[11px] text-slate-400">
                   {out.loop.steps.length} questions to the model · every prompt{' '}
                   <b className="text-slate-300">{out.loop.maxPromptChars} characters</b> long, however big the sum.
                 </div>
@@ -242,7 +242,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
               why the loop keeps working when the others stop
             </div>
             <table className="w-full font-mono text-[11px]">
-              <thead className="text-slate-500">
+              <thead className="text-slate-400">
                 <tr>
                   <th className="py-1 text-left font-normal">digits</th>
                   <th className="py-1 text-right font-normal">all at once</th>
@@ -264,7 +264,7 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-[11px] text-slate-500">
+            <p className="mt-2 text-[11px] text-slate-400">
               Characters the model must hold at once. Its memory is{' '}
               <b className="text-slate-300">{budget[0]?.ctx}</b> characters. Writing out the working grows
               with the sum and runs out of room; asking one column at a time never does.

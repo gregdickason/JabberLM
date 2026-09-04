@@ -35,7 +35,7 @@ export default function TokenizationDemo() {
     }
   }, [])
 
-  if (!data) return <div className={card + ' text-xs text-slate-500'}>{status}</div>
+  if (!data) return <div className={card + ' text-xs text-slate-400'}>{status}</div>
 
   const words = Object.keys(data.examples)
   const bpe = data.examples[word] ?? []
@@ -49,7 +49,7 @@ export default function TokenizationDemo() {
             key={w}
             onClick={() => setWord(w)}
             className={
-              'rounded px-1.5 py-0.5 font-mono text-[10px] ' +
+              'rounded px-1.5 py-0.5 font-mono text-[11px] ' +
               (word === w ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700')
             }
           >
@@ -68,7 +68,7 @@ export default function TokenizationDemo() {
               <Chip key={i} text={c} tone="char" />
             ))}
           </div>
-          <div className="mt-1.5 text-[10px] text-slate-500">every letter is its own token</div>
+          <div className="mt-1.5 text-[11px] text-slate-400">every letter is its own token</div>
         </div>
 
         <div className="rounded border border-violet-900/50 bg-slate-900/40 p-2">
@@ -80,20 +80,20 @@ export default function TokenizationDemo() {
               <Chip key={i} text={t} tone="bpe" />
             ))}
           </div>
-          <div className="mt-1.5 text-[10px] text-slate-500">whole chunks — it can't see the letters inside</div>
+          <div className="mt-1.5 text-[11px] text-slate-400">whole chunks — it can't see the letters inside</div>
         </div>
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
         These are the <b>real</b> tokens from OpenAI's <span className="font-mono">{data.encoding}</span>{' '}
-        tokenizer (the one behind {data.model}). It's <em>why</em> big models famously miss "how many r's in{' '}
-        <span className="font-mono">strawberry</span>?" — the model sees{' '}
-        <span className="font-mono text-violet-300">[str][aw][berry]</span>, not ten letters, so it's{' '}
-        <em>guessing</em> at a spelling it never really sees. Same reason multi-digit arithmetic and
-        reversing a string are hard: the pieces don't line up with characters. This site's char-level model
-        is the opposite — it sees every letter, so it <b>can</b> count and reverse (try the{' '}
-        <a className="text-sky-400 underline" href="./lab.html">lab</a>), but pays for it with a tiny
-        vocabulary that couldn't scale to real language.
+        tokenizer (the one behind {data.model}). A model asked "how many r's in{' '}
+        <span className="font-mono">strawberry</span>?" receives{' '}
+        <span className="font-mono text-violet-300">[str][aw][berry]</span>, not ten letters. Its answer is a{' '}
+        <em>guess</em> at a spelling it never saw. Multi-digit arithmetic and string reversal fail for the
+        same reason: the pieces do not line up with characters. This site's char-level model sees every
+        letter and <b>can</b> count and reverse (the{' '}
+        <a className="text-sky-400 underline" href="./lab.html">lab</a> does both), and pays for it with a
+        vocabulary too small to scale to real language.
       </p>
     </div>
   )

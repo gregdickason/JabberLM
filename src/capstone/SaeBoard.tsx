@@ -76,7 +76,7 @@ export default function SaeBoard({ model, tok }: { model: Model; tok: CharTokeni
         <button className="rounded border border-emerald-600 bg-emerald-900/40 px-3 py-1.5 text-emerald-200" onClick={train} disabled={phase === 'training'}>
           {phase === 'training' ? `training… ${step}` : phase === 'done' ? '↺ Re-train' : '▶ Train the dictionary (~20s)'}
         </button>
-        <span className="text-slate-500">{BOARDS.length} boards · {N_FEATURES} features</span>
+        <span className="text-slate-400">{BOARDS.length} boards · {N_FEATURES} features</span>
       </div>
 
       {phase === 'done' && st && (
@@ -85,21 +85,21 @@ export default function SaeBoard({ model, tok }: { model: Model; tok: CharTokeni
             <div className="mb-1 text-[11px] text-slate-400">features (most-used first)</div>
             <div className="flex flex-wrap gap-1" style={{ maxWidth: 260 }}>
               {ranked.slice(0, 24).map((f) => (
-                <button key={f} onClick={() => setFeat(f)} className={'rounded px-1.5 py-0.5 text-[10px] ' + (feat === f ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')}>#{f}</button>
+                <button key={f} onClick={() => setFeat(f)} className={'rounded px-1.5 py-0.5 text-[11px] ' + (feat === f ? 'bg-fuchsia-700 text-white' : 'bg-slate-800 text-slate-300')}>#{f}</button>
               ))}
             </div>
           </div>
           <div>
             <div className="mb-1 text-[11px] text-slate-400">boards that most activate feature <b>#{feat}</b></div>
             <div className="flex flex-wrap gap-2">
-              {topBoards.length === 0 ? <span className="text-[11px] text-slate-500">this feature never fires</span> :
+              {topBoards.length === 0 ? <span className="text-[11px] text-slate-400">this feature never fires</span> :
                 topBoards.map(([, b], i) => <MiniBoard key={i} board={b} vals={Array(9).fill(0)} size={22} />)}
             </div>
           </div>
         </div>
       )}
 
-      <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
+      <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
         Honest caveat: at ~130K params on a spatial task the features are <b>rough</b> — some are clean (a
         specific occupied cell), many are mixed. That's the reality of interpretability on a tiny model. The
         full technique — with steering — lives in the <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">lab's dictionary (SAE) tab</a>.

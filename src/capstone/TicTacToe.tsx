@@ -175,7 +175,7 @@ export default function TicTacToe({
   const cellColor = (c: string) => (c === 'X' ? '#38bdf8' : c === 'O' ? '#fbbf24' : 'transparent')
   const a = turn
   const reason = a?.analysis
-  if (!weak && !strong && !liveReady) return <div className="text-xs text-slate-500">{status}</div>
+  if (!weak && !strong && !liveReady) return <div className="text-xs text-slate-400">{status}</div>
 
   const modelBtn = (w: Which, label: string, ok: boolean) => (
     <button
@@ -187,11 +187,11 @@ export default function TicTacToe({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-slate-500">opponent:</span>
+        <span className="text-slate-400">opponent:</span>
         {modelBtn('weak', 'undertrained', !!weak)}
         {modelBtn('strong', 'well-trained', !!strong)}
         {modelBtn('live', 'your live model', liveReady)}
-        <span className="ml-auto text-slate-500">
+        <span className="ml-auto text-slate-400">
           {which === 'live' ? `trained ${liveStep} steps` : '~130K params'}
         </span>
       </div>
@@ -201,8 +201,8 @@ export default function TicTacToe({
         <p className="max-w-3xl rounded border border-slate-800 bg-slate-900/40 p-2 text-[0.6875rem] leading-relaxed text-slate-400">
           Both bundled agents are the <b>same ~130K-parameter model, same architecture</b> — the difference is the
           training <b>budget</b>. The <b className="text-slate-200">undertrained</b> one trained for <b>100 steps</b>:
-          1,600 positions, about a <b>third of one pass</b> over the game. The <b className="text-emerald-300">well-trained</b>
-          one went over every reachable position again and again, with a sharper target. Result, scored over{' '}
+          1,600 positions, about a <b>third of one pass</b> over the game. The{' '}
+          <b className="text-emerald-300">well-trained</b> one went over every reachable position again and again, with a sharper target. Result, scored over{' '}
           <b>all 4,520</b> positions: optimal moves <b>24% → 98%</b>, blocking <b>18% → 92%</b>, and it now{' '}
           <b>never loses to a random opponent</b>. The ceiling was never the model's size — same brain, longer education.
           And when you <b>look inside</b> (below), its attention heads swing onto your threat far harder
@@ -232,7 +232,7 @@ export default function TicTacToe({
                   {/* the cell INDEX — big enough to read from the back of a room (it is what the
                       model actually emits, so an audience needs to see it), but still clearly
                       secondary to the text-3xl X/O marks */}
-                  {board[i] === '.' ? <span className="text-xl font-normal text-slate-500">{i}</span> : board[i]}
+                  {board[i] === '.' ? <span className="text-xl font-normal text-slate-400">{i}</span> : board[i]}
                 </button>
               )
             })}
@@ -253,8 +253,8 @@ export default function TicTacToe({
           {/* the harness check toggle — the key control */}
           <label className="flex items-start gap-2 rounded border border-slate-700 bg-slate-900/50 p-2 text-[0.75rem]">
             <input type="checkbox" checked={validate} onChange={(e) => { setValidate(e.target.checked); if (fumbled) setTurn(null) }} className="mt-0.5" />
-            <span><b>Harness legal-move check</b> <span className="text-slate-500">({validate ? 'on' : 'off'})</span>
-              <div className="text-[0.6875rem] text-slate-500">a deterministic guard over the probabilistic model. On: it rejects an illegal move and asks the model to try again. Off: the model can fumble.</div></span>
+            <span><b>Harness legal-move check</b> <span className="text-slate-400">({validate ? 'on' : 'off'})</span>
+              <div className="text-[0.6875rem] text-slate-400">a deterministic guard over the probabilistic model. On: it rejects an illegal move and asks the model to try again. Off: the model can fumble.</div></span>
           </label>
 
           {/* ALWAYS-ON per-move harness loop: observe → act → check → apply, every turn */}
@@ -263,13 +263,13 @@ export default function TicTacToe({
             {thinking ? (
               <div className="text-sky-300">1 · harness → agent: sends the board … the agent is choosing a move</div>
             ) : !a ? (
-              <div className="text-slate-500">your move — the agent's turn will trace here (observe → act → check → apply)</div>
+              <div className="text-slate-400">your move — the agent's turn will trace here (observe → act → check → apply)</div>
             ) : (
               <ol className="space-y-0.5">
-                <li><span className="text-slate-500">1 · harness → agent:</span> here's the board <span className="text-slate-500">(observe)</span></li>
-                <li><span className="text-slate-500">2 · agent → harness:</span> “play cell <b className="text-sky-300">{a.attempts[0].move}</b>” <span className="text-slate-500">({Math.round((a.cellProbs[a.attempts[0].move] ?? 0) * 100)}% confident, act)</span></li>
+                <li><span className="text-slate-400">1 · harness → agent:</span> here's the board <span className="text-slate-400">(observe)</span></li>
+                <li><span className="text-slate-400">2 · agent → harness:</span> “play cell <b className="text-sky-300">{a.attempts[0].move}</b>” <span className="text-slate-400">({Math.round((a.cellProbs[a.attempts[0].move] ?? 0) * 100)}% confident, act)</span></li>
                 <li>
-                  <span className="text-slate-500">3 · harness checks:</span>{' '}
+                  <span className="text-slate-400">3 · harness checks:</span>{' '}
                   {a.attempts.length === 1 && a.attempts[0].legal ? (
                     <span className="text-emerald-300">cell {a.move} is legal ✓</span>
                   ) : fumbled ? (
@@ -285,7 +285,7 @@ export default function TicTacToe({
                 </li>
                 {!fumbled && reason && (
                   <li>
-                    <span className="text-slate-500">4 · harness reads it:</span>{' '}
+                    <span className="text-slate-400">4 · harness reads it:</span>{' '}
                     {reason.tookWin ? <span className="text-emerald-300">🏆 took the win at {a.move}</span>
                       : reason.madeBlock ? <span className="text-emerald-300">🛡 blocked your threat at {a.move}</span>
                       : reason.missedBlock != null ? <span className="text-red-300">⚠ missed a block at {reason.missedBlock} — you can win next!</span>
@@ -294,7 +294,7 @@ export default function TicTacToe({
                   </li>
                 )}
                 <li>
-                  <span className="text-slate-500">{fumbled ? '—' : '5 · harness applies:'}</span>{' '}
+                  <span className="text-slate-400">{fumbled ? '—' : '5 · harness applies:'}</span>{' '}
                   {fumbled ? (
                     <span className="text-red-300">the game is stuck. <button className="rounded border border-emerald-600 bg-emerald-900/40 px-2 py-0.5 text-emerald-200" onClick={() => { setValidate(true); setTurn(null) }}>turn the check on</button></span>
                   ) : result ? <span className="text-slate-300">placed at {a.move} — game over</span>
@@ -312,7 +312,7 @@ export default function TicTacToe({
                 {a.cellProbs.map((p, i) => (
                   <div key={i} className="relative h-9 w-[2.6875rem] overflow-hidden rounded bg-slate-800" title={`cell ${i}: ${Math.round(p * 100)}%`}>
                     <div className="absolute bottom-0 w-full" style={{ height: `${Math.round(p * 100)}%`, background: i === a.attempts[0].move ? '#38bdf8' : '#475569' }} />
-                    <div className="absolute inset-0 flex items-center justify-center text-[0.5625rem] text-slate-300">{i}·{Math.round(p * 100)}</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-[0.6875rem] text-slate-300">{i}·{Math.round(p * 100)}</div>
                   </div>
                 ))}
               </div>
@@ -329,7 +329,7 @@ export default function TicTacToe({
             {training ? '⏸ Pause' : liveStep > 0 ? '▶ Resume' : '▶ Train from scratch'}
           </button>
           <button className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-slate-200" onClick={resetLive}>↺ Reset</button>
-          <span className="text-slate-500">{liveStep} steps · plays {strength.at(-1)?.y ?? 0}% optimal moves — switch the opponent to "your live model" and play it as it learns</span>
+          <span className="text-slate-400">{liveStep} steps · plays {strength.at(-1)?.y ?? 0}% optimal moves — switch the opponent to "your live model" and play it as it learns</span>
         </div>
         {strength.length > 1 && (
           <div className="mt-2">

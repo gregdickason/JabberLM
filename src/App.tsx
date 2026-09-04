@@ -17,9 +17,9 @@ const TRAIN_TOUR: TourStep[] = [
     title: 'The training data',
     body: (
       <>
-        We've set this to <b className="text-fuchsia-200">Sorting</b> — examples like{' '}
-        <code>sort 6 9 2 =&gt; 2 6 9</code>. The model will try to learn to sort. (Poems and Equations
-        are here too — three very different things to learn.)
+        The dataset is <b className="text-fuchsia-200">Sorting</b>: examples like{' '}
+        <code>sort 6 9 2 =&gt; 2 6 9</code>. Poems and Equations are the other two, and each is learned
+        differently.
       </>
     ),
   },
@@ -28,8 +28,8 @@ const TRAIN_TOUR: TourStep[] = [
     title: 'Model size',
     body: (
       <>
-        How big the model is. We've picked <b>tiny</b> — it converges fast and shows the grokking jump
-        cleanly. <b>default</b> works too, just a touch slower.
+        How big the model is. The preset is <b>tiny</b>: it converges fast and shows the grokking jump
+        cleanly. <b>default</b> takes longer.
       </>
     ),
   },
@@ -184,7 +184,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col font-mono text-sm lg:h-full lg:min-h-0 lg:overflow-hidden">
       <SiteNav current="playground">
         <span
-          className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 text-[10px] text-slate-400"
+          className="rounded border border-slate-700 bg-slate-800/60 px-1.5 py-0.5 text-[11px] text-slate-400"
           title={
             pretrainedActive
               ? 'Results come from the built-in three-skill model bundled with the site.'
@@ -238,7 +238,7 @@ export default function App() {
                 In Inference, type a prompt, press <span className="text-sky-300">Run</span> / Step, and
                 open the tabs to inspect attention, residuals, and logits.
               </li>
-              <li>Try LoRA fine-tuning, or the Interpretability lab to see which heads do what.</li>
+              <li>Open the lab to ablate a head, fine-tune with LoRA, or watch a model forget a skill.</li>
             </ol>
             <button
               onClick={openGuide}
@@ -290,7 +290,7 @@ export default function App() {
               A real, tiny language model you can see inside — running entirely in your browser. Where
               would you like to start?
             </p>
-            <p className="mt-1 text-[10px] text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-400">
               New here? A good path: <span className="text-emerald-300">New to AI</span> →{' '}
               <span className="text-sky-300">How it works</span> →{' '}
               <span className="text-fuchsia-300">Experiment</span>.
@@ -304,7 +304,7 @@ export default function App() {
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-sm font-semibold text-emerald-200">New to AI — use it more wisely ★</span>
-                <span className="shrink-0 text-[10px] text-slate-500">~10 min</span>
+                <span className="shrink-0 text-[11px] text-slate-400">~10 min</span>
               </div>
               <div className="text-[11px] text-slate-400">
                 Plain language, no maths: how it answers, why it varies, what it costs, and where it goes
@@ -320,7 +320,7 @@ export default function App() {
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-sm font-semibold text-sky-200">Understand a transformer</span>
-                <span className="shrink-0 text-[10px] text-slate-500">~15 min</span>
+                <span className="shrink-0 text-[11px] text-slate-400">~15 min</span>
               </div>
               <div className="text-[11px] text-slate-400">
                 Follow one prediction through a real model: tokens → vectors → attention → next-character
@@ -332,7 +332,7 @@ export default function App() {
             <div className={tile + ' mt-2 border-fuchsia-700/60 bg-fuchsia-950/15'}>
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-sm font-semibold text-fuchsia-200">Experiment with the model</span>
-                <span className="shrink-0 text-[10px] text-slate-500">~5 min</span>
+                <span className="shrink-0 text-[11px] text-slate-400">~5 min</span>
               </div>
               <div className="text-[11px] text-slate-400">
                 Generate text and sort numbers here, then train one from scratch and watch it "grok".
@@ -354,7 +354,7 @@ export default function App() {
             </div>
 
             {/* secondary destinations */}
-            <div className="mt-3 text-center text-[11px] text-slate-500">
+            <div className="mt-3 text-center text-[11px] text-slate-400">
               Also:{' '}
               <a href="./harness.html" onClick={dismissChooser} className="text-sky-400 hover:underline">
                 Tools &amp; agents

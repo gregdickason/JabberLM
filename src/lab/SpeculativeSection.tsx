@@ -81,7 +81,7 @@ export default function SpeculativeSection() {
     setTiming({ naiveMs, specMs, identical: spec.text === naive })
   }
 
-  if (!target) return <div className="text-xs text-slate-500">{status}</div>
+  if (!target) return <div className="text-xs text-slate-400">{status}</div>
 
   const proposed = res ? res.rounds.reduce((n, r) => n + r.proposed.length, 0) : 0
   const acceptedTot = res ? res.rounds.reduce((n, r) => n + r.accepted, 0) : 0
@@ -123,7 +123,7 @@ export default function SpeculativeSection() {
         </button>
         <span className="flex flex-wrap gap-1">
           {PROMPTS.map((p) => (
-            <button key={p} onClick={() => setPrompt(p)} className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700">
+            <button key={p} onClick={() => setPrompt(p)} className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-300 hover:bg-slate-700">
               {show(p)}
             </button>
           ))}
@@ -139,7 +139,7 @@ export default function SpeculativeSection() {
               <span style={{ color: CORRECT }}>target correction</span> · <span style={{ color: BONUS }}>free bonus</span>
             </div>
             <div className="font-mono text-[15px] leading-relaxed">
-              <span className="text-slate-500">{show(prompt)}</span>
+              <span className="text-slate-400">{show(prompt)}</span>
               {res.tokens.map((tk, i) => (
                 <span key={i} style={{ color: tk.kind === 'accepted' ? ACCEPT : tk.kind === 'correction' ? CORRECT : BONUS }}>
                   {show(decode(tk.id))}
@@ -156,7 +156,7 @@ export default function SpeculativeSection() {
             <div className="space-y-0.5 font-mono text-[12px]">
               {res.rounds.map((r, ri) => (
                 <div key={ri} className="flex flex-wrap items-center gap-x-1">
-                  <span className="w-14 shrink-0 text-slate-600">round {ri + 1}</span>
+                  <span className="w-16 shrink-0 whitespace-nowrap text-slate-400">round {ri + 1}</span>
                   {r.proposed.map((id, pi) => {
                     const ok = pi < r.accepted
                     return (
@@ -187,28 +187,28 @@ export default function SpeculativeSection() {
               <div className="text-slate-100">
                 <b className="text-emerald-300">{res.targetForwards}</b> vs {res.tokens.length} naïve
               </div>
-              <div className="text-[10px] text-slate-500">the expensive model ran fewer times</div>
+              <div className="text-[11px] text-slate-400">the expensive model ran fewer times</div>
             </div>
             <div className="rounded border border-slate-800 bg-slate-900/50 p-2">
               <div className="text-slate-400">tokens / target pass</div>
-              <div className="text-slate-100"><b className="text-emerald-300">{tokPerTarget}</b> <span className="text-slate-500">(naïve 1.00)</span></div>
-              <div className="text-[10px] text-slate-500">= average accepted + 1</div>
+              <div className="text-slate-100"><b className="text-emerald-300">{tokPerTarget}</b> <span className="text-slate-400">(naïve 1.00)</span></div>
+              <div className="text-[11px] text-slate-400">= average accepted + 1</div>
             </div>
             <div className="rounded border border-slate-800 bg-slate-900/50 p-2">
               <div className="text-slate-400">acceptance</div>
               <div className="text-slate-100"><b>{acceptRate}%</b> of {proposed} guesses</div>
-              <div className="text-[10px] text-slate-500">{res.draftForwards} cheap draft passes</div>
+              <div className="text-[11px] text-slate-400">{res.draftForwards} cheap draft passes</div>
             </div>
             <div className="rounded border border-slate-800 bg-slate-900/50 p-2">
               <div className="text-slate-400">output</div>
               <div className="text-slate-100">{timing?.identical ? <b className="text-emerald-300">identical ✓</b> : <b className="text-rose-300">differs</b>}</div>
-              <div className="text-[10px] text-slate-500">
+              <div className="text-[11px] text-slate-400">
                 wall-clock {timing ? (timing.naiveMs / timing.specMs).toFixed(2) : '—'}× (toy scale)
               </div>
             </div>
           </div>
 
-          <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-500">
+          <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-400">
             The win that matters is <b>target forward passes</b> — the expensive model runs ~
             {tokPerTarget}× fewer times. Here the wall-clock barely moves, honestly: at this tiny scale the
             draft isn't proportionally cheaper and there's no live KV cache. At real scale the target dwarfs

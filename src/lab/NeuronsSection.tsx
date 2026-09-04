@@ -42,12 +42,12 @@ export default function NeuronsSection({ trainer }: { trainer: Trainer }) {
         inputs that make it fire hardest. The catch is <span className="text-slate-100">superposition</span>:
         models pack more concepts than they have neurons, so a single neuron is usually{' '}
         <span className="text-slate-100">polysemantic</span> — it lights up for several unrelated
-        patterns at once. That's why you can't just read meaning off neurons, and why the next tab
-        (dictionary learning) exists. {CAVEAT}
+        patterns at once. Meaning cannot be read off single neurons for that reason, which is what the dictionary-learning tab
+        addresses. {CAVEAT}
       </SectionIntro>
 
       {!sweep || !col ? (
-        <div className="text-xs text-slate-500">analyzing the corpus…</div>
+        <div className="text-xs text-slate-400">analyzing the corpus…</div>
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap items-end gap-3 text-xs text-slate-400">
@@ -112,16 +112,16 @@ export default function NeuronsSection({ trainer }: { trainer: Trainer }) {
                 const ctx = contextAround(trainer.tok.encode(trainer.text), (id) => trainer.tok.label(id), pos, 22)
                 return (
                   <div key={pos} className="flex items-center gap-2 text-[11px]">
-                    <span className="w-12 shrink-0 text-right text-slate-500">{value.toFixed(2)}</span>
+                    <span className="w-12 shrink-0 whitespace-nowrap text-right text-slate-400">{value.toFixed(2)}</span>
                     <span className="whitespace-pre rounded bg-slate-800 px-1 py-0.5 text-slate-300">
-                      <span className="text-slate-500">{ctx.before}</span>
+                      <span className="text-slate-400">{ctx.before}</span>
                       <span className="rounded bg-fuchsia-600 px-0.5 text-white">{ctx.charLabel}</span>
                     </span>
                   </div>
                 )
               })}
             </div>
-            <div className="mt-2 max-w-3xl text-[11px] text-slate-500">
+            <div className="mt-2 max-w-3xl text-[11px] text-slate-400">
               Browse a few neurons. Many will fire on more than one kind of context (e.g. both a space
               and the end of a word, or several different letters) — that mixing is superposition in
               action.

@@ -67,7 +67,7 @@ export default function SlidingWindowView({
       />
 
       <div>
-        <div className="mb-1 text-[10px] text-slate-500">
+        <div className="mb-1 text-[11px] text-slate-400">
           last token “{labels[lastIdx]}” attends to:
         </div>
         <div className="flex flex-wrap gap-0.5">
@@ -75,17 +75,17 @@ export default function SlidingWindowView({
             <span
               key={j}
               className={
-                'rounded px-1 text-[10px] ' +
+                'rounded px-1 text-[11px] ' +
                 (visible[j]
                   ? 'bg-sky-700/70 text-sky-50'
-                  : 'bg-slate-800 text-slate-600 line-through')
+                  : 'bg-slate-800 text-slate-400 line-through')
               }
             >
               {l}
             </span>
           ))}
         </div>
-        <div className="mt-1 text-[10px] text-slate-500">
+        <div className="mt-1 text-[11px] text-slate-400">
           {visible.filter(Boolean).length} of {seq} tokens visible —{' '}
           {seq - visible.filter(Boolean).length} dropped beyond the window.
         </div>

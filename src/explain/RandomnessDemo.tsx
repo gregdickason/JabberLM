@@ -69,7 +69,7 @@ export default function RandomnessDemo({ trainer }: { trainer: Trainer }) {
         </div>
       )}
       {runs && (
-        <div className="mt-2 text-[11px] text-slate-500">
+        <div className="mt-2 text-[11px] text-slate-400">
           {temp <= 0.001
             ? 'At temperature 0, Run B matches Run A and never changes — it always takes the single most likely next character. Raise the dial and click again.'
             : 'Run A never changes; Run B is different on every click — same prompt, different answer. That is temperature at work.'}

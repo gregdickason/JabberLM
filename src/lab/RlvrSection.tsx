@@ -153,7 +153,7 @@ export default function RlvrSection() {
     evalNow(0)
   }
 
-  if (!ready) return <div className="text-xs text-slate-500">building a model…</div>
+  if (!ready) return <div className="text-xs text-slate-400">building a model…</div>
 
   const series = [
     { label: 'SFT warm-up — accuracy', color: WARM, points: accWarm },
@@ -194,7 +194,7 @@ export default function RlvrSection() {
         <button className={btn + ' border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700'} onClick={reset}>
           ↺ Reset
         </button>
-        <span className="text-slate-500">
+        <span className="text-slate-400">
           step {step} · phase{' '}
           <span style={{ color: phase === 'warmup' ? WARM : RLVR }}>{phase === 'warmup' ? 'SFT warm-up' : 'RLVR (reward only)'}</span>
         </span>
@@ -219,15 +219,15 @@ export default function RlvrSection() {
           <div className="mb-1 text-[11px] text-slate-400">
             the model's own attempts this step — <span style={{ color: RLVR }}>correct (reinforced)</span> /{' '}
             <span style={{ color: '#f87171' }}>wrong (discouraged)</span>
-            {attempts.length > 0 && <span className="ml-1 text-slate-500">· {correct}/{attempts.length} right</span>}
+            {attempts.length > 0 && <span className="ml-1 text-slate-400">· {correct}/{attempts.length} right</span>}
           </div>
           <div className="space-y-0.5 font-mono text-[12px]">
             {attempts.length === 0 ? (
-              <div className="text-[11px] text-slate-500">start the run — attempts appear during the RLVR phase</div>
+              <div className="text-[11px] text-slate-400">start the run — attempts appear during the RLVR phase</div>
             ) : (
               attempts.map((a, i) => (
                 <div key={i} className="flex flex-wrap items-center gap-x-1">
-                  <span className="text-slate-500">{a.prompt}</span>
+                  <span className="text-slate-400">{a.prompt}</span>
                   <span style={{ color: a.reward === 1 ? RLVR : '#f87171' }}>
                     {a.completion || '…'} {a.reward === 1 ? '✓' : '✗'}
                   </span>
@@ -238,7 +238,7 @@ export default function RlvrSection() {
         </div>
       </div>
 
-      <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-500">
+      <p className="max-w-[900px] text-[11px] leading-relaxed text-slate-400">
         The <span style={{ color: RLVR }}>RLVR</span> curve climbs well above where warm-up left off — from a
         reward signal alone, with no answer keys. Honest caveats: RLVR only works where the answer is{' '}
         <b>verifiable</b> (sorting, maths, code — not open-ended writing); it needs a{' '}

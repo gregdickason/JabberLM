@@ -51,7 +51,7 @@ export default function Scatter({
           <text
             x={sx(p[0])}
             y={sy(p[1]) - 6}
-            fontSize={9}
+            fontSize={11}
             textAnchor="middle"
             fill={color(i)}
             className="font-mono"

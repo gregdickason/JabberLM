@@ -86,7 +86,7 @@ export default function RagDemo() {
     return { ranked, used, skipped }
   }, [wv, docVecs, query])
 
-  if (!wv) return <div className={card + ' text-xs text-slate-500'}>{status}</div>
+  if (!wv) return <div className={card + ' text-xs text-slate-400'}>{status}</div>
 
   const retrieved =
     mode === 'lookup'
@@ -123,7 +123,7 @@ export default function RagDemo() {
                 key={d.key}
                 onClick={() => setPickedKey(d.key)}
                 className={
-                  'rounded px-1.5 py-0.5 text-[10px] ' +
+                  'rounded px-1.5 py-0.5 text-[11px] ' +
                   (pickedKey === d.key ? 'bg-sky-700 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700')
                 }
               >
@@ -150,14 +150,14 @@ export default function RagDemo() {
               <button
                 key={q}
                 onClick={() => setQuery(q)}
-                className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300 hover:bg-slate-700"
+                className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-300 hover:bg-slate-700"
               >
                 {q}
               </button>
             ))}
           </div>
           {search && (
-            <div className="mt-2 text-[10px] text-slate-500">
+            <div className="mt-2 text-[11px] text-slate-400">
               matched on:{' '}
               {search.used.length ? (
                 <span className="text-slate-300">{search.used.join(', ')}</span>
@@ -167,7 +167,7 @@ export default function RagDemo() {
               {search.skipped.length > 0 && (
                 <>
                   {' · '}skipped (not in vocabulary):{' '}
-                  <span className="text-slate-600">{search.skipped.join(', ')}</span>
+                  <span className="text-slate-400">{search.skipped.join(', ')}</span>
                 </>
               )}
             </div>
@@ -185,7 +185,7 @@ export default function RagDemo() {
                       style={{ width: `${Math.max(0, Math.min(1, r.sim)) * 100}%` }}
                     />
                   </div>
-                  <span className="w-9 shrink-0 text-right font-mono text-slate-500">{r.sim.toFixed(2)}</span>
+                  <span className="w-9 shrink-0 text-right font-mono text-slate-400">{r.sim.toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -196,7 +196,7 @@ export default function RagDemo() {
       {/* retrieved passage → injected into context → grounded answer */}
       {retrieved && (
         <div className="rounded-lg border border-emerald-900 bg-emerald-950/30 p-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-400">
             ① retrieved passage → ② pasted into the model's context → ③ answer grounded in it
           </div>
           <p className="mt-2 rounded bg-slate-900/60 p-2 font-mono text-[11px] leading-relaxed text-slate-200">
@@ -210,7 +210,7 @@ export default function RagDemo() {
         </div>
       )}
 
-      <p className="text-[11px] leading-relaxed text-slate-500">
+      <p className="text-[11px] leading-relaxed text-slate-400">
         Two ways to find the passage: exact <strong>lookup</strong> when you know the name, or{' '}
         <strong>semantic search</strong> when you only know the meaning (reusing the very same word vectors as
         above). Real systems index millions of chunks this way. It's the honest fix for “it makes things up”:

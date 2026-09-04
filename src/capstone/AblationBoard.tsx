@@ -57,7 +57,7 @@ export default function AblationBoard({ model, tok, board }: { model: Model; tok
   return (
     <div className="space-y-3">
       <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
-        Knock out an attention head (click it) and the harness plays on with the damaged model. Watch its
+        Knocking out an attention head (click it) leaves the harness playing on with the damaged model. Its
         <b> tactical rate</b> — how often it still takes a win or blocks a threat — and its move on this board.
         Redder heads matter more; there's usually <b>one critical head</b> the whole skill leans on.
       </p>
@@ -68,12 +68,12 @@ export default function AblationBoard({ model, tok, board }: { model: Model; tok
           <div className="inline-block rounded border border-slate-800 p-1">
             {Array.from({ length: nLayers }, (_, l) => (
               <div key={l} className="flex items-center gap-1">
-                <span className="w-12 shrink-0 text-[10px] text-slate-500">layer {l}</span>
+                <span className="w-12 shrink-0 text-[11px] text-slate-400">layer {l}</span>
                 {Array.from({ length: nHeads }, (_, h) => {
                   const k = `${l}.${h}`, isDead = dead.has(k), imp = drop[k] / maxDrop
                   return (
                     <button key={k} onClick={() => toggle(k)} title={`ablating ${k} drops tactical rate by ${drop[k]}pts`}
-                      className={'m-0.5 flex h-9 w-11 items-center justify-center rounded border text-[10px] ' +
+                      className={'m-0.5 flex h-9 w-11 items-center justify-center rounded border text-[11px] ' +
                         (isDead ? 'border-red-500 bg-red-900/70 text-red-200 line-through' : 'border-slate-600 text-slate-200')}
                       style={isDead ? undefined : { background: `rgba(239,68,68,${0.12 + 0.6 * imp})` }}>
                       {l}.{h}
@@ -102,7 +102,7 @@ export default function AblationBoard({ model, tok, board }: { model: Model; tok
           </div>
         </div>
       </div>
-      <p className="max-w-3xl text-[11px] leading-relaxed text-slate-500">
+      <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
         This is the lab's <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=injury-recovery">injury &amp; recovery</a> demo, on the agent you just played: a skill can live mostly
         in one head, and removing it breaks that skill while leaving the rest intact.
       </p>

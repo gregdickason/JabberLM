@@ -82,16 +82,16 @@ export default function AttentionBoard({ model, tok, board }: { model: Model; to
     <div className="space-y-3">
       <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
         This overlays each attention head's focus, <b>at the moment it chose its move</b>, back onto the board —
-        brighter = looked harder. Notice the heads are <b>specialised per-cell readers</b> (each mostly watches
+        brighter = looked harder. The heads are <b>specialised per-cell readers</b> (each mostly watches
         one square). {threat.length > 0 && <>Your threat is <span className="text-red-300">ringed</span> — see which heads actually look there.
           Strongest focus on your threat cell here: <b className={looksHard ? 'text-emerald-300' : 'text-amber-300'}>{Math.round(focus * 100)}%</b>
-          {' '}<span className="text-slate-500">(toggle undertrained ↔ well-trained above to compare).</span></>}
+          {' '}<span className="text-slate-400">(toggle undertrained ↔ well-trained above to compare).</span></>}
       </p>
       <div className="flex flex-wrap gap-3">
         {perHead.map((layer, l) =>
           layer.map((vals, h) => (
             <button key={`${l}.${h}`} onClick={() => setSel([l, h])} className={'rounded p-1 ' + (sel[0] === l && sel[1] === h ? 'bg-fuchsia-900/50 ring-1 ring-fuchsia-400' : 'hover:bg-slate-800')}>
-              <div className="mb-0.5 text-[10px] text-slate-400">head {l}.{h}</div>
+              <div className="mb-0.5 text-[11px] text-slate-300">head {l}.{h}</div>
               <MiniBoard board={board} vals={vals} highlight={threat} size={24} />
             </button>
           )),
@@ -99,10 +99,10 @@ export default function AttentionBoard({ model, tok, board }: { model: Model; to
       </div>
       <div className="flex flex-wrap items-center gap-4 border-t border-slate-800 pt-3">
         <div>
-          <div className="mb-1 text-[11px] text-slate-400">head <b>{sel[0]}.{sel[1]}</b> — where it looked</div>
+          <div className="mb-1 text-[11px] text-slate-300">head <b>{sel[0]}.{sel[1]}</b> — where it looked</div>
           <MiniBoard board={board} vals={perHead[sel[0]][sel[1]]} highlight={threat} size={44} />
         </div>
-        <p className="max-w-sm text-[11px] leading-relaxed text-slate-500">
+        <p className="max-w-sm text-[11px] leading-relaxed text-slate-400">
           Each head reads roughly one square — together they carry the whole board into the residual stream.
           {threat.length === 0 ? (
             <> Put a threat on the board (or pick a "you threaten a row" preset) to see whether the heads track it.</>

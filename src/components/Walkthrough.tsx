@@ -42,7 +42,7 @@ export default function Walkthrough({ steps, onClose }: { steps: WalkStep[]; onC
             <span className="text-slate-400">{step.stage}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-slate-400">
               {i + 1} / {steps.length}
             </span>
             <button className={btn} onClick={onClose}>
@@ -84,7 +84,7 @@ export default function Walkthrough({ steps, onClose }: { steps: WalkStep[]; onC
           <button className={btn} onClick={prev} disabled={i === 0}>
             ← Back
           </button>
-          <span className="text-[10px] text-slate-600">
+          <span className="text-[11px] text-slate-400">
             ← / → or space to navigate · Esc to close
           </span>
           {atEnd ? (
@@ -112,7 +112,7 @@ function StepBody({ step }: { step: WalkStep }) {
             className="flex flex-col items-center rounded border border-slate-700 bg-slate-800 px-2 py-1"
           >
             <span className="text-sm text-slate-100">{lbl}</span>
-            <span className="text-[9px] text-slate-500">{step.tokens!.ids[i]}</span>
+            <span className="text-[11px] text-slate-400">{step.tokens!.ids[i]}</span>
           </div>
         ))}
       </div>

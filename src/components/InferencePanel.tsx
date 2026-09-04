@@ -106,7 +106,7 @@ export default function InferencePanel() {
     return (
       <div className="p-4">
         <h2 className="text-sm font-bold text-sky-300">Inference &amp; inspector</h2>
-        <div className="mt-3 rounded border border-dashed border-slate-700 p-6 text-center text-xs text-slate-500">
+        <div className="mt-3 rounded border border-dashed border-slate-700 p-6 text-center text-xs text-slate-400">
           <p>Generate text without training — load the model that ships with the site:</p>
           <button
             className="mt-3 rounded border border-sky-700 bg-sky-900/40 px-3 py-1.5 text-xs text-sky-200 hover:bg-sky-900/70"
@@ -115,7 +115,7 @@ export default function InferencePanel() {
             ▶ Load the built-in model
           </button>
           {loadMsg && <p className="mt-2 text-amber-400">{loadMsg}</p>}
-          <p className="mt-3 text-[11px] text-slate-600">
+          <p className="mt-3 text-[12px] text-slate-400">
             …or build &amp; train your own in the left panel, then run the inspector here.
           </p>
         </div>
@@ -209,14 +209,14 @@ export default function InferencePanel() {
             <span className="text-amber-300">"solves"</span> equations (watch the maths go wrong). Try an
             example, or press <span className="text-emerald-300">▶ Play</span> in Training to train your own.
           </div>
-          <div className="mt-1 text-[10px] text-sky-300/70">{MODEL_STATS_LINE}</div>
+          <div className="mt-1 text-[11px] text-sky-300/70">{MODEL_STATS_LINE}</div>
         </div>
       )}
 
       <div className="space-y-2">
         {pretrainedActive && (
           <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span className="text-slate-500">try:</span>
+            <span className="text-slate-400">try:</span>
             {MODEL_EXAMPLES.map((ex) => (
               <button
                 key={ex.label}
@@ -305,14 +305,17 @@ export default function InferencePanel() {
         >
           {genText || '(run a prompt to begin)'}
         </pre>
-        <div className="text-[10px] text-slate-500">
-          Run = generate the whole answer · Step = one token at a time (watch it think) · Continue ×20 =
-          keep going · Reset = clear · editing the prompt starts fresh
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[12px] text-slate-400">
+          <span><b className="text-slate-300">Run</b> generates the whole answer</span>
+          <span><b className="text-slate-300">Step</b> adds one token</span>
+          <span><b className="text-slate-300">Continue ×20</b> keeps going</span>
+          <span><b className="text-slate-300">Reset</b> clears</span>
+          <span>editing the prompt starts fresh</span>
         </div>
       </div>
 
       {!trace ? (
-        <div className="rounded border border-dashed border-slate-700 p-4 text-center text-[11px] text-slate-500">
+        <div className="rounded border border-dashed border-slate-700 p-4 text-center text-[11px] text-slate-400">
           Press <span className="text-emerald-300">▶ Run</span> to generate an answer and open the inspector.
         </div>
       ) : (

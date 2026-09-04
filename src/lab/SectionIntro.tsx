@@ -19,7 +19,7 @@ export default function SectionIntro({
       <h2 className="text-sm font-bold text-fuchsia-300">{title}</h2>
       <p className="text-[12px] leading-relaxed text-slate-300">{children}</p>
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
-        <span className="text-slate-500">papers:</span>
+        <span className="text-slate-400">papers:</span>
         {papers.map((p) => (
           <a
             key={p.url}

@@ -18,7 +18,7 @@ export default function BarChart({ values, labels, highlight, max, maxBars = 16 
   return (
     <div className="space-y-0.5">
       {order.map(({ v, i }) => (
-        <div key={i} className="flex items-center gap-1 text-[10px]">
+        <div key={i} className="flex items-center gap-1 text-[11px]">
           <span
             className={
               'w-6 shrink-0 text-right ' +
@@ -33,7 +33,7 @@ export default function BarChart({ values, labels, highlight, max, maxBars = 16 
               style={{ width: `${(v / top) * 100}%` }}
             />
           </div>
-          <span className="w-10 shrink-0 text-slate-500">{v.toFixed(3)}</span>
+          <span className="w-10 shrink-0 text-slate-400">{v.toFixed(3)}</span>
         </div>
       ))}
     </div>

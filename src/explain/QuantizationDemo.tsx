@@ -76,7 +76,7 @@ export default function QuantizationDemo() {
       <div className="mb-2 text-[12px] leading-relaxed text-slate-300">
         A model is a big pile of numbers. Each is normally stored in <b>32 bits</b>. <b>Quantisation</b>{' '}
         keeps fewer bits per number — so the model takes less memory and runs faster. The catch is
-        precision: round too hard and it breaks. Here's the exact trade-off on the sorting model, measured
+        precision: round too hard and it breaks. The trade-off on the sorting model, measured
         live (we round every weight, then re-test on unseen lists):
       </div>
       <button
@@ -86,7 +86,7 @@ export default function QuantizationDemo() {
       >
         {busy ? 'measuring…' : rows.length ? 'Measure again' : '▶ Quantise & measure'}
       </button>
-      {status && <span className="ml-2 text-[11px] text-slate-500">{status}</span>}
+      {status && <span className="ml-2 text-[11px] text-slate-400">{status}</span>}
 
       {rows.length > 0 && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -112,9 +112,9 @@ export default function QuantizationDemo() {
             })}
           </div>
           <div>
-            <div className="mb-1 text-[10px] text-slate-400">held-out sort accuracy (%)</div>
+            <div className="mb-1 text-[11px] text-slate-400">held-out sort accuracy (%)</div>
             <LineChart series={series} width={280} height={170} />
-            <p className="mt-1 text-[10px] text-slate-500">
+            <p className="mt-1 text-[11px] text-slate-400">
               left = full precision, right = fewest bits. Accuracy holds, then <b>falls off a cliff</b>.
             </p>
           </div>

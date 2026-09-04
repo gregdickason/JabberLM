@@ -143,7 +143,7 @@ function LessonPage({ demo }: { demo: Demo }) {
           >
             in context: {demo.source.label}
           </a>
-          <span className="rounded border border-slate-800 px-2 py-1 font-mono text-slate-500">
+          <span className="rounded border border-slate-800 px-2 py-1 font-mono text-slate-400">
             ?demo={demo.id}
           </span>
         </div>
@@ -191,7 +191,7 @@ function LessonPage({ demo }: { demo: Demo }) {
             </div>
           ))}
         </dl>
-        <p className="mt-6 text-[12px] text-slate-500">
+        <p className="mt-6 text-[12px] text-slate-400">
           <a className={a} href="./teachers.html#embeds">← all lessons</a> ·{' '}
           <a className={a} href="./guide.html">the long-form guide</a> covers every page of the site.
         </p>
@@ -327,7 +327,7 @@ export default function TeachersApp() {
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-[12px] text-slate-500">
+        <p className="mt-2 text-[12px] text-slate-400">
           Every demo has a written lesson: what the model is, how it was trained, what the demo tests,
           a step-by-step walkthrough, and the questions students ask. Box sizes are pixels at the default <code className="font-mono">scale=1.25</code>. Every demo but
           tic-tac-toe uses a fixed box so your page cannot reflow mid-demo; if your content
@@ -421,7 +421,7 @@ export default function TeachersApp() {
           </a>
           .
         </p>
-        <footer className="mt-6 border-t border-slate-800 pt-4 text-[12px] text-slate-500">
+        <footer className="mt-6 border-t border-slate-800 pt-4 text-[12px] text-slate-400">
           Teaching with it? The <a className={a} href="./guide.html">long-form guide</a> is the written
           version of the whole site, useful as a handout or pre-reading.
         </footer>

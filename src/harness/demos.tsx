@@ -59,7 +59,7 @@ function InjTraceView({ trace }: { trace: InjectedTrace }) {
       {trace.steps.map((s, i) => (
         <div key={i} className="font-mono text-[12px]">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500">step {i + 1}</span>
+            <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-400">step {i + 1}</span>
             {s.call ? (
               <span className={offPlan(s, i) ? 'font-bold text-rose-300' : 'text-fuchsia-300'}>
                 🧠 {s.call.tool}({s.call.args.join(' ')}){offPlan(s, i) && ' 🚨 off-plan'}
@@ -73,7 +73,7 @@ function InjTraceView({ trace }: { trace: InjectedTrace }) {
               <div className="mt-0.5 pl-6 text-[11px] text-rose-300">
                 ⚠️ tool output (attacker-controlled): <span className="text-rose-200">"{s.observation}"</span>
                 {s.observation !== s.result && (
-                  <span className="text-slate-500"> · real result was "{s.result}"</span>
+                  <span className="text-slate-400"> · real result was "{s.result}"</span>
                 )}
               </div>
             ) : (
@@ -145,7 +145,7 @@ export function ToolCallDemo({
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] text-slate-500">try:</span>
+        <span className="text-[11px] text-slate-400">try:</span>
         {TOOL_EXAMPLES.map((ex) => (
           <button key={ex} className={chip} onClick={() => run(ex)}>
             {ex}
@@ -191,7 +191,7 @@ export function ToolCallDemo({
               >
                 {answer ?? '—'}
               </span>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-slate-400">
                 {useHarness
                   ? '✓ computed by JavaScript — guaranteed correct'
                   : modelRight
@@ -200,7 +200,7 @@ export function ToolCallDemo({
               </span>
             </div>
             {t.parsed && t.modelGuess != null && t.modelGuess !== t.toolResult && (
-              <div className="mt-1 text-[11px] text-slate-500">
+              <div className="mt-1 text-[11px] text-slate-400">
                 model's own guess <code className="text-red-300">{t.modelGuess}</code> vs harness{' '}
                 <code className="text-emerald-300">{t.toolResult}</code> — same model, but the tool makes it reliable.
               </div>
@@ -243,7 +243,7 @@ export function AgentLoopDemo({ trainer, autoRun = false }: { trainer: Trainer; 
         </button>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] text-slate-500">try:</span>
+        <span className="text-[11px] text-slate-400">try:</span>
         {TWO_STEP_EXAMPLES.map((ex) => (
           <button key={ex} className={chip} onClick={() => runLoop(ex)}>
             {ex}
@@ -259,16 +259,16 @@ export function AgentLoopDemo({ trainer, autoRun = false }: { trainer: Trainer; 
           {agentTrace.steps.map((s, i) => (
             <div key={i}>
               {i > 0 && (
-                <div className="my-1 pl-6 text-[10px] text-sky-400/80">
+                <div className="my-1 pl-6 text-[11px] text-sky-400/80">
                   ↳ the harness feeds that result back; the model reads it and calls again
                 </div>
               )}
               <div className="flex items-center gap-2 font-mono text-[13px]">
-                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-500">step {i + 1}</span>
+                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] text-slate-400">step {i + 1}</span>
                 {s.call ? (
                   <>
                     <span className="text-fuchsia-300">🧠 {s.call.tool}([{s.call.args.join(', ')}])</span>
-                    <span className="text-slate-600">→</span>
+                    <span className="text-slate-500">→</span>
                     <span className="text-emerald-300">⚙️ {s.result}</span>
                   </>
                 ) : (
@@ -312,7 +312,7 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
   return (
     <>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <span className="text-[11px] text-slate-500">the tool "returns":</span>
+        <span className="text-[11px] text-slate-400">the tool "returns":</span>
         {INJ_ATTACKS.map((a) => (
           <button
             key={a.payload}
@@ -328,7 +328,7 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
           </button>
         ))}
       </div>
-      <div className="mt-1 text-[11px] text-slate-500">
+      <div className="mt-1 text-[11px] text-slate-400">
         instruction: <span className="font-mono text-slate-300">{INJ_SCENARIO}</span> — attacker payload:{' '}
         <span className="font-mono text-rose-300">"{injPayload}"</span>
         {'  ·  '}

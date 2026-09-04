@@ -96,7 +96,7 @@ export default function ConfigSidebar() {
             setTrainingText(e.target.value)
           }}
         />
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] text-slate-400">
           {trainingText.length} chars · {uniqueChars} unique
           {tooSmall && <span className="text-amber-400"> · add more text before training</span>}
         </div>
@@ -124,7 +124,7 @@ export default function ConfigSidebar() {
             )
           })}
         </div>
-        <div className="text-[10px] text-slate-500">
+        <div className="text-[11px] text-slate-400">
           Both are tiny and train in a minute or two.
         </div>
         <Row label="d_model">

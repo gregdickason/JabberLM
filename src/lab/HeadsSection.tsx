@@ -59,12 +59,12 @@ export default function HeadsSection({ trainer }: { trainer: Trainer }) {
       </SectionIntro>
 
       {!stats ? (
-        <div className="text-xs text-slate-500">scanning heads…</div>
+        <div className="text-xs text-slate-400">scanning heads…</div>
       ) : (
         <div className="flex flex-wrap gap-6">
           <div>
             <table className="text-[11px]">
-              <thead className="text-slate-500">
+              <thead className="text-slate-400">
                 <tr>
                   <th className="px-2 text-left">head</th>
                   <th className="px-2 text-right">prev-token</th>
@@ -102,7 +102,7 @@ export default function HeadsSection({ trainer }: { trainer: Trainer }) {
               rowLabels={probeLabels}
               colLabels={probeLabels}
             />
-            <div className="mt-1 max-w-sm text-[11px] text-slate-500">
+            <div className="mt-1 max-w-sm text-[11px] text-slate-400">
               On the repeated probe, an induction head puts weight on the stripe one position after the
               first copy — it has learned "this happened before; predict what came next".
             </div>

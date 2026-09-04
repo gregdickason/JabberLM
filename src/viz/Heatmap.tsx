@@ -65,7 +65,7 @@ export default function Heatmap({
 
   return (
     <div className="inline-block max-w-full align-top">
-      {title && <div className="mb-1 text-[10px] text-slate-400">{title}</div>}
+      {title && <div className="mb-1 text-[11px] text-slate-400">{title}</div>}
       <div className="max-w-full overflow-x-auto">
         <canvas
           ref={canvasRef}
@@ -80,14 +80,14 @@ export default function Heatmap({
           onMouseLeave={() => setHover(null)}
         />
       </div>
-      <div className="mt-1 h-4 text-[10px] text-slate-400">
+      <div className="mt-1 h-4 text-[11px] text-slate-400">
         {hover ? (
           <span>
             [{rowLabels?.[hover.r] ?? hover.r}, {colLabels?.[hover.c] ?? hover.c}] ={' '}
             <span className="text-slate-100">{hover.v.toFixed(4)}</span>
           </span>
         ) : (
-          <span className="text-slate-600">
+          <span className="text-slate-400">
             {rows}×{cols}
           </span>
         )}

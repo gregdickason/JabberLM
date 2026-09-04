@@ -34,7 +34,7 @@ function WithHarnessModel({ children }: { children: (t: Trainer) => React.ReactN
       cancelled = true
     }
   }, [])
-  return trainer ? <>{children(trainer)}</> : <div className="text-slate-500">{status}</div>
+  return trainer ? <>{children(trainer)}</> : <div className="text-slate-400">{status}</div>
 }
 
 // Generic "fetch a model, then render" wrapper — the lab and capstone frames each need one
@@ -65,7 +65,7 @@ function WithModel({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return trainer ? <>{children(trainer)}</> : <div className="text-slate-500">{status}</div>
+  return trainer ? <>{children(trainer)}</> : <div className="text-slate-400">{status}</div>
 }
 
 // Every demo here renders WITHOUT its page's framing — no heading, no intro prose, no
@@ -177,13 +177,13 @@ export default function EmbedApp() {
                   {d.id}
                 </a>{' '}
                 <span className="text-slate-400">— {d.title}</span>{' '}
-                <a className="text-slate-500 underline" href={d.source.href} target="_blank" rel="noopener">
+                <a className="text-slate-400 underline" href={d.source.href} target="_blank" rel="noopener">
                   ({d.source.label})
                 </a>
               </li>
             ))}
           </ul>
-          <p className="text-slate-500">
+          <p className="text-slate-400">
             Optional: <code className="text-fuchsia-300">&amp;scale=1.6</code> to enlarge everything for a
             projector.
           </p>
