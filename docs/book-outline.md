@@ -32,14 +32,21 @@ works": it ends by asking, with earned clarity, what it *means* (Hofstadter's st
 - Apparatus: preface (how to read with the site), **glossary**, cheat-sheet, further reading, index.
 
 ## Site gaps the book must handle
-- **Build item (only real code):** deep-linkable URLs/anchors so **Try it →** lands on the exact
-  tab/demo/example (`lab.html?tab=head-ablation`, `harness.html?ex=total+of+6+9+2`, `index.html?dataset=sort`).
+- ~~**Build item (only real code):** deep-linkable URLs/anchors so **Try it →** lands on the exact
+  tab/demo/example.~~ **Built.** Tabs route through `lab.html?tab=head-ablation`, sections through
+  `?section=` (`src/lib/sectionRoute.ts`), and the demos take their example from the URL
+  (`src/lib/urlParams.ts`): `?prompt=`, `?list=`, `?a=&b=`, `?word=`, `?basket=`, `?ex=` — on the full
+  pages and on the embeds alike. A **Try it →** can now be exact.
 - **Prose chapters (site doesn't demo these):** the pretraining→SFT→RLHF pipeline, prompting/context
   engineering, evaluation of generative models, jailbreaks, scaling laws/emergence. Multimodality = out of
   scope for v1. *(Tokenization/BPE, prompt injection, quantisation, embeddings & RAG now have live demos —
   `explain §5–§9` and `harness §4` — so they're off this list.)*
-- **Apparatus gaps:** glossary artifact, exercises/solutions, guided capstone, a figure/stat pipeline
-  (numbers sourced from `src/data/modelStats.ts` so book and site never disagree).
+- **Apparatus gaps:** exercises/solutions, guided capstone. *(Two are now closed: the site ships a
+  **glossary page** (`glossary.html`) and a **series** index (`series.html`) for the companion posts;
+  and the stat pipeline exists — `src/data/modelStats.ts` holds `BUNDLES` (params, dims, vocab,
+  `genScript`, `taughtOn`) and `MEASURED` (the accuracy figures, each saying what it was measured on)
+  for all nine bundled models, with `npm run stats` re-deriving the structural half straight from the
+  JSON. Quote figures from there — book and site then cannot disagree.)*
 
 ---
 
@@ -90,7 +97,9 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
        (specialist grokking begins ~step 1,500; generalist ~step 4,000+). *(Regenerate with the crossover
        script; keep figures in sync via the stat pipeline.)*
      - **Inference cost (the half that matters at scale).** Training is a one-off; *inference* is the bill
-       you pay forever. At equal sort quality (~95% both), the tiny specialist has ~6× fewer parameters →
+       you pay forever. At comparable sort quality — the shipped sort-only specialist measures **97%** on 145
+       unseen lists, the shipped three-skill generalist **89%** on the same held-out set
+       (`MEASURED` in `src/data/modelStats.ts`) — the tiny specialist has ~6× fewer parameters →
        ~6× less compute per token, and runs measurably faster. So even though the generalist was more
        expensive to train, the *specialist* is the one you'd deploy for a high-volume sort task. This is
        the economic engine behind how model usage is evolving as token cost bites: **route** easy requests
@@ -247,20 +256,27 @@ of an index-labelled cell (a tiny char model can't count positions — the straw
 took **masked** supervised learning (loss on the move only, not the un-guessable board) for the signal to land
 — a concrete lesson in what the loss is actually graded on.
 The page ships **two same-size (~130K) agents** — an *undertrained* one and a *well-trained* one, identical
-architecture — to make one lesson unmissable: **training-data design, not parameter count, is the lever**. The
-well-trained model saw *every* position (with the game-deciding ones emphasised); the undertrained one sampled
-carelessly. Same brain, better lessons — and it plays measurably better (loses far less to perfect play). This
-is also a small, honest cautionary tale about *doing* ML: the first "fix" I tried — oversample the openings,
-because every game starts there — *collapsed the model*, because tic-tac-toe openings have near-*uniform* best
-moves (every early move draws), so flooding them drowns training in no-information targets. The real weakness was
-tactical, not positional. Research in miniature: the plausible fix was wrong, and the exhaustive evaluation
-(score all ~4,520 positions) is what told me so (Sidebar).
+architecture and identical parameter count — to make one lesson unmissable: **training budget, not parameter
+count, is the lever**. The undertrained one ran for **100 steps** — about a third of one pass over the 4,520
+reachable positions. The well-trained one ran for **250 shuffled exhaustive epochs** (every reachable position
+once per pass, reshuffled each pass) against a **sharpened target** (T=0.1). Same brain, far more of the same
+lessons — and it plays measurably better (optimal 24%→98%, and it stops losing to perfect play). This is also a
+small, honest cautionary tale about *doing* ML, in two acts. First: oversample the openings, because every game
+starts there — that *collapsed the model*, because tic-tac-toe openings have near-*uniform* best moves (every
+early move draws), so flooding them drowns training in no-information targets. Then the follow-up fix, a
+**balanced deck** that reweighted the tactical positions 6×: a controlled arm — same seed, same budget, same
+T=0.1, differing *only* in the deck — **stalled** (loss flat over 1,000 steps, 29% optimal against 67% for the
+uniform arm at the same step). Its coverage argument was sound; the reweighting on top of an already-peaked
+target is what collapses it. It survives only as a comparison arm (`DECK=balanced`) and is **not** the shipped
+recipe. The real weakness was never the data design — it was that every earlier checkpoint stopped before the
+model had finished learning. Research in miniature: two plausible fixes were wrong, and the exhaustive
+evaluation (score all ~4,520 positions) is what told me so (Sidebar).
 And the capstone's real payoff is **"play the agent, then look inside it"**: the Part-III lab tools (attention,
 ablation, SAE) applied to the Part-IV agent, projected onto the board — now with a **weak-vs-strong comparison**.
 Put a threat on the board and read each model's attention: the undertrained heads barely look at the cell you're
-about to win on; the well-trained heads *swing onto it* (measured focus 0.53 → 0.74). *That* is the mechanistic
-reason better data makes a better player — the heads learned to **attend to what's at risk** — and you can watch
-it, side by side, in one toggle. You also *ablate the one critical head* and watch tactical play collapse — the
+about to win on; the well-trained heads *swing onto it* (mean attention on the threat cell **0.199 → 0.785**,
+over the 1,484 must-block boards). *That* is the mechanistic reason a longer budget makes a better player — the
+heads learned to **attend to what's at risk** — and you can watch it, side by side, in one toggle. You also *ablate the one critical head* and watch tactical play collapse — the
 injury demo, on the game you just played. That closes the loop of the whole book: a model predicts the next
 token, you can see the circuit that does it, and it's small enough to break and fix — Part IV's agent explained
 by Part III's tools, one page, in your hands. Distillation footnote: the oracle (minimax) supervises a *soft*
@@ -284,9 +300,10 @@ the interpretability literature) · Index.
 
 ## Production
 - Author in Markdown; render PDF + EPUB with **Quarto or Pandoc** from a `book/` folder; CI to build.
-- Site enablers: **deep-link support** (reuse `data-tour` anchors + example-chip machinery; read
-  `location.hash`/`?params` on mount in App/LabApp/HarnessApp/ExplainApp) + optional read-along landing.
-- Figures: repeatable capture per chapter; stats from `src/data/modelStats.ts`.
+- Site enablers: **deep-link support** — *done* (`?tab=`, `?section=`, and the demo prefill params in
+  `src/lib/urlParams.ts`) + optional read-along landing.
+- Figures: repeatable capture per chapter; stats from `src/data/modelStats.ts` (`BUNDLES` / `MEASURED`,
+  refreshed by `npm run stats`) — never retyped into prose.
 - **Voice test first** (below): Ch 1 full + Ch 18 (the strange loop) sketch, to prove one voice carries
   both registers.
 

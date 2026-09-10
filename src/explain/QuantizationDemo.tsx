@@ -125,8 +125,8 @@ export default function QuantizationDemo() {
         <span className="font-semibold text-violet-300">The pattern:</span> you can shrink a model{' '}
         <span className="text-slate-100">a lot</span> before it degrades — in this toy model <b>8-bit</b> is
         effectively lossless and <b>4-bit</b> stays strong before quality drops sharply. Production results
-        vary by model and task, so benchmark the workflows that matter. This is the fourth lever for cheaper
-        inference, alongside <span className="text-slate-100">distillation</span>,{' '}
+        vary by model and task, so benchmark the workflows that matter. This is the third of the three levers
+        above, and it has company elsewhere: <span className="text-slate-100">distillation</span>,{' '}
         <span className="text-slate-100">Mixture-of-Experts</span>, and{' '}
         <span className="text-slate-100">KV-caching</span>. It's why you can run a capable model on a
         laptop or phone: the same weights, stored in a quarter of the space.

@@ -29,6 +29,9 @@ const GROUPS: { label: string; blurb: string; tabs: Tab[] }[] = [
 const btn =
   'rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700 disabled:opacity-40'
 
+// unobtrusive link into the glossary / into another tab
+const link = 'underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
+
 // Routing (and why it is a query string, not a #hash) lives in ./tabRoute.
 
 export default function LabApp() {
@@ -147,41 +150,58 @@ export default function LabApp() {
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={onUpload} />
       </div>
 
+      {/* framing — stays visible with a model loaded, because the tabs on their own
+          don't say what any of this is for */}
+      <div className="border-b border-slate-800 px-4 py-2">
+        <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
+          This lab is{' '}
+          <a className={link} href="./glossary.html#interpretability">
+            mechanistic interpretability
+          </a>{' '}
+          — reverse-engineering what a trained transformer has actually learned, instead of judging it
+          only by its outputs. It is the same set of techniques frontier labs use to audit a model,
+          steer it, and catch behaviour that testing from the outside would never surface. New here?
+          Start with{' '}
+          <a className={link + ' text-fuchsia-300'} href="./lab.html?tab=head-ablation">
+            head ablation
+          </a>{' '}
+          — nothing to train, and the before/after is immediate.
+        </p>
+      </div>
+
       {!loaded ? (
         <div className="p-8 text-center text-xs text-slate-400">
           <p className="mx-auto max-w-xl leading-relaxed">
-            This lab demonstrates <span className="text-slate-300">mechanistic interpretability</span> —
-            techniques for reverse-engineering what a trained transformer has actually learned, rather
-            than judging it only by its outputs. Load a model to begin: it uses your last training run
-            automatically, or upload a saved JSON model.
+            Load a model to begin: the lab uses the built-in one, your last training run, or a saved
+            JSON model you upload.
           </p>
         </div>
       ) : (
         <>
-          <div className="space-y-1 border-b border-slate-800 px-4 py-2">
+          <div className="space-y-1.5 border-b border-slate-800 px-4 py-2">
             {GROUPS.map((g) => (
-              <div key={g.label} className="flex flex-wrap items-center gap-1">
-                <span
-                  className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400"
-                  title={g.blurb}
-                >
-                  {g.label}
-                </span>
-                {g.tabs.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    aria-pressed={tab === t}
-                    className={
-                      'rounded px-2 py-0.5 text-[11px] ' +
-                      (tab === t
-                        ? 'bg-fuchsia-700 font-semibold text-white ring-1 ring-fuchsia-300'
-                        : 'bg-slate-800 text-slate-300')
-                    }
-                  >
-                    {t}
-                  </button>
-                ))}
+              <div key={g.label}>
+                <div className="flex flex-wrap items-center gap-1">
+                  <span className="w-24 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    {g.label}
+                  </span>
+                  {g.tabs.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTab(t)}
+                      aria-pressed={tab === t}
+                      className={
+                        'rounded px-2 py-0.5 text-[11px] ' +
+                        (tab === t
+                          ? 'bg-fuchsia-700 font-semibold text-white ring-1 ring-fuchsia-300'
+                          : 'bg-slate-800 text-slate-300')
+                      }
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <div className="pl-[6.25rem] text-[10px] leading-tight text-slate-500">{g.blurb}</div>
               </div>
             ))}
           </div>

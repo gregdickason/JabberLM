@@ -4,6 +4,7 @@ import { Trainer } from '../engine/trainer'
 import { runAdder, runSinglePass, runSelfTrace, type AdderTrace } from './runAdder'
 import { sumLine, traceLine, colPrompt } from '../data/addition'
 import { Section, Callout, card } from '../explain/ui'
+import { paramNumber } from '../lib/urlParams'
 
 // The REASONING-LOOP section. The tool harness above lets a JS function do the maths; here
 // the MODEL does every single sum and the harness only remembers where it is. Same loop
@@ -25,6 +26,10 @@ const btnCls =
   'rounded border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-700 disabled:opacity-40'
 
 const clean = (s: string) => s.replace(/\D/g, '').slice(0, 30)
+
+// Width used for the "a chain multiplies" line in the closing callout. Computed there rather
+// than written out, so the arithmetic in the copy can never drift from the claim.
+const DEMO_WIDTH = 15
 
 function Verdict({ ok, children }: { ok: boolean; children: React.ReactNode }) {
   return (
@@ -60,8 +65,8 @@ function LoopTrace({ trace }: { trace: AdderTrace }) {
 export default function AdderSection({ n, embed = false }: { n: number; embed?: boolean }) {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
   const [status, setStatus] = useState('loading the adder…')
-  const [a, setA] = useState('23498')
-  const [b, setB] = useState('94321')
+  const [a, setA] = useState(() => paramNumber(location.search, 'a', '23498'))
+  const [b, setB] = useState(() => paramNumber(location.search, 'b', '94321'))
   const [busy, setBusy] = useState(false)
   const [out, setOut] = useState<{
     single: ReturnType<typeof runSinglePass>
@@ -120,10 +125,12 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
         harness only keeps track of where it is.
       </p>
       <p className="text-[13px] text-slate-400">
-        It was taught exactly one thing: the addition table. <b>200 facts</b>, of the form{' '}
+        At its centre are the <b>200 facts</b> of the addition table, of the form{' '}
         <code className="font-mono text-slate-300">add 8 1 0 =&gt; 9 0</code> — "eight plus one plus a
-        carry of nothing is nine, carry nothing". That is the whole of its arithmetic. Everything else
-        below is the <em>loop</em>.
+        carry of nothing is nine, carry nothing". It was <em>also</em> shown 6,000 whole sums of up to
+        four digits, and 6,000 worked traces of them. Keep that in mind for what follows: it was taught
+        to add two four-digit numbers in one go, and it still cannot. Everything below is the{' '}
+        <em>loop</em> that fixes that.
       </p>
     </>
   )
@@ -194,7 +201,8 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
               {out.self && (
                 <div className={card}>
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                    2 · ask it to show its working, all in one go
+                    2 · ask it to show its working, all in one go{' '}
+                    <span className="normal-case text-slate-500">— this is chain of thought</span>
                   </div>
                   <div className="mt-1 break-all font-mono text-[11px] text-slate-400">
                     {out.self.raw.trim() || '(nothing)'}
@@ -231,8 +239,8 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
 
           {!embed && (
             <p className="mt-4">
-              The harness slices off one column, asks the model, writes down the digit, and carries the
-              carry. <b>It never adds anything itself.</b> Every number in that answer came out of the
+              The harness slices off one column, asks the model, writes down the digit, and passes the
+              carry on to the next question. <b>It never adds anything itself.</b> Every number in that answer came out of the
               model — the harness is doing what a person does with a pencil: keeping the place.
             </p>
           )}
@@ -275,10 +283,16 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
             <Callout>
               Two different jobs get muddled together as "the agent thinks". <b>Reasoning</b> is the model
               doing a step it could not do in one go — here, every single addition. <b>Memory</b> is the
-              harness holding the place so the model never has to. This model knows only the addition table
-              and can't add two 4-digit numbers on its own, yet it adds 25-digit numbers correctly, because
-              the loop turns one big problem into many tiny ones it <em>can</em> do. When you buy an "agent",
-              ask which of those two you are getting — and what happens to the answer when one step is wrong.
+              harness holding the place so the model never has to. This model cannot add two 4-digit
+              numbers on its own — it was trained on exactly that and still fails it — yet it adds 25-digit
+              numbers correctly, because the loop turns one big problem into many tiny ones it{' '}
+              <em>can</em> do. Writing the working out in one pass (mode 2 above) is{' '}
+              <b>chain of thought</b>, and the reasoning models in the headlines are that idea trained in
+              rather than prompted; the loop here is the same trick with the harness supplying the paper.
+              When you buy an "agent", ask which of those two you are getting — and what happens when one
+              step is wrong. A chain multiplies: at <b>99%</b> per column, a {DEMO_WIDTH}-digit sum is right{' '}
+              <b>{Math.round(0.99 ** DEMO_WIDTH * 100)}%</b> of the time. That is why every step has to be
+              checkable on its own.
             </Callout>
           )}
         </>

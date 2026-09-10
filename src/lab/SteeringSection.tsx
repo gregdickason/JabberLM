@@ -7,6 +7,8 @@ import { DEFAULT_SAMPLE_CONFIG } from '../engine/config'
 import SectionIntro, { CAVEAT } from './SectionIntro'
 
 const SEED = 2024
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 export default function SteeringSection({
   trainer,
@@ -62,9 +64,13 @@ export default function SteeringSection({
           { title: 'Scaling Monosemanticity (Golden Gate Claude)', url: 'https://transformer-circuits.pub/2024/scaling-monosemanticity/' },
         ]}
       >
-        A feature can be written as well as read. A direction is added into the residual stream during
+        A feature can be written as well as read — that is{' '}
+        <a className={glossary} href="./glossary.html#steering">steering</a>. A direction is added into
+        the <a className={glossary} href="./glossary.html#residual-stream">residual stream</a> during
         generation and compared against an unsteered run from the same seed. A shift in the output makes the
-        direction <span className="text-slate-100">causal</span> rather than correlated. {CAVEAT} Effects here are character-level (more spaces, certain letters, repeated
+        direction <span className="text-slate-100">causal</span> rather than correlated. It is also the
+        cheapest lever a lab has on a deployed model: no retraining, just a direction turned up or down
+        at inference. {CAVEAT} Effects here are character-level (more spaces, certain letters, repeated
         fragments), not topics.
       </SectionIntro>
 
@@ -161,8 +167,11 @@ export default function SteeringSection({
 
         {!sae && (
           <div className="text-[11px] text-amber-400">
-            Train an SAE in the previous tab to steer a learned feature; meanwhile you can steer a raw
-            MLP neuron.
+            Train an SAE in the{' '}
+            <a className="underline decoration-dotted underline-offset-2 hover:text-amber-200" href="./lab.html?tab=dictionary-sae">
+              dictionary (SAE) tab
+            </a>{' '}
+            to steer a learned feature; meanwhile you can steer a raw MLP neuron.
           </div>
         )}
 

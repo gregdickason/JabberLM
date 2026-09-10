@@ -206,7 +206,11 @@ export default function TicTacToe({
           <b>all 4,520</b> positions: optimal moves <b>24% → 98%</b>, blocking <b>18% → 92%</b>, and it now{' '}
           <b>never loses to a random opponent</b>. The ceiling was never the model's size — same brain, longer education.
           And when you <b>look inside</b> (below), its attention heads swing onto your threat far harder
-          (<b>0.20 → 0.79</b> on the 1,484 boards where you threaten to win).
+          (<b>0.20 → 0.79</b> on the 1,484 boards where you threaten to win).{' '}
+          <b className="text-amber-300">It is still not perfect, and the way it fails is the interesting part:</b>{' '}
+          play every legal opponent sequence against it and <b>9 losing lines</b> remain, all of them as O.
+          Being right about 98% of positions and being safe in all of them are two different claims, and only
+          the exhaustive check can tell them apart.
           {which === 'weak' && <> The undertrained one is <b>barely a player</b>: in <b>60% of positions its top pick is a
             cell that is already taken</b>. Watch the harness legal-move check catch it, turn after turn — and untick the
             check to see what happens without it.</>}

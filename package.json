@@ -23,7 +23,8 @@
     "build": "npm run build:guide && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "stats": "node scripts/gen-stats.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -19,6 +19,13 @@ export type DemoId =
   | 'adder'
   | 'head-ablation'
   | 'warehouse'
+  | 'next-token'
+  | 'attention'
+  | 'hallucination'
+  | 'instruction'
+  | 'rag'
+  | 'quantisation'
+  | 'flaky-harness'
 
 export interface Demo {
   id: DemoId
@@ -105,6 +112,56 @@ export const DEMOS: Demo[] = [
     source: { label: 'Capstone', href: './capstone.html' },
     frame: { w: 56, h: 30 },
     font: 'mono',
+  },
+  // --- the Part I/II spine: the posts that had no embeddable demo until now ---------------
+  {
+    id: 'next-token',
+    title: 'Watch it choose the next character',
+    source: { label: 'New to AI', href: './explain.html?section=prediction' },
+    frame: { w: 44, h: 30 },
+    font: 'sans',
+  },
+  {
+    id: 'attention',
+    title: 'What it can see — the context window, lit up',
+    source: { label: 'New to AI', href: './explain.html?section=context' },
+    frame: { w: 44, h: 22 },
+    font: 'sans',
+  },
+  {
+    id: 'hallucination',
+    title: 'A confident answer, invented on the spot',
+    source: { label: 'New to AI', href: './explain.html?section=hallucination' },
+    frame: { w: 44, h: 20 },
+    font: 'sans',
+  },
+  {
+    id: 'instruction',
+    title: 'Why it answers instead of continuing',
+    source: { label: 'New to AI', href: './explain.html?section=instruction' },
+    frame: { w: 54, h: 30 },
+    font: 'sans',
+  },
+  {
+    id: 'rag',
+    title: 'Retrieval — find the passage, then answer from it',
+    source: { label: 'New to AI', href: './explain.html?section=rag' },
+    frame: { w: 48, h: 34 },
+    font: 'sans',
+  },
+  {
+    id: 'quantisation',
+    title: 'The precision cliff — shrink a model until it breaks',
+    source: { label: 'New to AI', href: './explain.html?section=inference' },
+    frame: { w: 48, h: 32 },
+    font: 'sans',
+  },
+  {
+    id: 'flaky-harness',
+    title: 'A malformed call, and the harness catching it',
+    source: { label: 'Tools & agents §2', href: './harness.html?section=robust' },
+    frame: { w: 48, h: 20 },
+    font: 'sans',
   },
 ]
 

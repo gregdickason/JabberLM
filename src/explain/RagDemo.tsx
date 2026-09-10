@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { loadWordVectors, cosine, embedText, type WordVectors } from './embeddings'
 import { card } from './ui'
+import { paramString } from '../lib/urlParams'
 
 // A tiny "knowledge base" the model was NOT trained on — the point of RAG is that
 // the facts live in these documents, retrieved at query time, not baked into weights.
@@ -53,7 +54,11 @@ export default function RagDemo() {
   const [wv, setWv] = useState<WordVectors | null>(null)
   const [status, setStatus] = useState('loading…')
   const [mode, setMode] = useState<'lookup' | 'semantic'>('semantic')
-  const [query, setQuery] = useState('creatures of the ocean')
+  // ?query= reads best for a search box; ?prompt= is accepted too, so a post author can use
+  // the same key across every demo without checking which one this is.
+  const [query, setQuery] = useState(() =>
+    paramString(location.search, 'query', paramString(location.search, 'prompt', 'creatures of the ocean')),
+  )
   const [pickedKey, setPickedKey] = useState('the-sea')
 
   useEffect(() => {

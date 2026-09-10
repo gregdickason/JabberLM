@@ -32,6 +32,8 @@ const HELD: Record<MoeOp, () => [number, number, number][]> = {
 }
 
 const tick = () => new Promise((r) => setTimeout(r, 0))
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 export default function MoeSection() {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
@@ -151,7 +153,8 @@ export default function MoeSection() {
           { title: 'Mixtral of Experts', url: 'https://arxiv.org/abs/2401.04088' },
         ]}
       >
-        A Mixture-of-Experts layer replaces the single MLP with several <b>expert</b> FFNs plus a{' '}
+        A <a className={glossary} href="./glossary.html#moe">Mixture-of-Experts</a> layer replaces the
+        single MLP with several <b>expert</b> FFNs plus a{' '}
         <b>gate</b> that routes <em>each token</em> to them. Attention is unchanged — only the MLP is
         split — so every head tool in the other tabs works here identically; the new thing to inspect is
         the <b>router</b>. This model has {E} experts per layer, trained on three tasks (sort, max,
@@ -291,10 +294,12 @@ export default function MoeSection() {
 
       <p className="max-w-2xl text-[11px] leading-relaxed text-slate-400">
         Ablate one expert and only some tasks and tokens degrade: the router had handed
-        different work to different experts (the MoE analogue of the head-ablation tab). Toggle top-1 and
-        the accuracy barely moves: most tokens only really needed their top expert. Remember attention
-        and its heads are untouched by all of this — load this JSON in the main lab (Upload) to inspect
-        its heads with the tools above.
+        different work to different experts (the MoE analogue of{' '}
+        <a className={glossary} href="./lab.html?tab=head-ablation">the head-ablation tab</a>). Toggle
+        top-1 and the accuracy barely moves: most tokens only really needed their top expert. Remember
+        attention and its heads are untouched by all of this — to inspect them, load{' '}
+        <span className="font-mono text-slate-300">public/moe-model.json</span> with the{' '}
+        <b>Upload JSON model</b> button at the top of the lab, then open the Observe tabs.
       </p>
     </div>
   )

@@ -14,6 +14,8 @@ import ConceptMap from './ConceptMap'
 import TicTacToe from './TicTacToe'
 import Inspector from './Inspector'
 import { type Board } from '../data/tictactoe'
+import { BUNDLES } from '../data/modelStats'
+import { useSectionRoute } from '../lib/useSectionRoute'
 
 // ---- live two-phase trainer knobs (from the offline Phase-0 sweep) ----------
 const WARM_TARGET = 70 // % held-out accuracy to hand SFT → RL (or WARM_CAP steps, whichever first)
@@ -34,12 +36,19 @@ const rlReward = (prompt: string, completion: string): number => warehouseReward
 type Pt = { x: number; y: number }
 type View = 'bundled' | 'live'
 
+// Short, stable section ids. The capstone had none, so nothing on it could be linked from a
+// blog post or the guide; these are the addresses those links use.
+const SECTIONS = ['play', 'inside', 'warehouse', 'train', 'concepts', 'loop-halves', 'recap'] as const
+
 export default function CapstoneApp() {
   const [bundled, setBundled] = useState<Trainer | null>(null)
   const [bundledStatus, setBundledStatus] = useState('loading the trained agent…')
   const [view, setView] = useState<View>('bundled')
 
   const [inspectBoard, setInspectBoard] = useState<Board>('XX....O..') // the position the interpretability inspector shows
+
+  // ?section= deep links (and the scroll-spy that keeps the URL honest)
+  useSectionRoute(SECTIONS, bundled)
 
   // live trainer
   const [running, setRunning] = useState(false)
@@ -151,12 +160,12 @@ export default function CapstoneApp() {
   return (
     <div className="min-h-screen font-mono text-sm text-slate-200">
       <SiteNav current="capstone">
-        <span className="hidden text-xs text-slate-400 sm:inline">Capstone — a warehouse agent</span>
+        <span className="hidden text-xs text-slate-400 sm:inline">Capstone — play an agent, then look inside it</span>
       </SiteNav>
 
       <div className="mx-auto max-w-5xl space-y-6 p-4">
         {/* play-first hook: a tic-tac-toe agent in a closed loop, with the harness check layer */}
-        <section className="space-y-3">
+        <section id="play" className="scroll-mt-6 space-y-3">
           <h1 className="text-lg font-bold text-sky-200">Play a tiny transformer — then look inside it</h1>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
             The opponent is a ~130K-parameter transformer trained to play tic-tac-toe. Each turn is a closed{' '}
@@ -166,13 +175,28 @@ export default function CapstoneApp() {
             between the <b>undertrained</b> and <b>well-trained</b> agent: <b>same size, same architecture</b>,
             different training budget.
           </p>
+          <div className="rounded-lg border border-amber-900/50 bg-amber-950/20 p-3">
+            <div className="mb-1 text-[12px] font-semibold text-amber-200">
+              Before you play — what this model was and was not told
+            </div>
+            <p className="max-w-3xl text-[12px] leading-relaxed text-slate-300">
+              It predicts characters. That is the only thing it does. Nobody gave it the rules of
+              tic-tac-toe, nobody told it that three in a row wins, and — this is the one that matters
+              below — <b>nobody told it which cells are still empty</b>. It learned by being shown
+              thousands of boards alongside a good player's preferred move, and it reads the board as a
+              line of text where each cell carries its own index:{' '}
+              <code className="font-mono text-slate-200">0X1O2.3.4.5.6.7.8.</code> Choosing a move means
+              copying an index it can see, not counting squares. So when the check layer below catches an
+              illegal move, it is catching a model that never knew the move was illegal.
+            </p>
+          </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <TicTacToe onLookInside={setInspectBoard} />
           </div>
         </section>
 
         {/* look inside the agent — the interpretability payoff (Part III tools on the Part IV agent) */}
-        <section className="space-y-3 rounded-lg border border-fuchsia-900/40 bg-slate-900/40 p-4">
+        <section id="inside" className="scroll-mt-6 space-y-3 rounded-lg border border-fuchsia-900/40 bg-slate-900/40 p-4">
           <h2 className="text-base font-bold text-fuchsia-200">Now look inside the agent you just played</h2>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
             The same interpretability tools the{' '}
@@ -187,7 +211,7 @@ export default function CapstoneApp() {
         </section>
 
         {/* ---- the warehouse demo: relational reasoning + generalisation + interpretability ---- */}
-        <section className="space-y-2 border-t border-slate-800 pt-6">
+        <section id="warehouse" className="scroll-mt-6 space-y-2 border-t border-slate-800 pt-6">
           <h2 className="text-base font-bold text-sky-200">A second agent: relational reasoning in a warehouse</h2>
           <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
             The tic-tac-toe agent shows the <em>loop</em>. This one shows the <em>reasoning</em>: a
@@ -233,7 +257,7 @@ export default function CapstoneApp() {
         </section>
 
         {/* train it yourself */}
-        <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <section id="train" className="scroll-mt-6 space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="text-sm font-semibold text-slate-200">Train one from scratch — SFT teaches the job, RL makes it better at it</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {!running ? (
@@ -281,7 +305,7 @@ export default function CapstoneApp() {
 
         {/* discovered concepts */}
         {activeTrainer && (
-          <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+          <section id="concepts" className="scroll-mt-6 space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <h2 className="text-sm font-semibold text-slate-200">It discovered the concepts nobody labelled</h2>
             <div className="flex flex-wrap items-start gap-6">
               <ConceptMap model={activeTrainer.model} tok={activeTrainer.tok} />
@@ -299,7 +323,7 @@ export default function CapstoneApp() {
         )}
 
         {/* output → input: the other half of the harness */}
-        <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <section id="loop-halves" className="scroll-mt-6 space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="text-sm font-semibold text-slate-200">Output now, input next — the two halves of a harness</h2>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
             Both agents use the harness for <b>output</b>: the model emits a tool call — a packing action, a
@@ -310,26 +334,46 @@ export default function CapstoneApp() {
             Read-back carries the risk: the loop writes a result into the context with no boundary between
             data and instructions, so whoever controls a result can plant the next command —{' '}
             <b>prompt injection</b>. Both are live on the{' '}
-            <a className="text-fuchsia-300 hover:underline" href="./harness.html#loop-it-and-its-an-agent">agent loop</a>{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=loop">agent loop</a>{' '}
             and the{' '}
-            <a className="text-fuchsia-300 hover:underline" href="./harness.html#the-catch-prompt-injection">injection demo</a>.
+            <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=injection">injection demo</a>.
           </p>
         </section>
 
         {/* the whole book in one page */}
-        <section className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+        <section id="recap" className="scroll-mt-6 space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
           <h2 className="text-sm font-semibold text-slate-200">The whole book, in one page</h2>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">These two agents touch every idea in the site:</p>
           <ul className="max-w-3xl space-y-1 text-[12px] text-slate-400">
-            <li>• <b>Attention</b> — packing depends on the whole order; the move on the whole board → <a className="text-fuchsia-300 hover:underline" href="./learn.html">How it works</a></li>
-            <li>• <b>Generalisation</b> — the warehouse packs orders it never trained on (a learned rule, not a lookup) → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=advanced-grokking">grokking</a></li>
-            <li>• <b>Tools &amp; agents</b> — emitting tool calls, reading results back, the injection risk → <a className="text-fuchsia-300 hover:underline" href="./harness.html">Tools &amp; agents</a></li>
-            <li>• <b>SFT → RL</b> — imitate an expert, then improve from a verifier alone → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=reward-learning-rlvr">reward learning</a></li>
-            <li>• <b>Interpretability</b> — the model discovered the hidden attributes; you can read its move confidence → <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">the lab</a></li>
+            <li>• <b>Next-token prediction</b> — every move and every packing action is one character guessed after another; you met it on{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./explain.html?section=prediction">New to AI §1</a></li>
+            <li>• <b>Attention</b> — packing depends on the whole order, the move on the whole board; you followed it through a real forward pass on{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./learn.html?section=attention">How it works §3</a></li>
+            <li>• <b>Generalisation</b> — the warehouse packs orders it never trained on, which is a learned rule and not a lookup; you watched that jump happen in{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=advanced-grokking">the lab's grokking demo</a></li>
+            <li>• <b>The check layer</b> — a deterministic guard around a probabilistic model, which is the toggle you flipped at the top of this page; the same idea drives{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=tools">Tools &amp; agents §1</a></li>
+            <li>• <b>The loop, and its risk</b> — output now, input next, and whoever controls a result can plant the next command →{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=loop">the agent loop</a> and{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=injection">prompt injection</a></li>
+            <li>• <b>SFT → RL</b> — imitate an expert, then improve from a verifier alone →{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=reward-learning-rlvr">reward learning</a></li>
+            <li>• <b>Interpretability</b> — heads that learned to look at danger, a head you can ablate, features you can name →{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=head-ablation">head ablation</a> and{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=dictionary-sae">the feature dictionary</a></li>
           </ul>
           <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
-            Attention, generalisation, agents, SFT→RL and interpretability, in ~130K parameters. All of it is
-            next-token prediction at a size you can see through.
+            Attention, generalisation, agents, SFT→RL and interpretability, in {BUNDLES.tictactoe.paramsLabel}{' '}
+            parameters. All of it is next-token prediction at a size you can see through.
+          </p>
+          <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
+            Where to go next: the{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./glossary.html">glossary</a> if a word here
+            was doing more work than it explained, the{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./lab.html">lab</a> if you want to break
+            something, or{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./teachers.html">For teachers</a> if you
+            want to run this with other people.
           </p>
         </section>
       </div>

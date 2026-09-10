@@ -14,7 +14,7 @@ memorisation vs generalisation vs hallucination. See "The built-in model" below.
 Everything is written from scratch in TypeScript: a tiny tensor + reverse-mode autograd engine, the
 transformer, the optimizer, and the visualizations. Every number on screen is one you can trace back to the math.
 
-It's a **five-page teaching site**, so different readers can start where they're comfortable:
+It's a **ten-page teaching site**, so different readers can start where they're comfortable:
 
 - **Playground** (`index.html`) — train live and inspect every internal (the main app).
 - **New to AI** (`explain.html`) — a no-maths explainer of how these models answer, vary, cost, and go
@@ -28,8 +28,15 @@ It's a **five-page teaching site**, so different readers can start where they're
   **tool calls**, which a small JS **harness** parses and runs. The model that hallucinates arithmetic
   elsewhere becomes always-right here, because the harness does the maths. It also demonstrates **prompt
   injection** — an attacker-controlled tool result hijacking the agent loop — and the mitigation.
+- **Capstone** (`capstone.html`) — two agents you play with and then look inside: a tic-tac-toe agent
+  (two same-size bundles, one undertrained and one well-trained) and a relational warehouse packer.
+- **For teachers** (`teachers.html`) — session plans, a per-page "moment to point at", the embed
+  reference, and a written lesson for every embeddable demo.
+- **Embed shell** (`embed.html`) — one demo on its own, for dropping into someone else's page (see
+  *Embedding a demo* below).
 
-There's also a generated long-form **guide** (`GUIDE.md` → `public/guide.html`).
+There's also a generated long-form **guide** (`GUIDE.md` → `public/guide.html`), a **glossary**
+(`glossary.html`) and a **series** index (`series.html`) listing the companion blog posts.
 
 ## Why character-level, and why many poems?
 
@@ -81,10 +88,11 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
 - **Inference + inspector panel** — type a prompt, step one token at a time, and walk the full
   pipeline through tabs: `tokenize → embed → attention → residual → mlp → logits`. Hover any
   heatmap cell to read the exact value. Sample with temperature / top-k / top-p.
-- **LoRA fine-tuning (in-browser)** — adapt the loaded model by training a tiny low-rank overlay
-  (`ΔW = A·B`) on top of frozen base weights. Pick a built-in pack (or paste text), watch only the
-  adapters train, inspect the `A` / `B` / `ΔW` heatmaps in the **LoRA** tab, and toggle the overlay
-  on/off to compare base vs fine-tuned generation. Adapters save/load with the model.
+- **LoRA fine-tuning (in-browser)** — adapt a frozen base model by training a tiny low-rank overlay
+  (`ΔW = A·B`) on top of it: watch only the adapters train, inspect the `A` / `B` / `ΔW` heatmaps, and
+  toggle the overlay on/off to compare base vs fine-tuned generation. Adapters save/load with the
+  model. This lives in the **lab** (`lab.html?tab=lora-fine-tuning`) — the playground is kept to plain
+  training.
 - **Deep feature demos (live toggles)**:
   - **RoPE** — rotary position embedding visualized as rotation; spokes show each position's angle.
   - **KV cache** — the key/value cache as a grid, with reused-vs-recomputed status and the
@@ -125,16 +133,24 @@ per-token gate heatmaps, expert specialisation, and expert ablation.
 npm install
 npm run dev          # http://localhost:5173 (also renders GUIDE.md → public/guide.html)
 npm run test         # gradient checks + model/trainer/persistence tests
-npm run build        # static bundle in dist/ (6 pages: index/explain/learn/lab/harness/guide)
+npm run build        # static bundle in dist/ (10 pages: index/explain/learn/harness/lab/capstone/
+                     #                          teachers/glossary/series/embed — plus the guide)
+npm run stats        # re-derive every bundled model's params/dims/vocab from the JSON files
+                     #   into src/data/modelStats.ts (the single source of truth for numbers)
 npm run gen:multitask # (re)train the bundled three-skill model → public/multitask-model.json
 npm run gen:moe      # (re)train the Mixture-of-Experts model  → public/moe-model.json
 npm run gen:harness  # (re)train the tool-calling model        → public/harness-model.json
 npm run gen:sort     # (re)train the sort-only model (recovery) → public/sort-model.json
 ```
 
+Every figure about a bundled model — parameter count, dimensions, vocabulary, what it was actually
+trained on, and the measured accuracies — lives in **`src/data/modelStats.ts`** (`BUNDLES` and
+`MEASURED`). Quote it from there rather than retyping it, so a retrain can't leave a stale number
+behind in prose; `npm run stats` regenerates the structural half straight from the model files.
+
 ## Deploy
 
-It's a fully static site (no backend), six HTML pages, hosted on **Cloudflare Pages** at
+It's a fully static site (no backend), ten HTML pages, hosted on **Cloudflare Pages** at
 [`jabberlm.com`](https://jabberlm.com). The bundled three-skill model (`multitask-model.json`, ~281 KB
 gzipped) is fetched once on the teaching surfaces and cached; the MoE model (`moe-model.json`) and the
 tool-calling model (`harness-model.json`) are each fetched only when their page/tab is opened.
@@ -151,8 +167,16 @@ default. The lab's thirteen demos are the exception: they route through **`lab.h
 own pageview and "which demo did anyone actually open?" becomes answerable. Two rules that module's
 comments spell out, both read off the beacon source: **push** (a `replaceState` is not a navigation and
 reports nothing) and push an **absolute** path (it resolves a relative URL to the bare origin, which
-would collapse all thirteen tabs into one entry). Old `lab.html#slug` links still resolve. The other
-in-page surfaces — explain/capstone/harness sections — remain invisible; same fix would apply.
+would collapse all thirteen tabs into one entry). Old `lab.html#slug` links still resolve. The same fix
+now covers the other in-page surfaces: the explain / learn / harness / capstone sections route through
+**`?section=<slug>`** (`src/lib/sectionRoute.ts`), and old `#slug` links still resolve there too.
+
+Deep links go one step further than a section. The teaching demos and their embeds read their example
+straight out of the query string (`src/lib/urlParams.ts`, pure + unit-tested), so a blog post or a
+lesson plan can land a reader in front of the *exact* case it's discussing: `?prompt=` (a generation
+prompt), `?list=` (a sort/max/reverse list), `?a=&b=` (the adder's two numbers), `?word=` (a word for
+the embeddings map), `?basket=` (a warehouse order) and `?ex=` (a harness instruction). Every one is
+defensive — a missing, over-long or hostile value falls back to the demo's own default.
 
 ## Embedding a demo (for lecturers, trainers, presenters)
 
@@ -172,7 +196,7 @@ framing; we supply the thing that works.
 
 - **`?demo=<id>`** picks the demo (`src/embed/demos.ts` is the registry; `embed.html` with no `demo`
   lists what exists). Query string, so each embedded demo is countable in analytics on its own — same
-  reason the lab's tabs use one. Five ship today:
+  reason the lab's tabs use one. Seventeen ship today:
 
   | `?demo=` | what it is | box at `scale=1` | at the default `scale=1.25` |
   |---|---|---|---|
@@ -237,6 +261,10 @@ src/explain/     # "New to AI" page (explain.html)
 src/learn/       # "how a transformer works" page (learn.html)
 src/lab/         # interpretability lab: Neurons/Heads/Ablation/Recovery/SAE/Steering/MoE/Grok/Distill
 src/harness/     # tool use & harness page (harness.html): runHarness.ts (parse→dispatch→robustness)
+src/capstone/    # capstone page (capstone.html): tic-tac-toe agent + warehouse agent + Inspector
+src/teachers/    # "For teachers" page (teachers.html): session plans, embed table, per-demo lessons
+src/embed/       # embed shell (embed.html): demos.ts registry + EmbedApp
+src/lib/         # shared URL plumbing: sectionRoute (?section=) and urlParams (demo prefill)
 src/state/       # zustand store + bundled-model install (pretrained.ts)
 src/viz/         # Canvas heatmap, line chart, bar chart, scatter, color scales
 ```

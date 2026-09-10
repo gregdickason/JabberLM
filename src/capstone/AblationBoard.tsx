@@ -57,9 +57,10 @@ export default function AblationBoard({ model, tok, board }: { model: Model; tok
   return (
     <div className="space-y-3">
       <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
-        Knocking out an attention head (click it) leaves the harness playing on with the damaged model. Its
-        <b> tactical rate</b> — how often it still takes a win or blocks a threat — and its move on this board.
-        Redder heads matter more; there's usually <b>one critical head</b> the whole skill leans on.
+        Knocking out an attention head (click it) leaves the harness playing on with the damaged model.
+        Below you get its <b>tactical rate</b> — how often it still takes a win or blocks a threat — and
+        the move it makes on this board. Redder heads matter more; there is usually{' '}
+        <b>one critical head</b> the whole skill leans on.
       </p>
       <div className="flex flex-wrap items-start gap-6">
         {/* head grid, coloured by importance */}

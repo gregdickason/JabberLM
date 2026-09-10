@@ -1,4 +1,5 @@
 import type { DemoId } from '../embed/demos'
+import { BUNDLES, MEASURED } from '../data/modelStats'
 
 // A standalone written lesson per embeddable demo, reached from the teachers page as
 // teachers.html?lesson=<id>. Each one sets up what the model is and how it was trained before
@@ -177,10 +178,13 @@ export const LESSONS: Record<DemoId, Lesson> = {
     headline: 'A model that cannot add two 4-digit numbers adds two 25-digit numbers correctly.',
     model: (
       <>
-        A 90,000-parameter character model, context 96, taught exactly one thing: the addition table.
-        Two hundred facts of the form <span className={c}>add 8 1 0 =&gt; 9 0</span> — eight plus one
-        plus a carry of zero is nine, carry zero. Every digit pair and both carry states. That is all of
-        its arithmetic.
+        A character model of {BUNDLES.adder.params.toLocaleString()} parameters, context{' '}
+        {BUNDLES.adder.contextLen}. It was trained on the 200 single-column facts —{' '}
+        <span className={c}>add 8 1 0 =&gt; 9 0</span>, eight plus one plus a carry of zero is nine,
+        carry zero, every digit pair and both carry states — and <b>also</b> on 6,000 whole sums of up to
+        four digits and 6,000 worked traces of those sums. Say that second part out loud before the demo
+        runs, because it is the point: it was shown thousands of complete four-digit sums, and it still
+        cannot do one in a single pass.
       </>
     ),
     tests: (
@@ -192,9 +196,9 @@ export const LESSONS: Record<DemoId, Lesson> = {
     ),
     steps: [
       { do: 'Read the three panels, which run on load for 23498 + 94321.', see: <>Panel 1, asked for the whole answer in one pass: wrong. Panel 2, asked to show its working: wrong. Panel 3, one column at a time through the loop: <b>117819</b>, correct.</> },
-      { do: 'Click “7 + 8”.', see: <>The single pass is now right. The model is not broken — it is out of room. Contrast with the 15-digit chip.</> },
+      { do: 'Click “7 + 8”.', see: <>The single pass is now right: one column is one column, and that it knows. What broke on the sum above was not a missing fact — it was the bookkeeping across columns, on a width it had trained on. Contrast with the 15-digit chip.</> },
       { do: 'Click “15 digits”.', see: <>The loop stays correct. Read the column trace aloud: each prompt is 13 characters, whatever the size of the sum.</> },
-      { do: 'Read the table at the bottom.', see: <>Characters the model must hold at once. Writing out the working grows with the sum and exceeds its 96-character memory. One column at a time never does.</> },
+      { do: 'Read the table at the bottom.', see: <>Characters the model must hold at once. Writing out the working grows with the sum and exceeds its {BUNDLES.adder.contextLen}-character memory. One column at a time never does.</> },
     ],
     mechanism: (
       <>
@@ -228,7 +232,7 @@ export const LESSONS: Record<DemoId, Lesson> = {
       </>
     ),
     steps: [
-      { do: 'Read the baseline before clicking anything.', see: <>Sorting ~85%, poem loss ~1.38. Write both on the board. Everything after this is a comparison against them.</> },
+      { do: 'Read the baseline before clicking anything.', see: <>Poem loss ~1.38, and sorting in the high eighties — the shipped model scores {MEASURED.multitaskSort.pct}% on {MEASURED.multitaskSort.n} unseen lists, while this panel re-measures live on a 20-vector sample, so its figure is coarser and wanders a few points. Write both down. Everything after this is a comparison against them.</> },
       { do: 'Ablate one middle-layer head (layer 1).', see: <>Sorting collapses. Poem loss barely moves. The sample lines below update: <span className={c}>sort 6 9 2 =&gt;</span> now returns something unsorted while the poem line still scans.</> },
       { do: 'Reset, then ablate a layer-0 head.', see: <>Both skills degrade. The first layer is shared infrastructure that every later computation reads from.</> },
       { do: 'Ablate two or three heads at once.', see: <>Degradation is not additive. Some pairs are survivable and some are not — the skill is distributed across a circuit, not stored in a cell.</> },
@@ -251,7 +255,8 @@ export const LESSONS: Record<DemoId, Lesson> = {
     headline: 'The same frozen model sorts up or down depending on a checkbox.',
     model: (
       <>
-        A base model of 87,456 parameters that sorts ascending at ~97% on held-out vectors. Every one
+        A base model of {BUNDLES.sort.params.toLocaleString()} parameters that sorts ascending at{' '}
+        {`~${MEASURED.sortOnly.pct}%`} on held-out vectors. Every one
         of those weights is <b>frozen</b>. A LoRA adapter of 10,368 weights — rank 8, alpha 16, on the
         attention and MLP matrices, about 12% of the base — is attached and trained on the{' '}
         <b>descending</b> task, with the same <span className={c}>sort 6 9 2 =&gt;</span> prompt.
@@ -303,9 +308,9 @@ export const LESSONS: Record<DemoId, Lesson> = {
       </>
     ),
     steps: [
-      { do: 'Start on “undertrained” and play a few moves.', see: <>The harness loop narrates every turn. In roughly 60% of positions the model’s top pick is a cell that is already taken; the harness rejects it and re-asks, shown as a retry chain ending in “caught it”.</> },
+      { do: 'Start on “undertrained” and play a few moves.', see: <>The harness loop narrates every turn. In roughly {100 - MEASURED.ttt.weak.legal}% of positions the model’s top pick is a cell that is already taken; the harness rejects it and re-asks, shown as a retry chain ending in “caught it”.</> },
       { do: 'Untick the legal-move check and keep playing.', see: <>The illegal move stands and the game jams. Nothing else in the system noticed. The check is the only thing that was catching it.</> },
-      { do: 'Switch to “well-trained” and play again.', see: <>The retry chain almost never appears. Same architecture, same parameter count: 24% optimal moves becomes 98%, blocking 18% becomes 92%.</> },
+      { do: 'Switch to “well-trained” and play again.', see: <>The retry chain almost never appears. Same architecture, same parameter count: {MEASURED.ttt.weak.optimal}% optimal moves becomes {MEASURED.ttt.strong.optimal}%, blocking {MEASURED.ttt.weak.block}% becomes {MEASURED.ttt.strong.block}%.</> },
       { do: 'Threaten to win, and watch the block.', see: <>The well-trained model blocks. The undertrained one usually does not, and the harness labels the miss: “missed a block at 4 — you can win next”.</> },
     ],
     mechanism: (
@@ -317,7 +322,7 @@ export const LESSONS: Record<DemoId, Lesson> = {
     ),
     questions: [
       { q: 'Why not just stop it choosing illegal cells?', a: <>Masking the output would hide the failure. The demo exists to show that a probabilistic component produces invalid actions and that something deterministic must catch them. Real agents call real APIs; the check is where the guarantee lives.</> },
-      { q: 'Is the well-trained one perfect?', a: <>No. An exhaustive search finds nine losing lines for it as O, at 98% optimal play. High accuracy and a specific exploitable flaw coexist.</> },
+      { q: 'Is the well-trained one perfect?', a: <>No. An exhaustive search finds {MEASURED.ttt.strong.losingLines} losing lines for it as O, at {MEASURED.ttt.strong.optimal}% optimal play. High accuracy and a specific exploitable flaw coexist.</> },
       { q: 'Would a bigger model fix the weak one?', a: <>Capacity was never the limit. Both bundles have the same parameter count. The difference is entirely training budget.</> },
     ],
   },
@@ -352,6 +357,265 @@ export const LESSONS: Record<DemoId, Lesson> = {
       { q: 'Could a lookup table do this?', a: <>For seen orders, yes. The held-out split is built so each relational trigger is tested on an unseen basket, which a lookup table fails and this model passes.</> },
       { q: 'How do we know it inferred the attributes?', a: <>The clusters in the concept map. Nothing in the input distinguishes A from C; only the packing decisions do. The model’s embedding for A ended up near other fragile items.</> },
       { q: 'Why is this the honest case for a transformer?', a: <>Because the decision for one token depends on other tokens in the sequence. That is exactly what attention computes.</> },
+    ],
+  },
+
+  'next-token': {
+    headline: 'The whole of what a language model does, on one screen: a probability for every next character.',
+    model: (
+      <>
+        The bundled three-skill model — {BUNDLES.multitask.params.toLocaleString()} parameters,
+        character-level, trained at once on Jabberwocky-style poems, algebra lines and sorted lists. The
+        bars are not an illustration. They are the model’s actual output: one probability for each of the{' '}
+        {BUNDLES.multitask.vocab} characters it knows, summing to 1, recomputed on every keystroke.
+      </>
+    ),
+    tests: (
+      <>
+        That there is only one operation underneath everything else. Chat, agents, summarising, refusing —
+        all of it is this, run in a loop, with the chosen character appended and the question asked again.
+        Nothing in the model plans a sentence.
+      </>
+    ),
+    steps: [
+      { do: 'Read the bars before touching anything.', see: <>A distribution, not an answer. The model has an opinion about every character, including the unlikely ones. Say the number out loud: this is the model’s entire output.</> },
+      { do: 'Press “Write the next character” four or five times.', see: <>Each press takes the tallest bar, appends it, and re-runs. The text grows one character at a time and the bars change every press, because the question changed.</> },
+      { do: 'Clear the box and type “sort 6 9 2 => ”.', see: <>The distribution concentrates: on a task it genuinely learned, one bar dominates. Compare with the middle of a poem, where several characters are plausible. Confidence is visible, and it varies by what is being asked.</> },
+      { do: 'Press “Let it write a bit”.', see: <>Twenty-four characters, always taking the top bar. It often falls into a repeating groove — which is the argument for the next section: always taking the most likely character is not the best way to use a distribution.</> },
+    ],
+    mechanism: (
+      <>
+        The final layer produces one score per vocabulary item; softmax turns those scores into
+        probabilities. Everything visible here is that vector. Generation is: sample or take the maximum,
+        append it, run the model again.
+      </>
+    ),
+    questions: [
+      { q: 'Is this what ChatGPT does?', a: <>Yes, with three differences: tokens instead of single characters, a vocabulary of about 100,000 instead of {BUNDLES.multitask.vocab}, and far more of the machinery producing the scores. The loop is identical.</> },
+      { q: 'So it never knows what it is going to say?', a: <>Not in advance, no. It is worth letting that sit. A long, coherent answer is produced one piece at a time, each piece conditioned on the pieces before it.</> },
+      { q: 'Why do the bars change when I add a space?', a: <>A space is a character like any other, and it changes the input. This is also why prompts are sensitive to small edits.</> },
+    ],
+  },
+
+  attention: {
+    headline: 'The model is looking at some of what you typed, and cannot see the rest at all.',
+    model: (
+      <>
+        The bundled three-skill model again. The highlight is real attention taken from the forward pass:
+        for the position it is about to predict, the demo averages every head in every layer and shades
+        each character by how much weight it received. Its context window is{' '}
+        {BUNDLES.multitask.contextLen} characters, so only the last {BUNDLES.multitask.contextLen} appear
+        in the strip.
+      </>
+    ),
+    tests: (
+      <>
+        Two things people conflate. <b>Attention</b>: within what it can see, the model weights some
+        characters far more than others. <b>The context window</b>: outside that span, text does not
+        score low — it is not there at all.
+      </>
+    ),
+    steps: [
+      { do: 'Read the default line and find the bright characters.', see: <>The weight is uneven and mostly recent. Ask the room to predict which characters would matter before revealing them.</> },
+      { do: 'Type a long sentence, well past the window.', see: <>The strip stops growing. The beginning of what you typed silently drops off the front — no warning, no error, no mention of it in the output.</> },
+      { do: 'Put an important word at the start, then push it out with padding.', see: <>The model’s continuation stops depending on it. This is the demo to point at when someone asks why a long chat “forgot” an instruction given at the top.</> },
+      { do: 'Try a line with obvious structure, such as “sort 6 9 2 => ”.', see: <>Weight lands on the digits rather than spread evenly. The model is reading the parts of the input the task depends on.</> },
+    ],
+    mechanism: (
+      <>
+        Every position computes a query and compares it with every earlier position’s key; the softmax of
+        those scores is what is shaded here. Averaging all heads makes a readable summary and loses the
+        detail — individual heads do specific jobs, which is what the lab’s attention and ablation tabs
+        are for.
+      </>
+    ),
+    questions: [
+      { q: 'Real models have million-token windows. Is this still relevant?', a: <>The limit moves; it does not go away, and cost grows with the square of the sequence. Everything beyond the window has to be summarised, retrieved or dropped — which is why retrieval exists.</> },
+      { q: 'Is the bright character the “important” one?', a: <>It is the one this averaged view weights most. Attention weight is evidence about the computation, not a claim about meaning — a caveat that applies to the interpretability literature too.</> },
+    ],
+  },
+
+  hallucination: {
+    headline: 'A model with no facts about your subject still produces a confident paragraph about it.',
+    model: (
+      <>
+        The bundled three-skill model, which read exactly three things: nonsense verse, single-variable
+        algebra and sorted 3-number lists. It has never seen a contract, a treaty or a medical record.
+        Sampling is seeded, so the same prompt gives the same continuation every time — useful when you
+        want to rehearse a line before saying it to a room.
+      </>
+    ),
+    tests: (
+      <>
+        That fluency and knowledge are separate, and that nothing in the mechanism produces “I don’t
+        know”. The model is always able to continue text. It has no representation of the gap between
+        what it read and what you asked.
+      </>
+    ),
+    steps: [
+      { do: 'Run the default, “the contract states that ”.', see: <>Sentence-shaped output with the rhythm of writing and no content. Read it aloud in a serious voice — the shape is doing all the work, and the shape is what people trust.</> },
+      { do: 'Type a subject of your own: a company, a law, a diagnosis.', see: <>The same behaviour every time. It never stops, never hedges, never declines.</> },
+      { do: 'Now run “sort 6 9 2 => ”.', see: <>A correct answer, in the same voice, from the same weights. This is the point of the demo: the output gives you no way to tell which of the two you are looking at.</> },
+      { do: 'Ask the room how they would tell, from the text alone.', see: <>They cannot. That is why the answers are checking a source, calling a tool, or retrieving the passage — the three things the later pages are about.</> },
+    ],
+    mechanism: (
+      <>
+        Generation is next-character prediction with no truth term anywhere in it. The objective rewards
+        plausible continuations of the training distribution. A confabulated answer and a correct one are
+        produced by the same process at the same confidence.
+      </>
+    ),
+    questions: [
+      { q: 'Doesn’t a bigger model just know more?', a: <>It knows more, so it is wrong less often and more convincingly. The failure mode is unchanged — and a rarer, better-dressed error is harder to catch, not easier.</> },
+      { q: 'Why does it not say it doesn’t know?', a: <>Nothing in the training makes “I don’t know” the likely continuation. Large assistants say it because they were shown examples of saying it, which is behaviour, not self-knowledge.</> },
+      { q: 'Is this the same as lying?', a: <>No, and the distinction matters for how you govern it. There is no model of the truth to depart from. Blame belongs to the process that let unchecked output reach a decision.</> },
+    ],
+  },
+
+  instruction: {
+    headline: 'The same instruction, two models of the same size: one carries on writing, one answers.',
+    model: (
+      <>
+        Two bundled models, side by side. <b>Left</b>: the three-skill model,{' '}
+        {BUNDLES.multitask.params.toLocaleString()} parameters, trained on plain text.{' '}
+        <b>Right</b>: the tool-calling model, {BUNDLES.harness.params.toLocaleString()} parameters, same
+        architecture, trained on pairs of instruction and the response that should follow. Both run
+        greedily, so nothing here is the luck of the sampling.
+      </>
+    ),
+    tests: (
+      <>
+        The step between a <b>base model</b> and an assistant. Pretraining produces something that
+        continues text. Answering the question you asked is a separate, much smaller stage of training —
+        instruction tuning, or supervised fine-tuning — and it is demonstrated, not grown into.
+      </>
+    ),
+    steps: [
+      { do: 'Ask the room to predict before you press anything.', see: <>Most expect the plain-text model to fail by falling silent or refusing. Take the guess, then run it.</> },
+      { do: 'Press “total of 6 9 2”.', see: <>The right-hand model answers in the shape it was shown. The left-hand one keeps writing — and may hand back a sorted list, fluently, for a question about a total. It answers something nobody asked.</> },
+      { do: 'Say why that is the more dangerous failure.', see: <>A blank is obviously broken. A confident answer to a different question passes review. This is worth more time than the correct panel.</> },
+      { do: 'Try the other two chips, then type an instruction of your own.', see: <>The split holds on phrasings neither model saw. What separates them is not size — it is 2,000-odd parameters apart — but what they read.</> },
+    ],
+    mechanism: (
+      <>
+        Both models are doing next-character prediction. Instruction tuning changes which continuation is
+        likely, by training on text where an instruction is followed by a response. Nothing is added to
+        the architecture. At real scale a third stage follows — reinforcement learning from human
+        feedback — which shapes tone and refusals, and does not make the model more often right.
+      </>
+    ),
+    questions: [
+      { q: 'Is the right-hand model the left one, fine-tuned?', a: <>No, and be straight about it: they are two separately trained models of the same architecture and near-identical size, trained on differently shaped data. That isolates the variable the lesson is about — what the training data looked like — but it is not a before-and-after of one model.</> },
+      { q: 'Why does the answer look like a tool call?', a: <>Because that is the shape the right-hand model was shown. Instruction tuning teaches a format as much as a disposition, which is also why real assistants have house styles.</> },
+      { q: 'Do base models still exist?', a: <>Yes — every assistant starts as one, and base models are released for people who want to tune their own. If you are ever handed one and expect a chatbot, this demo is what happens.</> },
+    ],
+  },
+
+  rag: {
+    headline: 'Find the right passage first, and the model no longer has to remember anything.',
+    model: (
+      <>
+        No site model runs here. Six short documents no model was trained on, plus the same real GloVe
+        word vectors the embeddings demo uses. “Look up by name” is an exact fetch; “Search by meaning”
+        turns your words into a vector, compares it with each document’s vector, and ranks them. The
+        retrieval is real and measurable; the final answering step is described rather than run, because
+        the tiny model has no facts to be grounded in.
+      </>
+    ),
+    tests: (
+      <>
+        What retrieval-augmented generation actually is, minus the mystique: retrieve the relevant text,
+        put it in the context, answer from it. And the division that follows — <b>knowledge you retrieve,
+        skill you train</b>.
+      </>
+    ),
+    steps: [
+      { do: 'Start in “Look up by name” and pick a document.', see: <>The dull case, and worth showing first: if you know the name, retrieval is a fetch. No AI is involved.</> },
+      { do: 'Switch to “Search by meaning” and run “creatures of the ocean”.', see: <>The sea document ranks first, with a similarity score, although the query shares almost no words with it. Meaning, not keywords.</> },
+      { do: 'Read the “matched on” line.', see: <>Which words were in the vocabulary and which were skipped. Retrieval quality is a property of that matching, and it is inspectable — unlike the model’s memory.</> },
+      { do: 'Type a query with a word the vectors have never seen.', see: <>It is skipped, and the ranking degrades. Half of a production RAG system is this problem: what your index does with the words your users actually type.</> },
+      { do: 'Read the green panel.', see: <>Retrieved passage → context → grounded answer. Say plainly that the retrieval is running live and the last step is narration here.</> },
+    ],
+    questions: [
+      { q: 'Does this fix hallucination?', a: <>It changes the failure. The model can now be right about things it never trained on, and you can point at the source. It can still misread the passage, or answer from memory when retrieval returns nothing useful.</> },
+      { q: 'Why not fine-tune the facts in instead?', a: <>Facts change, and weights are an awkward place to keep something you need to update, cite or delete. Retrieval keeps knowledge in a store you can edit and audit.</> },
+      { q: 'Is real retrieval done this way?', a: <>The shape is the same — embed, index, rank by similarity — over millions of chunks, with a learned embedding model rather than averaged word vectors, and usually with keyword search alongside it.</> },
+    ],
+  },
+
+  quantisation: {
+    headline: 'A model shrinks four times over with no measurable loss, and then falls off a cliff.',
+    model: (
+      <>
+        The bundled sort-only model — {BUNDLES.sort.params.toLocaleString()} parameters, ascending sorts
+        of 3-number lists and nothing else. Each run copies it, rounds every weight matrix to the chosen
+        number of bits (LayerNorm and biases stay full precision), and re-measures exact-match accuracy on
+        held-out lists it never trained on. The bars are measured in the browser while the class watches,
+        not read from a table.
+      </>
+    ),
+    tests: (
+      <>
+        Why a capable model can run on a laptop or a phone. Weights are stored at 32 bits by default and
+        that precision is largely unnecessary — until, quite abruptly, it is.
+      </>
+    ),
+    steps: [
+      { do: 'Press “Quantise & measure”.', see: <>Five rows appear as they are measured: 32, 8, 4, 3, 2 bits, each with its accuracy and how much smaller the model is.</> },
+      { do: 'Compare 32-bit with 8-bit.', see: <>Four times smaller, accuracy essentially unchanged. Ask what else in engineering gives a 4× saving for nothing.</> },
+      { do: 'Read down to 3-bit and 2-bit.', see: <>The bar turns red and the skill is gone. Not a graceful decline — a cliff. Nothing warned that the edge was there.</> },
+      { do: 'Draw the practical conclusion.', see: <>You cannot know where your cliff is without measuring it on your own task. The curve’s shape generalises; the position of the edge does not.</> },
+    ],
+    mechanism: (
+      <>
+        Quantisation maps each weight onto a small grid of values and stores the index. The rounding error
+        per weight is tiny and it accumulates through the network — up to a point the computation
+        tolerates, past which the errors dominate.
+      </>
+    ),
+    questions: [
+      { q: 'Is this what “4-bit” means on a downloadable model?', a: <>Yes, in outline. Production schemes are cleverer — per-block scales, some layers kept at higher precision, calibration on real data — which pushes the cliff further out.</> },
+      { q: 'Does it get faster too?', a: <>Usually, because less memory has to move. On this tiny model the point is the size axis; at real scale memory bandwidth is the thing you are buying back.</> },
+      { q: 'Why does a task this simple break so sharply?', a: <>Sorting is exact: an answer is right or it is not, so partial degradation shows up as a collapse. A fluency task would have shown a gentler slide and hidden the same damage.</> },
+    ],
+  },
+
+  'flaky-harness': {
+    headline: 'The model’s output is malformed more often than anyone plans for, and something has to catch it.',
+    model: (
+      <>
+        No model runs in this one — worth saying, because it is what makes the demo honest. Four
+        handwritten outputs of the kind a language model really does produce are fed into the{' '}
+        <b>real parser</b>, the same <span className={c}>harnessDispatch</span> code path the working
+        tool-call demo uses. The malformed strings are the fixture; the harness’s behaviour is the thing
+        under test.
+      </>
+    ),
+    tests: (
+      <>
+        That a probabilistic component is a source of invalid input to the rest of your system, and that
+        the boundary around it is ordinary defensive engineering — parse, validate, fail loudly, retry.
+        No part of this is AI.
+      </>
+    ),
+    steps: [
+      { do: 'Press “Simulate a flaky model”.', see: <><span className={c}>max(4 1 7 = 7</span> — the closing bracket is missing. The harness reports what was wrong and would re-prompt or fall back. No tool ran.</> },
+      { do: 'Press it again.', see: <><span className={c}>mxa(4 1 7) = 7</span>, a mistyped tool name. Ask what a system that dispatched on the model’s string without checking would do here.</> },
+      { do: 'Press again for the empty call.', see: <><span className={c}>sum() = </span> — well-formed and useless. Structure is not sufficient; arguments have to be validated too.</> },
+      { do: 'Press once more.', see: <>A valid call buried in chatter, which the parser finds. Being liberal about what surrounds the call is worth it; being liberal about the call itself is not.</> },
+    ],
+    mechanism: (
+      <>
+        The harness extracts a tool name and an argument list, checks the name against a registry and the
+        arguments against what the tool needs, and returns an error rather than throwing. An error is a
+        retry, a fallback, or a message to a person — the design decision is which, and that decision
+        belongs to your code, not to the model.
+      </>
+    ),
+    questions: [
+      { q: 'Don’t modern models emit valid JSON reliably?', a: <>Far more reliably, and constrained decoding makes syntax near-certain. Neither makes the tool name correct or the arguments sensible, which are the last two samples here.</> },
+      { q: 'Why fail loudly rather than guess?', a: <>A guess turns a visible failure into a wrong action with no record. The tic-tac-toe demo is this rule again: the check layer rejects and re-asks, and never quietly picks a better move.</> },
+      { q: 'Is a retry always the answer?', a: <>No. Retries cost money and can loop, so a harness needs an attempt limit and a defined path when it is reached — usually a fallback or a human.</> },
     ],
   },
 }

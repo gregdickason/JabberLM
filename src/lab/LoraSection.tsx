@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { paramDigits, paramString } from '../lib/urlParams'
 import { deserialize, type SavedModel } from '../engine/persist'
 import { Trainer } from '../engine/trainer'
 import { DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, DEFAULT_TRAIN_CONFIG } from '../engine/config'
@@ -58,8 +59,13 @@ export default function LoraSection({ embed = false }: { embed?: boolean } = {})
   const [curveAsc, setCurveAsc] = useState<{ x: number; y: number }[]>([])
   const [rows, setRows] = useState<Row[]>([])
   const [counts, setCounts] = useState({ trainable: 0, total: 0 })
-  // interactive "try your own" box
-  const [prompt, setPrompt] = useState('sort 4 6 1 => ')
+  // interactive "try your own" box. ?list=6 9 2 (or ?prompt=) opens it on a chosen list, so a
+  // post or a slide can link to the exact case it is about to discuss.
+  const [prompt, setPrompt] = useState(() => {
+    const list = paramDigits(location.search, 'list', [], 3)
+    if (list.length === 3) return `sort ${list.join(' ')} => `
+    return paramString(location.search, 'prompt', 'sort 4 6 1 => ')
+  })
   const [overlay, setOverlay] = useState(true)
   const [output, setOutput] = useState('')
   // which overlay state PRODUCED that output — the colour has to follow the run, not the

@@ -29,11 +29,21 @@ export function Section({
   )
 }
 
-// "What this means if you work in…" callout.
-export function Callout({ children }: { children: React.ReactNode }) {
+/**
+ * The "so what" box that closes a section. The default heading suits the explain page, whose
+ * reader is at work; pass `title` elsewhere (the learn page is following a mechanism, not
+ * making a decision, so "What this means for your work" reads oddly there).
+ */
+export function Callout({
+  title = 'What this means for your work',
+  children,
+}: {
+  title?: string
+  children: React.ReactNode
+}) {
   return (
     <div className="mt-4 rounded-lg border border-sky-900 bg-sky-950/40 p-3 text-[13px] leading-relaxed text-sky-100">
-      <div className="mb-1 font-semibold text-sky-300">What this means for your work</div>
+      <div className="mb-1 font-semibold text-sky-300">{title}</div>
       {children}
     </div>
   )

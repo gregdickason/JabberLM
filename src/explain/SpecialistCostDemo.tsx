@@ -2,11 +2,14 @@ import { useState } from 'react'
 import type { ModelConfig } from '../engine/config'
 import { measure, type SpeedResult } from './SpeedDemo'
 import { card } from './ui'
+import { MEASURED } from '../data/modelStats'
 
 // Topic: specialist vs generalist at INFERENCE. A tiny model tuned for one task
 // vs a bigger general model doing the SAME task. We measure real tok/s live; the
-// accuracy parity (both ~95% on held-out sort) is an offline result we cite, so
-// the takeaway is "same job, same quality, far cheaper per token."
+// accuracy parity on held-out sort is an offline result we cite (numbers from
+// src/data/modelStats.ts), so the takeaway is "same job, same quality, far
+// cheaper per token." The two models timed here are freshly-built shapes, not the
+// trained bundles — we are measuring cost per token, not quality.
 
 const SPECIALIST: Partial<ModelConfig> = { dModel: 24, nHeads: 2, nLayers: 2, contextLen: 32, dFF: 96 }
 const GENERALIST: Partial<ModelConfig> = { dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192 }
@@ -35,8 +38,10 @@ export default function SpecialistCostDemo() {
       <div className="mb-2 text-[12px] leading-relaxed text-slate-300">
         Same task — <span className="font-mono text-slate-200">sort 6 9 2 =&gt; 2 6 9</span> — two ways: a{' '}
         <b>tiny model tuned only for sorting</b> vs a <b>bigger general model</b> that also writes poems and
-        "does" algebra. Trained separately (see the training-cost story), <b>both reach ~95% on unseen
-        lists</b> — same quality. So which should you run in production? Time them here:
+        "does" algebra. Trained separately, <b>both sort unseen lists about as well as each other</b> —
+        the generalist scores ~{MEASURED.multitaskSort.pct}% on {MEASURED.multitaskSort.n} lists it never
+        saw, the specialist a little better. Same quality, then. So which should you run in production?
+        Time them here:
       </div>
       <button
         onClick={() => void run()}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Trainer } from '../engine/trainer'
-import { heldOutBaskets, type Basket } from '../data/warehouse'
+import { heldOutBaskets, SKUS, type Basket } from '../data/warehouse'
+import { paramString } from '../lib/urlParams'
 import { runBasket, type AgentRun } from './agent'
 import WarehouseGrid from './WarehouseGrid'
 
@@ -35,7 +36,15 @@ export default function WarehouseDemo({
   /** page-only: the line under the grid explaining what you are looking at */
   caption?: React.ReactNode
 }) {
-  const [basket, setBasket] = useState<Basket>(['A', 'C', 'F'])
+  // ?basket=ACF (or "A C F") opens the demo on a specific order, so a post can link to the
+  // exact relational case it is describing. Anything that is not 1-3 real SKUs falls back.
+  const [basket, setBasket] = useState<Basket>(() => {
+    const raw = paramString(location.search, 'basket', '')
+    const items = raw.toUpperCase().replace(/[^A-F]/g, '').split('')
+    return items.length >= 1 && items.length <= 3 && items.every((i) => SKUS.includes(i as never))
+      ? items
+      : ['A', 'C', 'F']
+  })
   const [run, setRun] = useState<AgentRun | null>(null)
 
   useEffect(() => {

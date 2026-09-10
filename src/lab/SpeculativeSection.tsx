@@ -14,6 +14,8 @@ const ACCEPT = '#34d399' // emerald — draft guessed right
 const CORRECT = '#f59e0b' // amber — target overrode
 const BONUS = '#38bdf8' // sky — free target token
 const REJECT = '#64748b' // grey — draft guess that was thrown away
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 async function loadModel(file: string): Promise<Trainer | null> {
   try {
@@ -96,7 +98,8 @@ export default function SpeculativeSection() {
         title="Speculative decoding — a small model proposes, a big model verifies"
         papers={[{ title: 'Leviathan, Kalman & Matias (2023) — Fast Inference via Speculative Decoding', url: 'https://arxiv.org/abs/2211.17192' }]}
       >
-        Generating is serial — one forward per token, each needing the <b>big</b> model. Speculative decoding
+        Generating is serial — one forward per token, each needing the <b>big</b> model.{' '}
+        <a className={glossary} href="./glossary.html#speculative-decoding">Speculative decoding</a>{' '}
         speeds it up: a small, cheap <b>draft</b> model{params ? <> (here <b>{(params.d / 1000).toFixed(0)}K</b>, ~{params.x}× smaller than the <b>{(params.t / 1000).toFixed(0)}K</b> target)</> : null}{' '}
         proposes <b>K</b> tokens, then the big <b>target</b> checks all K in <b>one</b> forward pass (its logits
         at every position say what it would have produced there). Accept the longest matching prefix; correct

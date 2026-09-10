@@ -5,6 +5,9 @@ import { contextAround, topKPositions } from '../interp/maxact'
 import SectionIntro, { CAVEAT } from './SectionIntro'
 import LineChart from '../viz/LineChart'
 
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
+
 export default function NeuronsSection({ trainer }: { trainer: Trainer }) {
   const [sweep, setSweep] = useState<ActivationSweep | null>(null)
   const [layer, setLayer] = useState(0)
@@ -39,11 +42,14 @@ export default function NeuronsSection({ trainer }: { trainer: Trainer }) {
         ]}
       >
         Each MLP neuron is one number per position. Reading what a neuron "detects" means finding the
-        inputs that make it fire hardest. The catch is <span className="text-slate-100">superposition</span>:
+        inputs that make it fire hardest. The catch is{' '}
+        <a className={glossary} href="./glossary.html#superposition">superposition</a>:
         models pack more concepts than they have neurons, so a single neuron is usually{' '}
         <span className="text-slate-100">polysemantic</span> — it lights up for several unrelated
-        patterns at once. Meaning cannot be read off single neurons for that reason, which is what the dictionary-learning tab
-        addresses. {CAVEAT}
+        patterns at once. Meaning cannot be read off single neurons for that reason, which is what{' '}
+        <a className={glossary} href="./lab.html?tab=dictionary-sae">the dictionary-learning tab</a>{' '}
+        addresses. This is the ground floor of any audit outside research too: a behaviour you cannot
+        locate inside the model is one you can only test for from the outside. {CAVEAT}
       </SectionIntro>
 
       {!sweep || !col ? (

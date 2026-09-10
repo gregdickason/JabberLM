@@ -394,7 +394,7 @@ export default function TrainingPanel() {
       }
       // No (usable) checkpoint: install the bundled model (ready to infer, 'idle').
       const ok = await installBundledModel()
-      if (ok) setSaveMsg('pretrained Shakespeare loaded ✓')
+      if (ok) setSaveMsg('built-in three-skill model loaded ✓')
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

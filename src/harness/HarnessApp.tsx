@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Trainer } from '../engine/trainer'
-import { harnessDispatch } from './runHarness'
-import { Section, Callout, card } from '../explain/ui'
-import { AgentLoopDemo, InjectionDemo, ToolCallDemo, btn, loadHarnessModel } from './demos'
+import { Section, Callout } from '../explain/ui'
+import { AgentLoopDemo, FlakyDemo, InjectionDemo, ToolCallDemo, loadHarnessModel } from './demos'
 import AdderSection from './AdderSection'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
+import { useSectionRoute } from '../lib/useSectionRoute'
+
+// Short, stable section ids for deep links. The long heading slugs these replaced are still
+// honoured (the capstone and the guide published some of them), see HARNESS_ALIASES.
+const SECTIONS = ['tools', 'robust', 'loop', 'injection', 'reasoning-loop', 'where-this-leaves-you'] as const
+const HARNESS_ALIASES = {
+  'ask-it-to-do-something-watch-the-harness-work': 'tools',
+  'why-harnesses-need-to-be-robust': 'robust',
+  'loop-it-and-its-an-agent': 'loop',
+  'the-catch-prompt-injection': 'injection',
+}
 
 // Garbled outputs a flaky tiny model might produce — what the harness must cope
 // with. Each shows a different failure mode (and one that still parses despite junk).
-const FLAKY_SAMPLES: { raw: string; note: string }[] = [
-  { raw: 'max(4 1 7 = 7', note: 'dropped the closing bracket' },
-  { raw: 'mxa(4 1 7) = 7', note: 'mistyped the tool name' },
-  { raw: 'sum() = ', note: 'forgot the arguments' },
-  { raw: 'hmm, i think max(4 1 7)?', note: 'a valid call buried in chatter — the harness still finds it' },
-]
-
 export default function HarnessApp() {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
   const [status, setStatus] = useState('loading the tool-calling model…')
-  const [flakyIdx, setFlakyIdx] = useState(0)
-  const [flaky, setFlaky] = useState<{ raw: string; note: string; res: ReturnType<typeof harnessDispatch> } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -39,15 +40,10 @@ export default function HarnessApp() {
     }
   }, [])
 
+  // ?section= deep links, with every legacy heading-slug anchor still resolving.
+  useSectionRoute(SECTIONS, trainer, HARNESS_ALIASES)
   useHashScroll(trainer) // deep-link scroll once the model loads and sections render
 
-  // "flaky model" demo: feed the harness a garbled model output (cycling through
-  // common failure modes) and show how it copes — self-contained, no prior run needed.
-  function flakyStep() {
-    const s = FLAKY_SAMPLES[flakyIdx % FLAKY_SAMPLES.length]
-    setFlaky({ raw: s.raw, note: s.note, res: harnessDispatch(s.raw) })
-    setFlakyIdx((i) => i + 1)
-  }
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
@@ -73,46 +69,26 @@ export default function HarnessApp() {
 
       {trainer && (
         <>
-          <Section n={1} title="Ask it to do something — watch the harness work">
-            <ToolCallDemo trainer={trainer} onRun={() => setFlaky(null)} />
+          <Section n={1} id="tools" title="Ask it to do something — watch the harness work">
+            <ToolCallDemo trainer={trainer} />
             <Callout>
               A model's answer is a guess. A tool's output is a computation. Parsing the intent, calling
               a real tool and using the tool's result makes the execution authoritative for anything a
               tool does: maths, lookups, code, search. The hallucination is removed from that step only.
               The model can still misread the intent, and the tool's data, permissions and inputs can be
-              wrong or hostile (§4). Reliability comes from the engineering around the call.
+              wrong or hostile (see the prompt-injection section below). Reliability comes from the engineering around the call.
             </Callout>
           </Section>
 
-          <Section n={2} title="Why harnesses need to be robust">
+          <Section n={2} id="robust" title="Why harnesses need to be robust">
             <p>
               The model is small and its output is sometimes a <b>malformed</b> call. The harness
-              validates before it dispatches. Each click feeds it a different failure:
+              validates before it dispatches. Each click feeds it a different failure — these four are
+              written by hand rather than sampled, so you can see each failure mode on demand:
             </p>
             <div className="mt-2">
-              <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={flakyStep}>
-                Simulate a flaky model →
-              </button>
+              <FlakyDemo />
             </div>
-            {flaky && (
-              <div className={card + ' mt-3 space-y-1.5 text-[12px]'}>
-                <div>
-                  <span className="text-fuchsia-300">🧠 the model emitted</span>{' '}
-                  <span className="text-slate-400">({flaky.note}):</span>
-                  <div className="mt-0.5 font-mono text-[13px] text-fuchsia-200">{flaky.raw}</div>
-                </div>
-                <div>
-                  <span className="text-sky-300">⚙️ the harness:</span>{' '}
-                  {flaky.res.error ? (
-                    <span className="text-red-300">✗ caught it — {flaky.res.error} → it would re-prompt or fall back (no bad tool ran)</span>
-                  ) : (
-                    <span className="text-emerald-300">
-                      ✓ found a valid call anyway: {flaky.res.parsed?.tool}([{flaky.res.parsed?.args.join(', ')}]) = {flaky.res.toolResult}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
             <Callout>
               Parsing, validating, retrying, sandboxing calls and managing what the model sees is{' '}
               <b>harness engineering</b>. Most of an agent's reliability comes from there rather than from
@@ -120,7 +96,7 @@ export default function HarnessApp() {
             </Callout>
           </Section>
 
-          <Section n={3} title="Loop it — and it's an agent">
+          <Section n={3} id="loop" title="Loop it — and it's an agent">
             <p>
               A single call is <b>function calling</b>. An <b>agent</b> adds the <b>loop</b>: the harness
               runs the tool, <b>writes the result back into the context</b>, and the model reads it to
@@ -134,7 +110,7 @@ export default function HarnessApp() {
             </Callout>
           </Section>
 
-          <Section n={4} title="The catch — prompt injection">
+          <Section n={4} id="injection" title="The catch — prompt injection">
             <p>
               The loop writes the tool's <b>output</b> back into the context with{' '}
               <b>no boundary between data and instructions</b>. Whoever controls what a tool{' '}
@@ -155,7 +131,7 @@ export default function HarnessApp() {
 
           <AdderSection n={5} />
 
-          <Section n={6} title="Where this leaves you">
+          <Section n={6} id="where-this-leaves-you" title="Where this leaves you">
             <p>
               A harness does three separable jobs, all three on this page: it <b>checked</b> what the
               model produced, it <b>ran the tool</b> the model asked for, and in the adder it{' '}

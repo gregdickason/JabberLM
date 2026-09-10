@@ -28,6 +28,8 @@ type Phase = 'healthy' | 'injured' | 'recovering' | 'recovered'
 const EVAL_EVERY = 100
 const HEALTH = '#34d399' // emerald
 const tick = () => new Promise((r) => setTimeout(r, 0))
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 export default function RecoverySection() {
   const [trainer, setTrainer] = useState<Trainer | null>(null)
@@ -246,11 +248,14 @@ export default function RecoverySection() {
           { title: 'Walsh & Cowey (2000) — TMS as a reversible "virtual lesion"', url: 'https://www.nature.com/articles/35036239' },
         ]}
       >
-        In the head-ablation tab you can knock out the attention head a skill depends on and watch the
-        skill die. Here the head stays <b>permanently off while training continues</b>. The model <b>recovers</b> by
+        In <a className={glossary} href="./lab.html?tab=head-ablation">the head-ablation tab</a> you can
+        knock out the attention head a skill depends on and watch the skill die. Here the head stays{' '}
+        <b>permanently off while training continues</b>. The model <b>recovers</b> by
         rerouting the sorting circuit through other heads. A re-scan afterwards shows the head the skill depends
         on has <b>moved</b>. This is the same shape as functional remapping after an injury, and the reason a
-        model tolerates some damage. Recovery is often partial. The injured head stays dead throughout.
+        model tolerates some damage. It is also why <em>removing</em> a capability from a model is much
+        harder than it sounds: cut the part that carries it and further training simply reroutes the
+        skill through what is left. Recovery is often partial. The injured head stays dead throughout.
       </SectionIntro>
 
       {/* status line */}
@@ -382,11 +387,13 @@ export default function RecoverySection() {
         {dead && (
           <div className="min-w-0">
             <div className="mb-1 text-[11px] text-slate-400">
-              recovery — held-out sort accuracy while retraining with {dead} ablated
+              recovery — <a className={glossary} href="./glossary.html#held-out">held-out</a> sort
+              accuracy while retraining with {dead}{' '}
+              <a className={glossary} href="./glossary.html#ablation">ablated</a>
             </div>
             <LineChart series={series} width={440} height={180} yLabel="sort %" />
             <div className="mt-1 max-w-[440px] text-[11px] leading-relaxed text-slate-400">
-              The dashed grey line is the pre-injury level. Accuracy drops to near zero the moment the head
+              The grey line is the pre-injury level. Accuracy drops to near zero the moment the head
               is ablated, then climbs back as the remaining heads relearn the job — <b>with the injured
               head still switched off</b>. That's the model routing the function around the damage.
             </div>

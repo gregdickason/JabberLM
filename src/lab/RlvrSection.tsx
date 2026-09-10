@@ -19,6 +19,8 @@ const evalInterval = (s: number) => (s < 120 ? 20 : 120)
 const WARM = '#f59e0b' // amber — SFT warm-up
 const RLVR = '#34d399' // emerald — RLVR accuracy
 const REW = '#38bdf8' // sky — mean reward
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 type Pt = { x: number; y: number }
 type Attempt = { prompt: string; completion: string; reward: number }
@@ -172,7 +174,8 @@ export default function RlvrSection() {
           { title: 'Zelikman et al. (2022) — STaR: self-taught reasoner', url: 'https://arxiv.org/abs/2203.14465' },
         ]}
       >
-        SFT copies given answers; distillation copies a teacher. <b>RLVR</b> needs neither — just a{' '}
+        SFT copies given answers; distillation copies a teacher.{' '}
+        <a className={glossary} href="./glossary.html#rlvr"><b>RLVR</b></a> needs neither — just a{' '}
         <b>verifier</b>. The model <em>samples its own attempts</em>, a checker says right/wrong, and a{' '}
         <b>policy-gradient</b> update pushes up the tokens of correct attempts and down the wrong ones
         (advantage = reward − the group's average). This is how reasoning models are trained where answers
@@ -210,8 +213,10 @@ export default function RlvrSection() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <div className="mb-1 text-[11px] text-slate-400">
-            held-out sort accuracy — <span style={{ color: WARM }}>SFT warm-up</span> then{' '}
-            <span style={{ color: RLVR }}>RLVR</span> (reward, right axis shares %)
+            <a className={glossary} href="./glossary.html#held-out">held-out</a> sort accuracy —{' '}
+            <span style={{ color: WARM }}>SFT warm-up</span> then{' '}
+            <span style={{ color: RLVR }}>RLVR</span> · <span style={{ color: REW }}>mean reward</span>{' '}
+            shares the same axis (it is a fraction correct, plotted as a %)
           </div>
           <LineChart series={series} width={460} height={200} yLabel="%" />
         </div>

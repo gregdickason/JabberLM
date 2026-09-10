@@ -1,49 +1,184 @@
-// Facts about the bundled pre-trained model (public/multitask-model.json), shown
-// in the UI and the Explain page. Single source of truth — update here (and the
-// numbers in GUIDE.md / README.md) whenever the model is regenerated.
+// Facts about every bundled pre-trained model in `public/`, shown in the UI, the
+// teaching pages and the teachers' lessons. SINGLE SOURCE OF TRUTH: quote numbers
+// from here rather than typing them into copy, so a retrain can't leave a stale
+// figure behind in prose. `npm run stats` re-derives the structural half (params,
+// dims, vocab) straight from the JSON files and rewrites the block below.
 //
-// It's a "three-skill" model: one tiny network (the `default` preset, ~0.09M
-// params) trained by `npm run gen:multitask` on Jabber poems + single-variable
-// algebra + sorting. The same model shows three things:
-//   - poems        -> text generation (memorisation of a style)
-//   - algebra      -> fluent but WRONG working (the hallucination lesson; the model
-//                     can't actually learn the arithmetic at this size)
-//   - sorting      -> a genuinely-learned procedure that generalises to unseen
-//                     inputs ("real" reasoning), emerging with a visible grokking jump
-// Training ran in plain single-threaded JavaScript (no GPU) — the same engine that
-// runs in the browser, so the wall-clock is a fair "tiny model on a laptop" number.
+// Measured figures (accuracy, %) are NOT derivable from the file — they come from
+// the eval scripts named in `measuredBy` and must be updated by hand after a
+// retrain. Each one says what it was measured on, so a claim is reproducible.
+
+export type BundleId =
+  | 'multitask'
+  | 'multitaskDraft'
+  | 'moe'
+  | 'sort'
+  | 'harness'
+  | 'adder'
+  | 'warehouse'
+  | 'tictactoe'
+  | 'tictactoeStrong'
+
+export type Bundle = {
+  id: BundleId
+  file: string // public/<file>
+  label: string // human name used in copy
+  params: number
+  paramsLabel: string // rounded, for prose ("~90K")
+  dModel: number
+  nHeads: number
+  nLayers: number
+  contextLen: number
+  dFF: number
+  vocab: number
+  nExperts?: number
+  genScript: string // npm script that regenerates it
+  taughtOn: string // what it was ACTUALLY trained on — say this before saying what it does
+  measuredBy?: string // the script that produces the measured numbers below
+}
+
+// --- BEGIN GENERATED (npm run stats) ---
+const STRUCT: Record<BundleId, Pick<Bundle, 'params' | 'dModel' | 'nHeads' | 'nLayers' | 'contextLen' | 'dFF' | 'vocab'> & { nExperts?: number }> = {
+  multitask: { params: 90_336, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192, vocab: 77 },
+  multitaskDraft: { params: 17_304, dModel: 24, nHeads: 2, nLayers: 2, contextLen: 48, dFF: 96, vocab: 77 },
+  moe: { params: 144_576, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 96, vocab: 22, nExperts: 4 },
+  sort: { params: 87_456, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192, vocab: 17 },
+  harness: { params: 88_464, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 48, dFF: 192, vocab: 38 },
+  adder: { params: 90_000, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 96, dFF: 192, vocab: 22 },
+  warehouse: { params: 24_896, dModel: 32, nHeads: 2, nLayers: 2, contextLen: 96, dFF: 96, vocab: 24 },
+  tictactoe: { params: 127_872, dModel: 64, nHeads: 4, nLayers: 3, contextLen: 32, dFF: 192, vocab: 20 },
+  tictactoeStrong: { params: 127_872, dModel: 64, nHeads: 4, nLayers: 3, contextLen: 32, dFF: 192, vocab: 20 },
+}
+// --- END GENERATED ---
+
+const round = (n: number) => (n >= 1000 ? `~${Math.round(n / 1000)}K` : `~${n}`)
+
+const META: Record<BundleId, Omit<Bundle, 'params' | 'paramsLabel' | 'dModel' | 'nHeads' | 'nLayers' | 'contextLen' | 'dFF' | 'vocab' | 'nExperts' | 'id'>> = {
+  multitask: {
+    file: 'multitask-model.json',
+    label: 'the built-in three-skill model',
+    genScript: 'npm run gen:multitask',
+    taughtOn: '50 Jabberwocky-style poems, single-variable algebra with worked steps, and sorted 3-number lists — all three at once, as plain next-character prediction',
+  },
+  multitaskDraft: {
+    file: 'multitask-draft.json',
+    label: 'the draft model',
+    genScript: 'npm run gen:multitask-draft',
+    taughtOn: 'the same corpus as the three-skill model, so it shares its vocabulary exactly',
+  },
+  moe: {
+    file: 'moe-model.json',
+    label: 'the Mixture-of-Experts model',
+    genScript: 'npm run gen:moe',
+    taughtOn: 'sorting, maximum and reversal of 3-number lists, with four expert networks per layer and a gate that routes each character',
+  },
+  sort: {
+    file: 'sort-model.json',
+    label: 'the sort-only model',
+    genScript: 'npm run gen:sort',
+    taughtOn: 'ascending sorts of 3-number lists, and nothing else',
+  },
+  harness: {
+    file: 'harness-model.json',
+    label: 'the tool-calling model',
+    genScript: 'npm run gen:harness',
+    taughtOn: 'instructions paired with tool calls — `instruction => tool(args) = result` — and two-step chains ending in `done`. It was never taught arithmetic',
+  },
+  adder: {
+    file: 'adder-model.json',
+    label: 'the adder model',
+    genScript: 'npm run gen:adder',
+    taughtOn: 'all 200 single-column addition facts (digit + digit + carry), plus 6,000 whole sums of up to 4 digits and 6,000 worked traces of those sums',
+  },
+  warehouse: {
+    file: 'warehouse-model.json',
+    label: 'the warehouse agent',
+    genScript: 'npm run gen:warehouse',
+    taughtOn: "a scripted picker's plans for 3-SKU orders. No item's attribute (fragile, heavy, food, chemical) ever appears as a character",
+  },
+  tictactoe: {
+    file: 'tictactoe-model.json',
+    label: 'the undertrained agent',
+    genScript: 'npm run gen:tictactoe',
+    taughtOn: 'board positions paired with a soft move preference from a perfect minimax player — for 100 steps, about a third of one pass over the 4,520 reachable positions. It was never told the rules, and never told which cells are legal',
+    measuredBy: 'npm run eval:tictactoe',
+  },
+  tictactoeStrong: {
+    file: 'tictactoe-strong-model.json',
+    label: 'the well-trained agent',
+    genScript: 'npm run gen:tictactoe-strong',
+    taughtOn: 'the same positions and the same oracle as the undertrained agent, with the same architecture and the same parameter count — for 250 shuffled passes over every reachable position instead of a third of one. It was never told the rules either',
+    measuredBy: 'npm run eval:tictactoe',
+  },
+}
+
+export const BUNDLES = Object.fromEntries(
+  (Object.keys(STRUCT) as BundleId[]).map((id) => [
+    id,
+    { id, ...STRUCT[id], ...META[id], paramsLabel: round(STRUCT[id].params) },
+  ]),
+) as Record<BundleId, Bundle>
+
+/** Params of a bundle, rounded for prose: `paramsOf('adder')` -> "~90K". */
+export const paramsOf = (id: BundleId) => BUNDLES[id].paramsLabel
+
+// ---------------------------------------------------------------------------
+// Measured results. Each says what it was measured on. Update after a retrain.
+// ---------------------------------------------------------------------------
+
+export const MEASURED = {
+  /** Three-skill model: exact-match on unseen 3-number sort lists. */
+  multitaskSort: { pct: 89, n: 145, of: 'unseen 3-number sort lists', seed: 1337 },
+  /** Sort-only model, ascending, held-out. */
+  sortOnly: { pct: 97, n: 145, of: 'unseen 3-number sort lists' },
+  /** Adder: single columns, and whole sums through the harness loop. */
+  adderColumns: { pct: 100, n: 200, of: 'single-column addition facts' },
+  adderLoop: { pct: 100, n: 0, of: 'whole sums at 4, 6, 10, 15 and 25 digits, through the loop' },
+  adderSinglePass: { pct: 0, n: 0, of: 'whole sums in one pass, at every width tested' },
+  adderSelfTrace: { pct: 10, n: 0, of: 'its own written working at 4 digits' },
+  /** Warehouse: unseen baskets (a rule-covering held-out split). */
+  warehouseHeldOut: { pct: 90, n: 16, of: 'unseen baskets' },
+  warehouseTrain: { pct: 98, n: 0, of: 'baskets it trained on' },
+  /** Tic-tac-toe, over ALL 4,520 reachable decision states (`npm run eval:tictactoe`). */
+  ttt: {
+    states: 4_520,
+    weak: { legal: 40, optimal: 24, win: 15, block: 18, vsRandom: 64, vsPerfect: 0, losingLines: 455 },
+    strong: { legal: 100, optimal: 98, win: 89, block: 92, vsRandom: 100, vsPerfect: 94, losingLines: 9 },
+    /** Mean attention on the opponent's threat cell, over the must-block boards. */
+    threatFocus: { weak: 0.2, strong: 0.79, boards: 1_484 },
+  },
+} as const
+
+// ---------------------------------------------------------------------------
+// Back-compat: the original single-model exports, now derived from BUNDLES.
+// ---------------------------------------------------------------------------
 
 export const MODEL_STATS = {
-  params: 90_336,
+  params: BUNDLES.multitask.params,
   paramsLabel: '~0.09M',
   steps: 6_000,
-  sortAccuracy: 89, // % held-out sort exact-match (generalises to unseen vectors)
-  sortHeldOut: 145, // # unseen 3-number lists the accuracy is measured on (20% of 729, disjoint from training)
-  seed: 1337, // training seed (a single run — figures are representative, not averaged)
-  model: 'multitask-model.json', // the exact bundled artifact these numbers describe
-  minutes: 30, // wall-clock
+  sortAccuracy: MEASURED.multitaskSort.pct,
+  sortHeldOut: MEASURED.multitaskSort.n,
+  seed: MEASURED.multitaskSort.seed,
+  model: BUNDLES.multitask.file,
+  minutes: 30,
   chars: 226_442,
-  vocab: 77,
+  vocab: BUNDLES.multitask.vocab,
   machine: 'MacBook Air (M4, 10-core CPU, 16 GB)',
   runtime: 'single-threaded JavaScript (no GPU)',
 } as const
 
-// How the headline accuracy was measured — surfaced next to the number so the claim
-// is reproducible rather than asserted. (Regenerate with `npm run gen:multitask`.)
 export const MODEL_METHOD =
   `Measured: exact-match on ${MODEL_STATS.sortHeldOut} unseen sort lists (a deterministic held-out ` +
   `split, none seen in training), one run, seed ${MODEL_STATS.seed}, ${MODEL_STATS.model}. ` +
   `A single run — representative, not averaged.`
 
-// Example prompts for the three skills, surfaced as one-click chips when the
-// bundled model is loaded.
 export const MODEL_EXAMPLES: { label: string; prompt: string; note: string }[] = [
   { label: 'Poem', prompt: "'Twas brillig, and the ", note: 'generates Jabberwocky-style verse' },
   { label: 'Sort', prompt: 'sort 6 9 2 => ', note: 'really sorts — a learned procedure' },
   { label: 'Solve', prompt: '7x + 2 = 16 => ', note: 'looks like working, but the maths is invented' },
 ]
 
-// One-line summary for banners/captions.
 export const MODEL_STATS_LINE =
   `${MODEL_STATS.paramsLabel} params · poems + algebra + sorting · sorts unseen inputs at ` +
   `~${MODEL_STATS.sortAccuracy}% · ~${MODEL_STATS.minutes} min of ${MODEL_STATS.runtime} on a ${MODEL_STATS.machine}`

@@ -4,6 +4,9 @@ import { computeHeadStats, probeHeadAttention, type HeadStat } from '../interp/h
 import SectionIntro from './SectionIntro'
 import Heatmap from '../viz/Heatmap'
 
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
+
 export default function HeadsSection({ trainer }: { trainer: Trainer }) {
   const [stats, setStats] = useState<HeadStat[] | null>(null)
   const [sel, setSel] = useState<{ layer: number; head: number }>({ layer: 0, head: 0 })
@@ -50,12 +53,15 @@ export default function HeadsSection({ trainer }: { trainer: Trainer }) {
           { title: 'In-context Learning and Induction Heads', url: 'https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html' },
         ]}
       >
-        Attention heads route information between positions, and many specialise. Two famous roles:
+        <a className={glossary} href="./glossary.html#head">Attention heads</a> route information
+        between positions, and many specialise. Two famous roles:
         a <span className="text-sky-300">previous-token</span> head (each position looks one step back)
         and an <span className="text-emerald-300">induction</span> head (it looks at the token that
         followed the last time the current token appeared — the core of copying and in-context
-        learning). Scores below are averaged over the whole corpus; pick a head to see its pattern on a
-        repeated probe, where induction shows up as a bright off-diagonal stripe.
+        learning). Naming heads is how a behaviour gets traced to a specific mechanism — one that can
+        then be monitored, switched off or patched, rather than only prompted around. Scores below are
+        averaged over the whole corpus; pick a head to see its pattern on a repeated probe, where
+        induction shows up as a bright off-diagonal stripe.
       </SectionIntro>
 
       {!stats ? (

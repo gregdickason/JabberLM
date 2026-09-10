@@ -4,13 +4,17 @@ import { DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG } from '../engine/config'
 import { generate } from '../engine/generate'
 import { RNG } from '../engine/random'
 import { btn, card } from './ui'
+import { paramString } from '../lib/urlParams'
 
 // "Why it makes things up." The model always produces fluent-looking text — even
 // when it has nothing real to say. That confident-but-empty output is
 // hallucination in miniature.
 export default function HallucinationDemo({ trainer }: { trainer: Trainer }) {
   const { model, tok } = trainer
-  const [prompt, setPrompt] = useState('the contract states that ')
+  // ?prompt= lets a blog post open this demo on the example it is discussing.
+  const [prompt, setPrompt] = useState(() =>
+    paramString(location.search, 'prompt', 'the contract states that '),
+  )
   const [out, setOut] = useState('')
   const rng = new RNG(7)
 
@@ -22,7 +26,7 @@ export default function HallucinationDemo({ trainer }: { trainer: Trainer }) {
   return (
     <div className={card}>
       <div className="mb-2 text-[11px] text-slate-400">
-        Ask this tiny model (which only ever saw one poem) to continue something it knows nothing about.
+        Ask this tiny model — which only ever read nonsense verse, school algebra and sorted lists — to continue something it knows nothing about.
       </div>
       <div className="flex gap-2">
         <input

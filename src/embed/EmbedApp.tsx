@@ -10,7 +10,14 @@ import AdderSection from '../harness/AdderSection'
 import WarehouseDemo from '../capstone/WarehouseDemo'
 import ConceptMap from '../capstone/ConceptMap'
 import { loadWarehouseModel } from '../capstone/agent'
-import { AgentLoopDemo, InjectionDemo, ToolCallDemo, loadHarnessModel } from '../harness/demos'
+import { AgentLoopDemo, FlakyDemo, InjectionDemo, ToolCallDemo, loadHarnessModel } from '../harness/demos'
+import NextTokenDemo from '../explain/NextTokenDemo'
+import ContextDemo from '../explain/ContextDemo'
+import HallucinationDemo from '../explain/HallucinationDemo'
+import InstructionDemo from '../explain/InstructionDemo'
+import RagDemo from '../explain/RagDemo'
+import QuantizationDemo from '../explain/QuantizationDemo'
+import { loadDemoModel } from '../explain/loadDemoModel'
 import type { Trainer } from '../engine/trainer'
 
 // The embeddable shell: a JabberLM wordmark, then the demo. Nothing else — no nav, no
@@ -29,6 +36,25 @@ function WithHarnessModel({ children }: { children: (t: Trainer) => React.ReactN
       if (cancelled) return
       if (t) setTrainer(t)
       else setStatus('could not load the tool-calling model (public/harness-model.json)')
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  return trainer ? <>{children(trainer)}</> : <div className="text-slate-400">{status}</div>
+}
+
+// The explain-page demos all run on the bundled three-skill model.
+function WithBundled({ children }: { children: (t: Trainer) => React.ReactNode }) {
+  const [trainer, setTrainer] = useState<Trainer | null>(null)
+  const [status, setStatus] = useState('loading the built-in model…')
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const loaded = await loadDemoModel()
+      if (cancelled) return
+      if (loaded) setTrainer(loaded.trainer)
+      else setStatus('could not load the built-in model')
     })()
     return () => {
       cancelled = true
@@ -89,6 +115,16 @@ const RENDER: Record<DemoId, () => React.ReactNode> = {
       {(t) => <AblationSection trainer={t} embed />}
     </WithModel>
   ),
+  // The explain-page demos that drive the Part I/II posts. They take the bundled three-skill
+  // model, the same one the page itself uses.
+  'next-token': () => <WithBundled>{(t) => <NextTokenDemo trainer={t} />}</WithBundled>,
+  attention: () => <WithBundled>{(t) => <ContextDemo trainer={t} />}</WithBundled>,
+  hallucination: () => <WithBundled>{(t) => <HallucinationDemo trainer={t} />}</WithBundled>,
+  instruction: () => <WithBundled>{(t) => <InstructionDemo base={t} />}</WithBundled>,
+  // These two fetch what they need themselves (word vectors, the sort model).
+  rag: () => <RagDemo />,
+  quantisation: () => <QuantizationDemo />,
+  'flaky-harness': () => <FlakyDemo autoRun />,
   warehouse: () => (
     <WithModel
       load={loadWarehouseModel}

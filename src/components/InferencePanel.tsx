@@ -4,6 +4,7 @@ import { getTrainer } from '../engine/trainer'
 import { installBundledModel } from '../state/pretrained'
 import { MODEL_STATS_LINE, MODEL_EXAMPLES } from '../data/modelStats'
 import { RNG } from '../engine/random'
+import { paramString } from '../lib/urlParams'
 import { lastRowLogits, sampleFromLogits, traceOf } from '../engine/generate'
 import type { Trace } from '../engine/trace'
 import ArchitectureMap from './ArchitectureMap'
@@ -50,7 +51,10 @@ export default function InferencePanel() {
   const rng = useRef(new RNG(2024))
   const [loadMsg, setLoadMsg] = useState('')
 
-  const [prompt, setPrompt] = useState(() => startPrompt(trainingText))
+  // ?prompt= wins over the dataset's default opener, so a post can link straight to an example.
+  const [prompt, setPrompt] = useState(() =>
+    paramString(location.search, 'prompt', startPrompt(trainingText)),
+  )
   const [ids, setIds] = useState<number[]>([])
   const [promptLen, setPromptLen] = useState(0)
   const [trace, setTrace] = useState<Trace | null>(null)

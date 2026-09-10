@@ -2,7 +2,16 @@
 // and where they currently are. Replaces the bespoke, per-page header link sets that
 // varied in which links they showed, their order, and their labels.
 
-export type NavKey = 'playground' | 'explain' | 'learn' | 'harness' | 'lab' | 'capstone' | 'teachers'
+export type NavKey =
+  | 'playground'
+  | 'explain'
+  | 'learn'
+  | 'harness'
+  | 'lab'
+  | 'capstone'
+  | 'teachers'
+  | 'glossary'
+  | 'series'
 
 const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'playground', label: 'Playground', href: './' },
@@ -12,21 +21,28 @@ const LINKS: { key: NavKey; label: string; href: string }[] = [
   { key: 'lab', label: 'Lab', href: './lab.html' },
   { key: 'capstone', label: 'Capstone', href: './capstone.html' },
   { key: 'teachers', label: 'For teachers', href: './teachers.html' },
+  { key: 'glossary', label: 'Glossary', href: './glossary.html' },
+  { key: 'series', label: 'Series', href: './series.html' },
 ]
 
 // The recommended learning sequence (distinct from the display order above), with a
 // rough time per stop — powers the "Next →" affordance so every page suggests where to go.
-// `teachers` is deliberately absent: it is a reference for whoever is RUNNING the session,
-// not a stop on the learner's path, so it never appears as anyone's "Next".
+// `teachers`, `glossary` and `series` are deliberately absent: they are references, not stops
+// on the learner's path, so none of them ever appears as anyone's "Next".
 const ORDER: NavKey[] = ['explain', 'learn', 'playground', 'harness', 'lab', 'capstone']
+// Measured against the actual prose and the demos that need a click, not aspirational.
+// Under-promising made a page feel like a failure to finish; the honest figure lets a
+// reader plan, and a session leader budget.
 const MINUTES: Record<NavKey, string> = {
-  explain: '10 min',
+  explain: '20 min',
   learn: '15 min',
-  playground: '5 min',
-  harness: '10 min',
+  playground: '10 min',
+  harness: '12 min',
   lab: 'explore',
-  capstone: '10 min',
+  capstone: '20 min',
   teachers: 'reference',
+  glossary: 'reference',
+  series: 'reference',
 }
 
 /**

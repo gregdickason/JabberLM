@@ -11,7 +11,8 @@ export default defineConfig({
     rollupOptions: {
       // multi-page: main app, interpretability lab, plain-language explainer, the
       // "how a transformer works" guided learn page, the tool-use/harness demo, the
-      // capstone, and `embed` — one demo on its own, for embedding in someone else's site
+      // capstone, the teachers' reference, the glossary, the blog-series index, and
+      // `embed` — one demo on its own, for embedding in someone else's site
       input: {
         main: 'index.html',
         lab: 'lab.html',
@@ -20,6 +21,8 @@ export default defineConfig({
         harness: 'harness.html',
         capstone: 'capstone.html',
         teachers: 'teachers.html',
+        glossary: 'glossary.html',
+        series: 'series.html',
         embed: 'embed.html',
       },
     },

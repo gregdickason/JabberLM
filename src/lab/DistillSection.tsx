@@ -16,6 +16,8 @@ const TEMPERATURE = 2
 const DISTILL = '#34d399' // emerald
 const LABELS = '#f59e0b' // amber
 const TEACHER = '#64748b' // grey reference
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 async function loadTeacher(): Promise<Trainer | null> {
   try {
@@ -171,7 +173,9 @@ export default function DistillSection() {
           { title: 'Hinton, Vinyals & Dean (2015) — Distilling the Knowledge in a Neural Network', url: 'https://arxiv.org/abs/1503.02531' },
         ]}
       >
-        Big models are expensive to run. <b>Distillation</b> trains a small <b>student</b> to copy a big{' '}
+        Big models are expensive to run.{' '}
+        <a className={glossary} href="./glossary.html#distillation"><b>Distillation</b></a> trains a
+        small <b>student</b> to copy a big{' '}
         <b>teacher</b>'s <em>whole answer distribution</em> — not just the single right token, but how much
         probability it put on every option. That extra signal ("dark knowledge") lets the student learn the
         skill from far fewer examples. Here a <b>{(sParams / 1000).toFixed(0)}K</b> student learns to sort
@@ -212,7 +216,8 @@ export default function DistillSection() {
 
       <div>
         <div className="mb-1 text-[11px] text-slate-400">
-          held-out sort accuracy — both students are the same tiny size; only the teaching signal differs
+          <a className={glossary} href="./glossary.html#held-out">held-out</a> sort accuracy — both
+          students are the same tiny size; only the teaching signal differs
         </div>
         <LineChart series={series} width={460} height={190} yLabel="sort %" />
         <p className="mt-1 max-w-[460px] text-[11px] leading-relaxed text-slate-400">

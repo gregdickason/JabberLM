@@ -3,11 +3,13 @@ import { loadDemoModel, type LoadedModel } from './loadDemoModel'
 import { MODEL_STATS, MODEL_METHOD } from '../data/modelStats'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
+import { useSectionRoute, pushSection } from '../lib/useSectionRoute'
 import { Section, Callout } from './ui'
 import NextTokenDemo from './NextTokenDemo'
 import RandomnessDemo from './RandomnessDemo'
 import ContextDemo from './ContextDemo'
 import HallucinationDemo from './HallucinationDemo'
+import InstructionDemo from './InstructionDemo'
 import CostsDemo from './CostsDemo'
 import SpeedDemo from './SpeedDemo'
 import SpecialistCostDemo from './SpecialistCostDemo'
@@ -29,10 +31,26 @@ function DemoLoading() {
   )
 }
 
-// Compact in-page contents so the ten sections read as three tiers — and signal that the
+// Compact in-page contents so the eleven sections read as three tiers — and signal that the
 // cost/inference sections are an optional deeper module for decision-makers.
+// The section ids, in page order. `?section=<id>` deep-links to any of them and is countable
+// in analytics, which a #fragment is not — that is what a blog post's "Try it →" uses.
+export const SECTIONS = [
+  'prediction',
+  'randomness',
+  'context',
+  'hallucination',
+  'instruction',
+  'tokens',
+  'embeddings',
+  'rag',
+  'cost',
+  'inference',
+  'governance',
+] as const
+
 const TOC: { group: string; items: [string, string][] }[] = [
-  { group: 'The basics', items: [['prediction', 'Prediction'], ['randomness', 'Randomness'], ['context', 'Context & memory'], ['hallucination', 'Hallucination']] },
+  { group: 'The basics', items: [['prediction', 'Prediction'], ['randomness', 'Randomness'], ['context', 'Context & memory'], ['hallucination', 'Hallucination'], ['instruction', 'Why it answers']] },
   { group: 'Under the hood', items: [['tokens', 'Tokens'], ['embeddings', 'Embeddings'], ['rag', 'Retrieval (RAG)']] },
   { group: 'For decision-makers', items: [['cost', 'Cost'], ['inference', 'Inference economics'], ['governance', 'What to ask']] },
 ]
@@ -48,7 +66,14 @@ function ContentsNav() {
               <ul className="mt-0.5 space-y-0.5">
                 {g.items.map(([id, label]) => (
                   <li key={id}>
-                    <a href={`#${id}`} className="text-[12px] text-sky-400 hover:underline">
+                    <a
+                      href={`?section=${id}`}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        pushSection(id)
+                      }}
+                      className="text-[12px] text-sky-400 hover:underline"
+                    >
                       {label}
                     </a>
                   </li>
@@ -86,6 +111,7 @@ export default function ExplainApp() {
   // Deep-link scroll (e.g. explain.html#cost) — re-runs once the model loads so it lands
   // correctly after the §1–4 demos hydrate and the layout above the target settles.
   useHashScroll(loaded)
+  useSectionRoute(SECTIONS, loaded)
 
   return (
     <div className="min-h-screen font-sans text-sm text-slate-200">
@@ -187,7 +213,58 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={5} id="tokens" title="How it reads text — tokens, and why letters trip it up">
+          <Section n={5} id="instruction" title="Why it answers instead of continuing">
+            <p>
+              A model trained on text does one thing: it carries on. Type half a sentence and it
+              finishes the sentence. So why does the assistant you use at work answer your question
+              instead of writing three more questions like it?
+            </p>
+            <p>
+              Because someone taught it to. After the long, expensive stage of reading a great deal of
+              text — <em>pretraining</em>, which produces a <em>base model</em> — the model is trained
+              again on a much smaller pile of examples that pair an instruction with the response that
+              should follow it. That step is called <em>instruction tuning</em>, or supervised
+              fine-tuning. Being helpful is not something a language model grows into. It is
+              demonstrated, thousands of times, until it copies the pattern.
+            </p>
+            <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
+              <summary className="cursor-pointer select-none text-slate-400">
+                Predict first: below, the same instruction goes to two models of the same size. One
+                read plain text; one read instructions with their answers. How differently can they
+                behave?
+              </summary>
+              <p className="mt-2">
+                Completely differently — and the one that read plain text does not fall silent or
+                refuse. It answers a question you did not ask, in the voice of whatever it read most.
+                That failure is more dangerous than a blank.
+              </p>
+            </details>
+            {loaded ? <InstructionDemo base={loaded.trainer} /> : <DemoLoading />}
+            <p>
+              A third stage usually follows. Once the model responds, human raters (or another model)
+              rank competing answers, and the model is nudged toward the ones people preferred. That is{' '}
+              <em>reinforcement learning from human feedback</em>, and it is where tone, refusals and
+              "helpful, harmless, honest" come from. Worth being precise about what it does: it shapes{' '}
+              <b>behaviour and preferences</b>, not truth. A model tuned this way is friendlier about
+              being wrong. It is not more often right — the hallucination above survives all three
+              stages untouched.
+            </p>
+            <p>
+              One more thing this explains. A chat is not a conversation the model remembers. Each turn,
+              the whole exchange so far is sent again as one long prompt, and the model continues it. The
+              "memory" of your chat is just text being re-read, which is why it{' '}
+              <a className="text-sky-400 hover:underline" href="#cost">costs what it costs</a> and why it{' '}
+              <a className="text-sky-400 hover:underline" href="#context">runs out</a>.
+            </p>
+            <Callout>
+              When you compare models, ask what the tuning taught, not just how big the model is. Two
+              systems on the same base model can differ entirely in what they refuse, how they format an
+              answer and whether they admit uncertainty. And when a vendor says their model is "aligned",
+              ask what it was aligned to do — that is a statement about behaviour, not about accuracy.
+            </Callout>
+          </Section>
+
+          <Section n={6} id="tokens" title="How it reads text — tokens, and why letters trip it up">
             <p>
               A model does not read letters. Text is cut into <em>tokens</em> before the model sees it,
               and production models use <strong>subword chunks</strong>. Counting letters, spelling and
@@ -201,7 +278,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={6} id="embeddings" title="Words as coordinates — how meaning becomes maths">
+          <Section n={7} id="embeddings" title="Words as coordinates — how meaning becomes maths">
             <p>
               Every token becomes a list of numbers: an <em>embedding</em>. Tokens with similar meaning
               end up close together. Nothing defines "king" for the model; its position is learned from
@@ -215,7 +292,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={7} id="rag" title="Giving it real facts — retrieval (RAG)">
+          <Section n={8} id="rag" title="Giving it real facts — retrieval (RAG)">
             <p>
               A model knows what was in its training text. It fills the gaps with plausible invention
               (§4). <strong>Retrieval</strong> closes the gap: find the relevant text, put it in the
@@ -248,7 +325,7 @@ export default function ExplainApp() {
             </div>
           </div>
 
-          <Section n={8} id="cost" title="What it costs to run">
+          <Section n={9} id="cost" title="What it costs to run">
             <p>
               You pay by the <em>token</em> — a few characters of text — for what goes in
               <strong> and</strong> what comes out. Cost scales with document length, answer length,
@@ -295,11 +372,11 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={9} id="inference" title="Inference economics — the same answer can cost very different amounts">
+          <Section n={10} id="inference" title="Inference economics — the same answer can cost very different amounts">
             <p>
-              Two levers move the bill more than the headline price per token:{' '}
-              <strong>which model</strong> runs a task, and <strong>how the context is handled</strong>{' '}
-              (the KV cache).
+              Three levers move the bill more than the headline price per token:{' '}
+              <strong>which model</strong> runs a task, <strong>how the context is handled</strong>{' '}
+              (the KV cache), and <strong>how precisely the weights are stored</strong>.
             </p>
             <p className="mt-3 font-semibold text-slate-200">1. Run the smallest model that does the job.</p>
             <SpecialistCostDemo />
@@ -314,7 +391,7 @@ export default function ExplainApp() {
             </Callout>
           </Section>
 
-          <Section n={10} id="governance" title="What you can't see, and questions to ask">
+          <Section n={11} id="governance" title="What you can't see, and questions to ask">
             <Governance />
           </Section>
 

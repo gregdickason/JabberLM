@@ -65,12 +65,31 @@ higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task 
 prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
 Bundled-model facts in `src/data/modelStats.ts`.
 
-The app is **eight pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
+**Numbers come from `src/data/modelStats.ts`, never from prose.** `BUNDLES` describes all nine
+bundled models (params, dims, vocab, the `gen:` script that makes it, and `taughtOn` — what it was
+actually trained on, which the copy must say before it says what the model does); `MEASURED` holds
+the accuracy figures, each naming what it was measured on. `npm run stats` (`scripts/gen-stats.mjs`,
+plain node — not vite-node) re-derives the structural half straight from the JSON files; measured
+figures stay hand-maintained because only a person can say what a number was measured on.
+
+**Deep links and prefill** exist for the companion blog series. Long pages take `?section=<id>`
+(`src/lib/sectionRoute.ts` + `useSectionRoute`), short hand-set ids with the old heading slugs kept
+as aliases (`src/lib/legacyAnchors.ts`) so published links survive. The scroll-spy uses
+`replaceState` and only a contents click `pushState`s — a history entry per section scrolled past
+would wreck the back button. Demos read their example from the URL via `src/lib/urlParams.ts`
+(`?prompt=`, `?list=`, `?a=&b=`, `?word=`, `?basket=`, `?ex=`, `?query=`); every parser falls back
+to the demo's default rather than erroring, and the same params work on embeds.
+
+The app is **ten pages** (each its own `main.tsx`): the live playground (`index.html`), a no-maths
 "New to AI" explainer (`explain.html` → `src/explain/`), a guided "how a transformer works" walk
 (`learn.html` → `src/learn/`), an interpretability lab (`lab.html` → `src/lab/`), a **tool use &
 harness** demo (`harness.html` → `src/harness/`), and the **capstone** warehouse-agent
 (`capstone.html` → `src/capstone/`), a **For teachers** reference (`teachers.html` →
-`src/teachers/`), and the **embeddable demo shell** (`embed.html` → `src/embed/`); plus a generated
+`src/teachers/`), the **glossary** (`glossary.html` → `src/glossary/`, one definition per term from
+`src/data/glossary.ts`, per-term anchors, linked from first uses across the teaching pages), the
+**series** index (`series.html` → `src/series/`, the blog-post reading order from
+`src/data/series.ts` — one registry so a post's title, status and Try-it link cannot drift), and the
+**embeddable demo shell** (`embed.html` → `src/embed/`); plus a generated
 long-form guide (`GUIDE.md` → `public/guide.html`) whose §1-5 cover the playground and §6-11 walk
 through each of the other pages (explain / learn / harness / lab / capstone / teachers+embeds). All but `embed` share one nav component,
 `src/components/SiteNav.tsx` (same destinations/order/labels, current page
@@ -103,8 +122,11 @@ and its px→rem conversion, and why any demo added to the registry must avoid p
 `{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
 query makes each embed countable in analytics.
 
-Ten demos ship: `tictactoe`, `harness-tools` (harness §1), `agent-loop` (§3), `prompt-injection` (§4),
-`lora`, `tokenizer`, `embeddings`, `adder` (harness §5), `head-ablation` and `warehouse`. All but
+Seventeen demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
+`agent-loop` (§3), `prompt-injection` (§4), `adder` (§5), `lora`, `tokenizer`, `embeddings`,
+`head-ablation`, `warehouse`, and the Part I/II spine added for the blog series — `next-token`,
+`attention`, `hallucination`, `instruction`, `rag`, `quantisation`. The explain-page frames run on
+the bundled three-skill model via `WithBundled` in `EmbedApp`. All but
 `tictactoe` declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
 use them would otherwise reflow the host page mid-demo; the box scrolls if a narrow host squeezes it)
 and a `font` (the harness page is sans, lab/capstone mono). Getting them out of their pages meant a

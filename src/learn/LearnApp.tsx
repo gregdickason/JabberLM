@@ -4,9 +4,10 @@ import { Section, Callout, card } from '../explain/ui'
 import { traceOf } from '../engine/generate'
 import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import { pca2 } from '../interp/pca'
-import { MODEL_STATS } from '../data/modelStats'
+import { BUNDLES, MODEL_STATS } from '../data/modelStats'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
+import { useSectionRoute } from '../lib/useSectionRoute'
 import type { Trace } from '../engine/trace'
 
 import TokenizerView from '../components/inspector/TokenizerView'
@@ -21,6 +22,50 @@ import Scatter from '../viz/Scatter'
 // honest thing to point at when we later say "it learned a concept".
 const EXAMPLE = 'sort 3 1 2 => '
 const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+// Short, stable section ids for deep links, in page order. The blog series links to these by
+// name; the long heading slugs they replaced still resolve, see LEARN_ALIASES.
+const SECTIONS = ['tokenize', 'embed', 'attention', 'mlp', 'logits', 'training', 'grokking', 'scale'] as const
+const LEARN_ALIASES = {
+  'text-becomes-numbers-tokenize': 'tokenize',
+  'each-number-becomes-a-vector-embed': 'embed',
+  'letting-tokens-look-at-each-other-attention': 'attention',
+  'each-token-does-its-own-thinking-the-mlp': 'mlp',
+  'turning-the-last-vector-into-a-guess-logits-softmax': 'logits',
+  'loss-gradients-and-held-out-data': 'training',
+  'grokking-the-moment-it-gets-it': 'grokking',
+  'bigger-models-emergent-features-and-fine-tuning': 'scale',
+}
+
+// The same shape at three sizes (section 8). GPT-2 and GPT-3 are the last generation whose
+// dimensions were published in full, so the table stops there rather than guessing.
+const M = BUNDLES.multitask
+const fmt = (x: number) => x.toLocaleString('en-GB')
+const DIMS: { name: string; params: string; d: string; layers: string; heads: string; ctx: string }[] = [
+  {
+    name: 'this model',
+    params: fmt(M.params),
+    d: fmt(M.dModel),
+    layers: fmt(M.nLayers),
+    heads: fmt(M.nHeads),
+    ctx: fmt(M.contextLen),
+  },
+  { name: 'GPT-2 small', params: '124,000,000', d: '768', layers: '12', heads: '12', ctx: '1,024' },
+  { name: 'GPT-3', params: '175,000,000,000', d: '12,288', layers: '96', heads: '96', ctx: '2,048' },
+]
+
+// First mention of a term links to its glossary entry. Quiet by design: a reader who already
+// knows the word should be able to read straight past it.
+function Gloss({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <a
+      className="underline decoration-dotted decoration-slate-500 underline-offset-2 hover:decoration-slate-300"
+      href={`./glossary.html#${id}`}
+    >
+      {children}
+    </a>
+  )
+}
 
 // A wide inspector view can overflow on a phone — let it scroll horizontally
 // inside a calm card instead of blowing out the page.
@@ -68,6 +113,8 @@ export default function LearnApp() {
     }
   }, [])
 
+  // ?section= deep links, with every legacy heading-slug anchor still resolving.
+  useSectionRoute(SECTIONS, loaded, LEARN_ALIASES)
   useHashScroll(loaded) // deep-link scroll once the model loads and sections render
 
   // One forward pass over the running example — every Act-1 view reads from this
@@ -124,6 +171,13 @@ export default function LearnApp() {
           example is <code className="font-mono text-slate-300">{EXAMPLE.trim()}</code>, because sorting is a task
           this model genuinely <em>learns</em> (Act 2).
         </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
+          Two kinds of number fill those grids. A <Gloss id="parameter">parameter</Gloss> is a number that
+          training chose and then left in place: one cell of one weight matrix. An activation is a number
+          this particular example produced on its way through. This model holds{' '}
+          {fmt(MODEL_STATS.params)} parameters, and training is the whole business of nudging every one of
+          them a little at a time.
+        </p>
         <p className="mt-3 text-[11px] text-slate-400">running on: {status}</p>
       </div>
 
@@ -138,35 +192,76 @@ export default function LearnApp() {
             blurb="A single pass through the model. The same example, viewed from each stage in turn — tokenize → embed → attention → MLP → next-character guess."
           />
 
-          <Section n={1} title="Text becomes numbers (tokenize)">
+          <Section n={1} id="tokenize" title="Text becomes numbers (tokenize)">
             <p>
               A model reads numbers, not letters. The first step maps every character to an integer id: its row
-              number in a fixed vocabulary. A "token" here is one character. Production models use word-pieces by the
-              same mechanism.
+              number in a fixed vocabulary. A <Gloss id="token">token</Gloss> here is one character. Production
+              models use word-pieces by the same mechanism.
             </p>
             <Viz>
               <TokenizerView trace={trace} tok={tok} />
             </Viz>
           </Section>
 
-          <Section n={2} title="Each number becomes a vector (embed)">
+          <Section n={2} id="embed" title="Each number becomes a vector (embed)">
             <p>
-              Each token id looks up a learned row of numbers: a <em>vector</em>. Over training, characters that
-              behave alike acquire similar vectors. Nothing enforces this; it comes from the data. That grid of
-              vectors, <em>plus</em> a position signal, is the <strong>residual stream</strong>, which every later
-              step reads from and writes back to.
+              Each token id looks up a learned row of numbers: a <em>vector</em>, and that row is the token's{' '}
+              <Gloss id="embedding">embedding</Gloss>. Over training, characters that behave alike acquire similar
+              vectors. Nothing enforces this; it comes from the data.
+            </p>
+            <p>
+              That grid of vectors, <em>plus</em> a position signal, is the{' '}
+              <Gloss id="residual-stream">residual stream</Gloss>. It is best read as a running total that each
+              position carries through the model: every later step reads the total, works out a small adjustment,
+              and <em>adds</em> that adjustment back in. Nothing is overwritten, which is why the grid below is
+              labelled "residual stream into layer 0" — it is the opening balance, and each layer edits it in
+              place. It also means every step has a straight, unobstructed path back to the first one, and that is
+              largely why a deep stack can be trained at all.
             </p>
             <Viz>
               <EmbeddingView trace={trace} tok={tok} />
             </Viz>
           </Section>
 
-          <Section n={3} title="Letting tokens look at each other (attention)">
+          <Section n={3} id="attention" title="Letting tokens look at each other (attention)">
             <p>
-              Each vector starts with no information about the others. <strong>Attention</strong> moves it. Every
+              Each vector starts with no information about the others.{' '}
+              <strong>
+                <Gloss id="attention">Attention</Gloss>
+              </strong>{' '}
+              moves it. Every
               position emits a <em>query</em> ("what am I looking for") and a <em>key</em> ("what do I offer").
               Comparing them decides who reads from whom. A <em>value</em> is what passes along. These are Q, K and
               V. Attention is the <em>only</em> step where information moves <em>between</em> characters.
+            </p>
+            <p>
+              "Comparing them" is a dot product: multiply a query by a key element by element, add the results
+              up, and you have one number saying how well the two match. Every query is compared with every key,
+              so a line of <span className="font-mono">n</span> characters produces an{' '}
+              <span className="font-mono">n × n</span> grid of scores: the grid titled{' '}
+              <span className="font-mono">scores = QKᵀ / √d</span> below, one row per query, one column per key.
+            </p>
+            <p>
+              Three things then happen to it. First it is divided by <span className="font-mono">√d</span>, where{' '}
+              <span className="font-mono">d</span> is the length of one query vector. Longer vectors put more
+              terms into that sum, so their dot products grow simply for being longer; dividing by{' '}
+              <span className="font-mono">√d</span> cancels the growth. Skip it and a wider model gets wilder
+              scores, and the softmax that follows would dump nearly all the weight onto a single cell.
+            </p>
+            <p>
+              Second, the <strong>causal mask</strong>. Position 5 may look at positions 0 to 5 and nothing later,
+              so every cell above the diagonal has <span className="font-mono">−∞</span> added to it, which is the
+              blue triangle in the <span className="font-mono">additive mask</span> grid. Two things follow. The model cannot cheat by reading the character
+              it is being asked to predict. And because each position depends only on what came before it, every
+              position in a line can be trained in the same pass, instead of one at a time.
+            </p>
+            <p>
+              Third, a <Gloss id="softmax">softmax</Gloss> along each row: exponentiate each score, then divide by
+              the row's total. Every row now adds up to 1, so it reads as a share — "this position takes 60% of
+              what it reads from there, 30% from there". That is the{' '}
+              <span className="font-mono">attention weights</span> grid. Multiply each row's weights by the
+              matching value vectors and add them up, and that weighted sum is what attention hands back to the
+              position: the last grid, <span className="font-mono">head output = attn · V</span>.
             </p>
             <details className="rounded border border-slate-700 bg-slate-900/50 p-2 text-[12px] text-slate-300">
               <summary className="cursor-pointer select-none text-slate-400">
@@ -178,6 +273,25 @@ export default function LearnApp() {
                 rows sit over the input digits.
               </p>
             </details>
+            <p className="mt-3">
+              All of that happens several times over, side by side. A <Gloss id="head">head</Gloss> is one slice
+              of the machinery: the {model.cfg.dModel} numbers in a vector are cut into {model.cfg.nHeads} slices
+              of {model.cfg.dModel / model.cfg.nHeads}, each slice gets its own Q, K and V and runs its own
+              attention over its own part, and the {model.cfg.nHeads} results are joined back end to end and
+              passed through one more learned matrix. The dropdown below is not switching model; it is showing
+              you one of {model.cfg.nHeads} attentions that all happened at once.
+            </p>
+            <p>
+              Why slice it up rather than do one big attention? Because one attention pattern is one weighted
+              average per position, and an average cannot do two jobs. A model that wants both "look at the
+              character just before me" and "look back at where this phrase last appeared" would have to blend the
+              two into something that does neither. Separate heads let each pattern specialise, and they do: the
+              grids change shape as you move the dropdown. Further on, in the{' '}
+              <a className="text-fuchsia-300 underline" href="./lab.html?tab=head-ablation">
+                interpretability lab
+              </a>
+              , you can find the individual head a skill depends on and switch that head off.
+            </p>
             <div className="mt-3 flex items-center gap-3 text-[11px] text-slate-400">
               <label className="flex items-center gap-1">
                 layer
@@ -214,30 +328,45 @@ export default function LearnApp() {
             </Viz>
           </Section>
 
-          <Section n={4} title="Each token does its own thinking (the MLP)">
+          <Section n={4} id="mlp" title="Each token does its own thinking (the MLP)">
             <p>
               After attention has gathered context, every position is processed on its own by a small
-              two-layer network — the <strong>MLP</strong>. It expands the vector to a wider space, applies
-              a non-linear squish, and contracts it back. If attention is "talk to your neighbours", the
-              MLP is "now think about what you heard". Stack attention + MLP a few times and you have the
-              whole model.
+              two-layer network — the <Gloss id="mlp">MLP</Gloss>. It expands the vector to a wider space,
+              applies a non-linear squish, and contracts it back. If attention is "talk to your neighbours",
+              the MLP is "now think about what you heard".
+            </p>
+            <p>
+              Both steps are preceded by a <strong>normalisation</strong>; the one before the MLP is the grid
+              below, labelled "LN2 output". It rescales the numbers in each position's vector to have mean 0 and a spread of about 1,
+              then stretches them by two learned numbers. It does no thinking. It just keeps the values going into
+              a step within a sane range, so one loud position cannot swamp the rest and the gradients coming back
+              stay a workable size. Read a layer as four moves, then: normalise, attend, add the result into the
+              residual stream; normalise again, run the MLP, add that in too.
+            </p>
+            <p>
+              Stack attention + MLP a few times and you have the whole model. Depth is what makes the extra
+              copies worth having: layer 1 never sees raw characters, it sees whatever layer 0 wrote into the
+              residual stream. So layer 0 can build something like "this position is a digit inside the list to be
+              sorted" and layer 1 can work in those terms, rather than starting again from the letters. This model
+              has {model.cfg.nLayers} layers. GPT-3 has 96.
             </p>
             <Viz>
               <MLPView trace={trace} tok={tok} layer={layer} />
             </Viz>
           </Section>
 
-          <Section n={5} title="Turning the last vector into a guess (logits → softmax)">
+          <Section n={5} id="logits" title="Turning the last vector into a guess (logits → softmax)">
             <p>
               At the end, the final vector for the <em>last</em> position is scored against every character
-              in the vocabulary — one <em>logit</em> each. <strong>Softmax</strong> turns those scores into
+              in the vocabulary — one <Gloss id="logit">logit</Gloss> each. <strong>Softmax</strong>, the same
+              operation as in section 3, turns those scores into
               probabilities that add up to 1, and the model picks from them. That's the entire output: a
               probability for every possible next character.
             </p>
             <Viz>
               <LogitsView trace={trace} tok={tok} sampled={built?.sampled} />
             </Viz>
-            <Callout>
+            <Callout title="Why that one guess is the whole machine">
               That single guess, repeated — feed the chosen character back in and run the whole pass again —
               is how all text is generated, one character at a time. For the plain-English version of this
               idea (and what it means for trusting the output), see the{' '}
@@ -260,24 +389,41 @@ export default function LearnApp() {
             blurb="Those vectors and weights start random. Training is the slow process of nudging them until the guesses get good — and, sometimes, until the model suddenly grasps the whole idea."
           />
 
-          <Section n={6} title="Loss, gradients, and held-out data">
+          <Section n={6} id="training" title="Loss, gradients, and held-out data">
             <p>
               Training shows the model an example, compares its guess to the real next character, and gets a
-              single number — the <strong>loss</strong> — for how wrong it was.{' '}
+              single number — the <Gloss id="loss">loss</Gloss> — for how wrong it was.{' '}
               <strong>Backpropagation</strong> then works out, for every one of the model's numbers, which
-              way to nudge it to make the loss a little smaller. Repeat millions of times.
+              way to nudge it to make the loss a little smaller. That direction, one per parameter, is the{' '}
+              <Gloss id="gradient">gradient</Gloss>. Then repeat: this model took{' '}
+              {fmt(MODEL_STATS.steps)} such steps, about {MODEL_STATS.minutes} minutes of{' '}
+              {MODEL_STATS.runtime} on a laptop. Real models run for months across thousands of machines, but the
+              step they repeat is this step.
             </p>
             <p>
-              A model can lower its loss by <em>memorising</em> the examples. Some data is therefore held back and
-              never trained on. Accuracy on those <strong>unseen</strong> cases measures what generalised rather than
-              what was memorised.
+              None of that has to be taken on trust. In the{' '}
+              <a className="text-sky-300 underline" href="./">
+                playground
+              </a>
+              , <strong>⇄ Step Through</strong> walks one training step matrix by matrix, forwards and then
+              backwards, on the real numbers. You see the very first gradient,{' '}
+              <code className="font-mono text-slate-300">∂loss/∂logits = softmax − one-hot(target)</code> — the
+              probabilities it just predicted, with 1 subtracted in the slot the right answer was in — then that
+              gradient travelling back through every matrix it came through, and finally the update itself,{' '}
+              <code className="font-mono text-slate-300">W_after = W_before − lr × grad</code>.
+            </p>
+            <p>
+              A model can lower its loss by <em>memorising</em> the examples. Some data is therefore{' '}
+              <Gloss id="held-out">held out</Gloss>: kept back and never trained on. Accuracy on those{' '}
+              <strong>unseen</strong> cases measures what generalised rather than what was memorised.
             </p>
           </Section>
 
-          <Section n={7} title="Grokking: the moment it 'gets it'">
+          <Section n={7} id="grokking" title="Grokking: the moment it 'gets it'">
             <p>
               Train this model on sorting and held-out accuracy stays near zero for a long time, then{' '}
-              <em>leaps</em>. Memorisation gives way to <em>generalisation</em>: an algorithm for <em>order</em>
+              <em>leaps</em>. That late jump is what <Gloss id="grokking">grokking</Gloss> names.
+              Memorisation gives way to <em>generalisation</em>: an algorithm for <em>order</em>
               rather than a lookup table. The jump on unseen lists is the evidence. The picture below is the
               mechanism: the model's 9 digit vectors, projected to 2-D, arrange themselves into a{' '}
               <strong>number line</strong>, <span className="font-mono">1…9</span> in order, unprompted.
@@ -302,7 +448,7 @@ export default function LearnApp() {
                 </div>
               </Viz>
             )}
-            <Callout>
+            <Callout title="See it happen live">
               The leap itself only happens <em>during</em> training, so it's worth seeing live: in the{' '}
               <a className="text-sky-300 underline" href="./">
                 playground
@@ -321,7 +467,7 @@ export default function LearnApp() {
             blurb="The same machinery, made bigger — and the levers that matter once you actually use these models."
           />
 
-          <Section n={8} title="Bigger models, emergent features, and fine-tuning">
+          <Section n={8} id="scale" title="Bigger models, emergent features, and fine-tuning">
             <p>
               Real LLMs are this exact stack — attention + MLP, repeated — just far wider and deeper, on
               whole-word tokens, trained on much of the internet. With scale, the features the model
@@ -332,6 +478,44 @@ export default function LearnApp() {
                 interpretability lab
               </a>
               .
+            </p>
+            <p>
+              The numbers are worth seeing next to each other, because the shape does not change with size. Only
+              the counts do.
+            </p>
+            <div className={card + ' mt-3 overflow-x-auto'}>
+              <table className="min-w-full border-collapse whitespace-nowrap text-left text-[12px] tabular-nums">
+                <thead className="text-slate-400">
+                  <tr>
+                    <th className="py-1 pr-4 font-medium">model</th>
+                    <th className="py-1 pr-4 font-medium">parameters</th>
+                    <th className="py-1 pr-4 font-medium">d_model</th>
+                    <th className="py-1 pr-4 font-medium">layers</th>
+                    <th className="py-1 pr-4 font-medium">heads</th>
+                    <th className="py-1 font-medium">context</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {DIMS.map((r) => (
+                    <tr key={r.name} className="border-t border-slate-800">
+                      <td className="py-1 pr-4 text-slate-200">{r.name}</td>
+                      <td className="py-1 pr-4 font-mono text-slate-300">{r.params}</td>
+                      <td className="py-1 pr-4 font-mono text-slate-300">{r.d}</td>
+                      <td className="py-1 pr-4 font-mono text-slate-300">{r.layers}</td>
+                      <td className="py-1 pr-4 font-mono text-slate-300">{r.heads}</td>
+                      <td className="py-1 font-mono text-slate-300">{r.ctx}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Every row is the stack you have just walked through: tokens in, vectors, attention, MLP, a
+              next-token guess. GPT-2 and GPT-3 are the last generation whose dimensions were published in full,
+              which is why the table stops there. Nobody outside the labs knows the width, depth or head count of
+              a current frontier model, and the figures quoted in the press are guesses, so there is no honest
+              fourth row to add. What is safe to say is that the columns kept going up and the shape stayed the
+              same.
             </p>
             <p>
               Many of the largest models go one step further with a <strong>Mixture of Experts</strong>:
@@ -350,10 +534,14 @@ export default function LearnApp() {
               </a>{' '}
               has a live calculator). Second, <strong>fine-tuning</strong>: retraining a giant model is
               hugely expensive, so instead you freeze it and train a tiny add-on (<strong>LoRA</strong>) —
-              far cheaper in memory and time, and enough to teach a new style or task. You can do that in
-              the playground and watch the adapter fill in.
+              far cheaper in memory and time, and enough to teach a new style or task. You can watch an adapter
+              learn, and flip it on and off over a frozen model, in the{' '}
+              <a className="text-sky-300 underline" href="./lab.html?tab=lora-fine-tuning">
+                lab
+              </a>
+              .
             </p>
-            <Callout>
+            <Callout title="The whole arc, in one paragraph">
               That's the whole arc: text → vectors → attention + MLP → a next-character guess; trained by
               loss and gradients until concepts <em>grok</em>; scaled up until rich features emerge; and
               adapted cheaply with fine-tuning. Now go{' '}

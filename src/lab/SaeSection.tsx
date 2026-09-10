@@ -8,6 +8,8 @@ import SectionIntro, { CAVEAT } from './SectionIntro'
 
 const TOTAL_STEPS = 400
 const CHUNK = 20
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 export default function SaeSection({
   trainer,
@@ -126,9 +128,14 @@ export default function SaeSection({
           { title: 'Scaling Monosemanticity', url: 'https://transformer-circuits.pub/2024/scaling-monosemanticity/' },
         ]}
       >
-        Because neurons are polysemantic, activations are decomposed into a larger set of cleaner units. A sparse autoencoder learns to rebuild a layer's activations from a few active features
-        out of many — here {nFeatures} features from a {sweep?.dModel ?? '?'}-dimensional residual
-        stream. The L1 penalty forces sparsity, which pushes each feature toward a single meaning. {CAVEAT}{' '}
+        Because neurons are polysemantic, activations are decomposed into a larger set of cleaner units. A{' '}
+        <a className={glossary} href="./glossary.html#sae">sparse autoencoder</a> learns to rebuild a
+        layer's activations from a few active features out of many — here {nFeatures} features from a{' '}
+        {sweep?.dModel ?? '?'}-dimensional{' '}
+        <a className={glossary} href="./glossary.html#residual-stream">residual stream</a>. The L1
+        penalty forces sparsity, which pushes each feature toward a single meaning. This is the main
+        technique labs currently use to find and <em>name</em> what a model has learned, so a behaviour
+        can be audited or steered rather than only observed. {CAVEAT}{' '}
         The features were <em>learned</em> by a model trained on all three skills. The probes below use clean{' '}
         <span className="font-mono">sort … =&gt; …</span> inputs so each feature reads clearly.
       </SectionIntro>
@@ -236,9 +243,12 @@ export default function SaeSection({
                   })}
                 </div>
                 <div className="mt-2 max-w-md text-[11px] text-slate-400">
-                  Compare these to the raw neurons in the first tab — features tend to fire on a more
-                  consistent pattern. There are far more features than residual dimensions, which is the
-                  point: superposition, unpacked.
+                  Compare these to the raw neurons in{' '}
+                  <a className={glossary} href="./lab.html?tab=neurons">the neurons tab</a> — features
+                  tend to fire on a more consistent pattern. There are far more features than residual
+                  dimensions, which is the point:{' '}
+                  <a className={glossary} href="./glossary.html#superposition">superposition</a>,
+                  unpacked.
                 </div>
               </div>
             </div>

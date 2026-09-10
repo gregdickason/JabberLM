@@ -1,3 +1,5 @@
+import { BUNDLES } from '../data/modelStats'
+
 export interface Paper {
   title: string
   url: string
@@ -37,4 +39,6 @@ export default function SectionIntro({
 }
 
 export const CAVEAT =
-  'This is a ~200k-parameter character model, so its "features" are low-level (spaces, letter pairs, capitals, vowel runs), not rich concepts. It demonstrates the method and the intuition, not Claude-scale meaning.'
+  `This is a ${BUNDLES.multitask.paramsLabel}-parameter character model, so its "features" are low-level ` +
+  '(spaces, letter pairs, capitals, vowel runs), not rich concepts. It demonstrates the method and the ' +
+  'intuition, not Claude-scale meaning.'

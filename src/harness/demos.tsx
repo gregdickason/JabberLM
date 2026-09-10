@@ -1,14 +1,8 @@
 import { useEffect, useState } from 'react'
 import { deserialize, type SavedModel } from '../engine/persist'
+import { paramString } from '../lib/urlParams'
 import { Trainer } from '../engine/trainer'
-import {
-  runHarness,
-  runAgent,
-  runAgentInjected,
-  type HarnessTrace,
-  type AgentTrace,
-  type InjectedTrace,
-} from './runHarness'
+import { harnessDispatch, runAgent, runAgentInjected, runHarness, type AgentTrace, type HarnessTrace, type InjectedTrace } from './runHarness'
 import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
 import { card } from '../explain/ui'
 
@@ -111,7 +105,9 @@ export function ToolCallDemo({
   onRun?: () => void
   autoRun?: boolean
 }) {
-  const [instruction, setInstruction] = useState('total of 6 9 2')
+  const [instruction, setInstruction] = useState(() =>
+    paramString(location.search, 'ex', 'total of 6 9 2'),
+  )
   const [trace, setTrace] = useState<HarnessTrace | null>(null)
   const [useHarness, setUseHarness] = useState(true)
 
@@ -215,7 +211,9 @@ export function ToolCallDemo({
 
 /** §3 — the same call, looped: the harness feeds each result back until the model says done. */
 export function AgentLoopDemo({ trainer, autoRun = false }: { trainer: Trainer; autoRun?: boolean }) {
-  const [agentInstruction, setAgentInstruction] = useState('sort 6 9 2 then reverse it')
+  const [agentInstruction, setAgentInstruction] = useState(() =>
+    paramString(location.search, 'ex', 'sort 6 9 2 then reverse it'),
+  )
   const [agentTrace, setAgentTrace] = useState<AgentTrace | null>(null)
 
   function runLoop(text: string) {
@@ -361,5 +359,59 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
       )}
 
     </>
+  )
+}
+
+// --- §2: a deliberately malformed model output, and the harness catching it ---------------
+// Shared with embed.html?demo=flaky-harness. The samples are hand-written rather than sampled
+// from the model, because we need each failure MODE on demand; the page says so.
+const FLAKY_SAMPLES: { raw: string; note: string }[] = [
+  { raw: 'max(4 1 7 = 7', note: 'dropped the closing bracket' },
+  { raw: 'mxa(4 1 7) = 7', note: 'mistyped the tool name' },
+  { raw: 'sum() = ', note: 'forgot the arguments' },
+  { raw: 'hmm, i think max(4 1 7)?', note: 'a valid call buried in chatter — the harness still finds it' },
+]
+
+export function FlakyDemo({ autoRun = false }: { autoRun?: boolean }) {
+  const [idx, setIdx] = useState(0)
+  const [flaky, setFlaky] = useState<{ raw: string; note: string; res: ReturnType<typeof harnessDispatch> } | null>(null)
+
+  function step() {
+    const s = FLAKY_SAMPLES[idx % FLAKY_SAMPLES.length]
+    setFlaky({ raw: s.raw, note: s.note, res: harnessDispatch(s.raw) })
+    setIdx((i) => i + 1)
+  }
+
+  // A frame with no prose has to show the thing working on arrival; the page waits for a click.
+  useEffect(() => {
+    if (autoRun) step()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  return (
+    <div>
+      <button className={btn + ' border-amber-600 bg-amber-900/30 text-amber-200'} onClick={step}>
+        Simulate a flaky model →
+      </button>
+      {flaky && (
+        <div className={card + ' mt-3 space-y-1.5 text-[12px]'}>
+          <div>
+            <span className="text-fuchsia-300">🧠 a model might emit</span>{' '}
+            <span className="text-slate-400">({flaky.note}):</span>
+            <div className="mt-0.5 font-mono text-[13px] text-fuchsia-200">{flaky.raw}</div>
+          </div>
+          <div>
+            <span className="text-sky-300">⚙️ the harness:</span>{' '}
+            {flaky.res.error ? (
+              <span className="text-red-300">✗ caught it — {flaky.res.error} → it would re-prompt or fall back (no bad tool ran)</span>
+            ) : (
+              <span className="text-emerald-300">
+                ✓ found a valid call anyway: {flaky.res.parsed?.tool}([{flaky.res.parsed?.args.join(', ')}]) = {flaky.res.toolResult}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

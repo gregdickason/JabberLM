@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react'
 import type { Trainer } from '../engine/trainer'
 import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import { card } from './ui'
+import { paramString } from '../lib/urlParams'
 
 // "What 'context' is and why it forgets." Highlights which earlier characters the
 // model leaned on (attention) when predicting the next one.
 export default function ContextDemo({ trainer }: { trainer: Trainer }) {
   const { model, tok } = trainer
-  const [text, setText] = useState('the slithy toves did gyre and ')
+  const [text, setText] = useState(() =>
+    paramString(location.search, 'prompt', 'the slithy toves did gyre and '),
+  )
 
   const view = useMemo(() => {
     let ids = tok.encode(text)

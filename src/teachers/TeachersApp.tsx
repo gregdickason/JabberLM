@@ -43,9 +43,15 @@ const ROUTES = [
     label: 'A lecture',
     body: (
       <>
-        <a className={a} href="./explain.html">New to AI</a> (tokens, embeddings, why it makes things up)
+        <a className={a} href="./explain.html">New to AI</a> (tokens, embeddings, why it makes things up),
+        ending on{' '}
+        <a className={a} href="./explain.html?section=instruction">§5, “why it answers instead of continuing”</a>{' '}
         → <a className={a} href="./harness.html">Tools &amp; agents</a> §1 and §3 → the{' '}
-        <a className={a} href="./capstone.html">capstone</a> game. Talk over the first, run the last two live.
+        <a className={a} href="./capstone.html">capstone</a> game. Talk over the explain page but{' '}
+        <b>run §5 live</b>: the same instruction goes to two models within 2,000 parameters of each
+        other, and the one trained
+        on plain text carries on writing — it answers a question nobody asked. That is the
+        pretraining → instruction-tuning story with two real models rather than a diagram.
       </>
     ),
   },
@@ -59,7 +65,11 @@ const ROUTES = [
         <a className={a} href="./">Playground</a> (everyone trains a model) →{' '}
         <a className={a} href="./harness.html">Tools &amp; agents</a> →{' '}
         <a className={a} href="./lab.html">Lab</a> → <a className={a} href="./capstone.html">Capstone</a>.
-        Give the playground and the lab the most time — they are the parts people remember.
+        Give the playground and the lab the most time — they are the parts people remember. If the room
+        needs the pretraining → instruction-tuning → RLHF sequence, take{' '}
+        <a className={a} href="./explain.html?section=instruction">explain §5</a> slowly on the way past:
+        it is the one place on the site where two models of the same architecture and near-identical
+        size answer the same instruction differently, and the difference is what they were trained on.
       </>
     ),
   },
@@ -108,6 +118,46 @@ const PAGES = [
     audience: 'everyone',
     moment: 'Turn the legal-move check off and let the agent break the game in two moves.',
   },
+]
+
+// Deep links: every long page resolves `?section=<id>`, the lab `?tab=<slug>`. Listed here in
+// full because a session leader building a deck needs the actual ids, not the idea of them.
+const SECTIONS = [
+  {
+    page: 'explain.html',
+    href: './explain.html',
+    key: '?section=',
+    ids: 'prediction · randomness · context · hallucination · instruction · tokens · embeddings · rag · cost · inference · governance',
+  },
+  {
+    page: 'harness.html',
+    href: './harness.html',
+    key: '?section=',
+    ids: 'tools · robust · loop · injection · reasoning-loop',
+  },
+  {
+    page: 'capstone.html',
+    href: './capstone.html',
+    key: '?section=',
+    ids: 'play · inside · warehouse · train · concepts · recap',
+  },
+  {
+    page: 'lab.html',
+    href: './lab.html',
+    key: '?tab=',
+    ids: 'one slug per tab — the tab strip on the page names them',
+  },
+]
+
+// Prefill: the demo opens on YOUR example rather than its default. Same keys on the full
+// pages and on the embeds.
+const PREFILL = [
+  { k: '?prompt=', what: 'the text a completion demo starts on', eg: 'explain.html?section=hallucination&prompt=the contract states that' },
+  { k: '?list=', what: 'a three-digit list, for the sorting demos', eg: 'embed.html?demo=lora&list=6 9 2' },
+  { k: '?a= &b=', what: "the adder's two numbers", eg: 'harness.html?section=reasoning-loop&a=23498&b=94321' },
+  { k: '?word=', what: 'the word the embeddings demo looks up', eg: 'explain.html?section=embeddings&word=paris' },
+  { k: '?basket=', what: 'the order the warehouse agent packs', eg: 'capstone.html?section=warehouse&basket=A B C' },
+  { k: '?ex=', what: 'the instruction handed to the tool-caller', eg: 'harness.html?section=tools&ex=total of 6 9 2' },
 ]
 
 /** teachers.html?lesson=<id> — the written lesson for one embeddable demo. */
@@ -279,6 +329,19 @@ export default function TeachersApp() {
             </tbody>
           </table>
         </div>
+        <p className="mt-3 text-[13px] text-slate-400">
+          Two further pages are references rather than teaching stops, so they are not in the table and
+          nobody needs to visit them in order.{' '}
+          <a className={a} href="./glossary.html">Glossary</a> defines every term the site uses, plainly,
+          each entry linking to the demo it comes from — this is the link to put in the chat or on your
+          last slide, for whoever loses a word halfway through and stops following. Individual terms are
+          addressable, so you can send someone straight to one:{' '}
+          <code className="font-mono text-fuchsia-300">glossary.html#logit</code>.{' '}
+          <a className={a} href="./series.html">Series</a> is the reading order for the written version —
+          26 posts in five parts, each with a link into the demo it describes — and is what to hand
+          anyone who asks what to read next. Most posts are still marked planned; the demos they point
+          at already work.
+        </p>
       </Sec>
 
       <Sec>
@@ -353,7 +416,81 @@ export default function TeachersApp() {
       </Sec>
 
       <Sec>
-        <H id="stage" n={4}>Running it live</H>
+        <H id="links" n={4}>Link straight to the moment</H>
+        <p className="text-slate-300">
+          The long pages take a <code className="font-mono text-fuchsia-300">?section=</code>, and most
+          demos take a parameter that prefills them. Together those mean a link can land on the exact
+          example you are about to talk about. This is worth half an hour of preparation: you can build a
+          deck in which every link opens the thing you want on screen, rather than typing an example into
+          a demo in front of a room and hoping it behaves. It also survives being handed to someone else
+          to present.
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-[13px]">
+            <thead>
+              <tr>
+                <th className={th}>page</th>
+                <th className={th}>key</th>
+                <th className={th}>values</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SECTIONS.map((s) => (
+                <tr key={s.page}>
+                  <td className={td + ' whitespace-nowrap'}>
+                    <a className={a + ' font-mono'} href={s.href}>{s.page}</a>
+                  </td>
+                  <td className={td + ' whitespace-nowrap font-mono text-fuchsia-300'}>{s.key}</td>
+                  <td className={td + ' font-mono text-[12px] text-slate-400'}>{s.ids}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <h3 className="mt-5 font-semibold text-slate-200">Prefilling a demo</h3>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full min-w-[40rem] border-collapse text-[13px]">
+            <thead>
+              <tr>
+                <th className={th}>key</th>
+                <th className={th}>what it sets</th>
+                <th className={th}>example</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PREFILL.map((p) => (
+                <tr key={p.k}>
+                  <td className={td + ' whitespace-nowrap font-mono text-fuchsia-300'}>{p.k}</td>
+                  <td className={td + ' text-slate-300'}>{p.what}</td>
+                  <td className={td + ' font-mono text-[12px] text-slate-400'}>{p.eg}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-[13px] text-slate-400">
+          The same keys work on the embeds, which is where they earn their keep:{' '}
+          <code className="font-mono">embed.html?demo=adder&amp;a=23498&amp;b=94321</code> puts one
+          specific sum in your own slide, and the same demo with different numbers is the next slide. A
+          value a demo cannot use is ignored and it opens on its usual default, so a mistyped link
+          degrades to the ordinary page rather than breaking in front of people.
+        </p>
+
+        <h3 className="mt-5 font-semibold text-slate-200">Why <code className="font-mono text-fuchsia-300">?section=</code> and not <code className="font-mono">#section</code></h3>
+        <p className="mt-2 text-slate-300">
+          Both scroll to the same place — the older <code className="font-mono">#hash</code> links still
+          resolve — but only one is countable. The site's analytics record the path and the query string,
+          so <code className="font-mono text-fuchsia-300">explain.html?section=instruction</code> arrives
+          as a visit to that section, while the same link written with a <code className="font-mono">#</code>{' '}
+          is indistinguishable from someone landing at the top of the page. If you want to know whether
+          the links in your handout were opened — or which of them was — send the{' '}
+          <code className="font-mono text-fuchsia-300">?section=</code> form.
+        </p>
+      </Sec>
+
+      <Sec>
+        <H id="stage" n={5}>Running it live</H>
         <ul className="space-y-2 text-slate-300">
           <li>
             <b className="text-slate-200">Open every page once before you start.</b> Each demo fetches its
@@ -378,11 +515,17 @@ export default function TeachersApp() {
             <b className="text-slate-200">Laptops are better than phones</b> for the lab and the
             playground. The explain page and the tic-tac-toe demo are fine on a phone.
           </li>
+          <li>
+            <b className="text-slate-200">Keep the glossary in a second tab.</b> Someone always loses a
+            term — logit, residual stream, temperature — and then stops following. Paste{' '}
+            <a className={a} href="./glossary.html">the glossary</a> into the chat rather than stopping
+            the room, and carry on.
+          </li>
         </ul>
       </Sec>
 
       <Sec>
-        <H id="honesty" n={5}>“Is this a real one?”</H>
+        <H id="honesty" n={6}>“Is this a real one?”</H>
         <p className="text-slate-300">
           Worth answering carefully, because both halves are true. These models are{' '}
           <b>tiny</b> — 24,000 to 130,000 parameters, against hundreds of billions in a frontier model,
@@ -404,7 +547,7 @@ export default function TeachersApp() {
       </Sec>
 
       <Sec>
-        <H id="licence" n={6}>Licence, credit, and getting help</H>
+        <H id="licence" n={7}>Licence, credit, and getting help</H>
         <p className="text-slate-300">
           MIT-licensed. Embed it, screenshot it, fork it, put it in a paid course — no permission needed.
           A link back to <a className={a} href="https://jabberlm.com">jabberlm.com</a> is appreciated and
@@ -423,7 +566,9 @@ export default function TeachersApp() {
         </p>
         <footer className="mt-6 border-t border-slate-800 pt-4 text-[12px] text-slate-400">
           Teaching with it? The <a className={a} href="./guide.html">long-form guide</a> is the written
-          version of the whole site, useful as a handout or pre-reading.
+          version of the whole site, useful as a handout or pre-reading. For the people who want to keep
+          going afterwards, send them the <a className={a} href="./series.html">series</a> — the posts in
+          reading order, each one landing on a demo they can run.
         </footer>
       </Sec>
     </div>

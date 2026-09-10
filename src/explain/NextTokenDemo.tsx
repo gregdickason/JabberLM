@@ -3,12 +3,15 @@ import type { Trainer } from '../engine/trainer'
 import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import BarChart from '../viz/BarChart'
 import { btn, card } from './ui'
+import { paramString } from '../lib/urlParams'
 
 // "It predicts the next piece of text." Shows the model's probability for each
 // possible next character given what's typed so far, and lets you let it write.
 export default function NextTokenDemo({ trainer }: { trainer: Trainer }) {
   const { model, tok } = trainer
-  const [text, setText] = useState("'Twas brillig, and the ")
+  const [text, setText] = useState(() =>
+    paramString(location.search, 'prompt', "'Twas brillig, and the "),
+  )
 
   const dist = useMemo(() => {
     let ids = tok.encode(text)

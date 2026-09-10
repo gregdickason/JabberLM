@@ -23,6 +23,8 @@ const TEMPERATURE = 2
 const SFT = '#f87171' // red — the one that forgets
 const REPLAY = '#34d399' // emerald — keeps both
 const BASE = '#64748b' // grey reference
+const glossary =
+  'text-slate-100 underline decoration-dotted decoration-slate-500 underline-offset-2 hover:text-fuchsia-200'
 
 async function loadBase(): Promise<SavedModel | null> {
   try {
@@ -215,7 +217,8 @@ export default function ForgettingSection() {
           { title: 'Kirkpatrick et al. (2017) — Overcoming catastrophic forgetting', url: 'https://arxiv.org/abs/1612.00796' },
         ]}
       >
-        Teaching a model a <b>new</b> skill can quietly erase an <b>old</b> one — "catastrophic forgetting".
+        Teaching a model a <b>new</b> skill can quietly erase an <b>old</b> one —{' '}
+        "<a className={glossary} href="./glossary.html#catastrophic-forgetting">catastrophic forgetting</a>".
         The bundled model sorts <b>ascending</b> (<span className="font-mono">sort 6 9 2 =&gt; 2 6 9</span>,
         ~{baseAcc}%). We teach it a new verb, "<b><span className="font-mono">tros</span></b>" ("sort" backwards
         = descending), two ways and watch what happens to the old "<span className="font-mono">sort</span>"{' '}
