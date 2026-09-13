@@ -289,6 +289,10 @@ export default function AdderSection({ n, embed = false }: { n: number; embed?: 
               <em>can</em> do. Writing the working out in one pass (mode 2 above) is{' '}
               <b>chain of thought</b>, and the reasoning models in the headlines are that idea trained in
               rather than prompted; the loop here is the same trick with the harness supplying the paper.
+              Both work for the same reason: one pass does a fixed amount of work, and the only way to
+              spend more is to take more passes. A chain buys compute one token at a time and the budget
+              is finite, which is why a chain can be too short for a hard problem, and why the adder gives
+              every column its own fresh pass instead of asking one pass to hold them all.
               When you buy an "agent", ask which of those two you are getting — and what happens when one
               step is wrong. A chain multiplies: at <b>99%</b> per column, a {DEMO_WIDTH}-digit sum is right{' '}
               <b>{Math.round(0.99 ** DEMO_WIDTH * 100)}%</b> of the time. That is why every step has to be

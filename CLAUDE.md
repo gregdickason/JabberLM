@@ -298,7 +298,14 @@ task is **`src/data/addition.ts`**: the primitive `add 8 1 0 => 9 0` (digit+digi
 `src/harness/runAdder.ts` runs the loop: a **fresh, constant 13-char prompt per column**, right to
 left, keeping the model's carry as state.
 
-**INVARIANT: the harness may remember and route, but must never compute.** `runAdderWith(solve, …)`
+**INVARIANT: the harness may remember and route, but must never compute.** (Its theoretical
+reason is now stated on the harness page: one forward pass does a fixed amount of work, O(N²·d),
+regardless of the task, so anything harder must go to more passes or to the harness; and a second model
+verifying the first has the same fixed budget, so trust has to come from execution, not from a model's
+opinion. Sikka & Sikka, "Hallucination Stations". The honest version — chain-of-thought lifts the
+per-pass bound only linearly per token, Merrill & Sabharwal — is exactly what the adder shows: one pass
+fails at 4 digits, the loop succeeds at 25. The **Limits** lab group in `docs/OPUS-LIMITS-PROMPT.md`
+makes it measurable.) `runAdderWith(solve, …)`
 takes the column solver as a parameter precisely so tests can prove this — a solver wrong on one
 column yields an answer wrong in exactly that digit; a solver that always says `0 0` yields zeros.
 If the harness were secretly adding, those tests would pass wrongly. Same rule as the tic-tac-toe

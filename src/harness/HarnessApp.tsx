@@ -64,6 +64,14 @@ export default function HarnessApp() {
           <code className="font-mono text-slate-300">sum(6&nbsp;9&nbsp;2)</code>. JavaScript computes{' '}
           <code className="font-mono text-slate-300">17</code>.
         </p>
+        <p className="mt-3 text-[13px] leading-relaxed text-slate-400">
+          There is a rule underneath this whole page. <b>A model does the same amount of work on every
+          question, however hard the question is.</b> One pass through the model costs a fixed number of
+          operations, set by the size of the input and the size of the model, and the difficulty of what
+          you asked does not enter into it. So anything that needs more computation than one pass can
+          hold has to be broken into pieces the model can do, or handed to something whose effort grows
+          with the problem. That is what a harness is for.
+        </p>
         <p className="mt-3 text-[11px] text-slate-400">{status || 'model loaded — try an instruction below'}</p>
       </div>
 
@@ -136,6 +144,22 @@ export default function HarnessApp() {
               A harness does three separable jobs, all three on this page: it <b>checked</b> what the
               model produced, it <b>ran the tool</b> the model asked for, and in the adder it{' '}
               <b>held the state</b> the model could not. Most systems need all three.
+            </p>
+            <p>
+              The fixed-work rule from the top of the page decides where each job has to live. Checking
+              belongs outside the model for the same reason computing does: verifying an answer is
+              often at least as much work as producing it, and a second model asked to review the first
+              has exactly the same fixed budget and exactly the same blind spot. A review by another
+              model is not independent review. Trust comes from something that actually runs — the
+              tool, the test, the simulation — and whose effort scales with the problem, not from a
+              model's report of its own confidence, and not from another model's.
+            </p>
+            <p>
+              Handing work off is not a trick to get round the model. For a reader with a fixed budget,
+              the result of running the code is new information it could not have produced by thinking
+              harder. The{' '}
+              <a className="text-sky-400 hover:underline" href="./lab.html">lab</a> is where the rule
+              becomes measurable on this site's own models.
             </p>
             <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-400">
               This tool-caller was trained in the browser's own engine on{' '}
