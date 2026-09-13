@@ -35,3 +35,30 @@ describe('lab tab routing', () => {
     expect(tabFromUrl('?other=1', '')).toBe(DEFAULT_TAB)
   })
 })
+
+describe('the Limits tabs', () => {
+  it('gives each of them the slug the harness page and the series registry link to', () => {
+    expect(slug('what fits')).toBe('what-fits')
+    expect(slug('structure vs noise')).toBe('structure-vs-noise')
+    expect(slug("verifier's budget")).toBe('verifiers-budget')
+  })
+
+  it('drops apostrophes rather than turning them into a separator', () => {
+    // `verifier-s-budget` would be an ugly, easily-mistyped URL, and the explain page's slug
+    // already strips them — the two were inconsistent until the Limits group needed one.
+    expect(slug("verifier's budget")).not.toContain('-s-')
+  })
+
+  it('leaves every pre-existing slug untouched', () => {
+    expect(slug('dictionary (SAE)')).toBe('dictionary-sae')
+    expect(slug('injury & recovery')).toBe('injury-recovery')
+    expect(slug('reward learning (RLVR)')).toBe('reward-learning-rlvr')
+    expect(slug('LoRA fine-tuning')).toBe('lora-fine-tuning')
+  })
+
+  it('resolves them from a ?tab= and from a legacy #hash', () => {
+    expect(tabFromUrl('?tab=what-fits', '')).toBe('what fits')
+    expect(tabFromUrl('', '#verifiers-budget')).toBe("verifier's budget")
+    expect(tabFromUrl('?tab=structure-vs-noise', '')).toBe('structure vs noise')
+  })
+})

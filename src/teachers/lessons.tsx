@@ -618,4 +618,222 @@ export const LESSONS: Record<DemoId, Lesson> = {
       { q: 'Is a retry always the answer?', a: <>No. Retries cost money and can loop, so a harness needs an attempt limit and a defined path when it is reached — usually a fallback or a human.</> },
     ],
   },
+
+  'what-fits': {
+    headline: 'A model cannot try harder. A class watches the same weights fail and then succeed, on budget alone.',
+    model: (
+      <>
+        The adder — {BUNDLES.adder.params.toLocaleString()} parameters, context window{' '}
+        {BUNDLES.adder.contextLen} characters. Trained on the 200 single-column addition facts{' '}
+        <b>and</b> 6,000 whole sums of up to four digits <b>and</b> 6,000 worked traces of them.
+        Say that last part out loud before you start: whole four-digit sums were in its training
+        data. Everything you are about to watch it fail at, it was taught.
+      </>
+    ),
+    tests: (
+      <>
+        That one forward pass costs a fixed amount of work, set by the length of the input and the
+        size of the model, and never by how hard the question is. A model has no way to concentrate.
+        So the same weights can fail and succeed on the same sum depending only on how many passes
+        the answer is allowed to take.
+      </>
+    ),
+    steps: [
+      {
+        do: 'Let the sweep finish — it measures three ways of asking, across ten widths.',
+        see: (
+          <>
+            Three curves from <em>one</em> set of weights. Nothing is trained here; nothing is
+            learned between the lines.
+          </>
+        ),
+      },
+      {
+        do: 'Read the red line first, then say that it was trained on four-digit sums.',
+        see: (
+          <>
+            It is near zero almost everywhere. This is the moment to kill the idea that a wrong
+            answer means missing knowledge. The knowledge was supplied and the answer is still wrong.
+          </>
+        ),
+      },
+      {
+        do: 'Now the amber line, at one and two digits.',
+        see: (
+          <>
+            Writing the working out is <b>better</b> than answering outright. That is chain of
+            thought, and this is the honest evidence that it does something real: more passes buy
+            computation the model did not otherwise have.
+          </>
+        ),
+      },
+      {
+        do: 'Follow amber to three digits, then to six.',
+        see: (
+          <>
+            It collapses at three — while the working still fits easily in the window, so this is
+            the model losing its place, not running out of room. By six, the working would need more
+            characters than the window holds and the row reads <b>no room</b>. Two different limits,
+            and the second one is arithmetic you can do in advance.
+          </>
+        ),
+      },
+      {
+        do: 'Finally the green line, at 25 digits.',
+        see: (
+          <>
+            Perfect, on sums far longer than anything it trained on, because the harness gives every
+            column its own pass with a prompt of constant length. Ask the room what changed about the
+            model. Nothing did.
+          </>
+        ),
+      },
+    ],
+    mechanism: (
+      <>
+        Attention compares every position with every other, so a pass over N tokens costs on the
+        order of N² work for a model of a given width — fixed once the input is fixed. Generating
+        more tokens is the only way to spend more, which is why chain of thought helps and why it is
+        bounded by the context window. A harness escapes both by starting a fresh pass per step and
+        keeping the state itself.
+      </>
+    ),
+    questions: [
+      {
+        q: 'So transformers cannot do hard problems?',
+        a: (
+          <>
+            That is the overclaim to avoid, and the amber line is why. Extra passes genuinely extend
+            what fits, which is exactly what reasoning models are trained to exploit. What is true is
+            narrower and more useful: work per pass is fixed, passes are the only currency, and the
+            supply is finite.
+          </>
+        ),
+      },
+      {
+        q: 'Would a bigger model fix the red line?',
+        a: (
+          <>
+            It would raise it, and the shape would stay. A bigger model does more work per pass but
+            still the same amount whatever you ask, so there is still a width where one pass is not
+            enough — further out, and still there.
+          </>
+        ),
+      },
+      {
+        q: 'Is this why my agent framework loops?',
+        a: (
+          <>
+            Yes, and it is the useful way to think about the design. Each turn round the loop is a
+            fresh budget. A well-built harness spends those turns on steps that are individually
+            checkable, rather than asking for one heroic answer.
+          </>
+        ),
+      },
+    ],
+  },
+
+  'verifiers-budget': {
+    headline: 'A checker with a perfect error-catch rate, which is nonetheless worthless.',
+    model: (
+      <>
+        The same {BUNDLES.adder.paramsLabel}-parameter adder, now shown a sum together with a
+        claimed answer and asked whether to accept it. It was never trained to say yes or no, so
+        "accepting" means its own recomputed answer matched the claim. That is what checking by
+        re-computation costs, and it is the only check this model can actually perform. Wrong claims
+        are made by flipping one digit of the true answer.
+      </>
+    ),
+    tests: (
+      <>
+        Whether a model can be trusted to check work — its own, or another model's. Verifying is not
+        automatically cheaper than producing, and a reviewer bounded the same way as the author fails
+        in the same place, fluently.
+      </>
+    ),
+    steps: [
+      {
+        do: 'Before running it, ask the room how they would score a reviewer.',
+        see: (
+          <>
+            Almost everyone proposes some version of "how many errors did it catch". Write that on
+            the board; you are about to break it.
+          </>
+        ),
+      },
+      {
+        do: 'Run the sweep and read only the grey line on the left.',
+        see: (
+          <>
+            <b>100% at every width.</b> It caught every wrong answer, and kept doing so as the sums
+            got harder. By the metric the room just proposed, this is a perfect reviewer that does
+            not degrade. Let that sit for a moment.
+          </>
+        ),
+      },
+      {
+        do: 'Now add the green line.',
+        see: (
+          <>
+            It rejects correct answers just as eagerly. The checker has not become strict — it is
+            saying no to everything, because its own recomputation disagrees with every claim put to
+            it. Perfect error detection, zero value.
+          </>
+        ),
+      },
+      {
+        do: 'Move to the right chart and compare the four methods.',
+        see: (
+          <>
+            Only the gap between accepting truth and accepting lies carries information. Checking in
+            one pass has almost none. The harness loop keeps it, because its budget grows with the
+            problem. JavaScript is exact and costs the model nothing.
+          </>
+        ),
+      },
+    ],
+    mechanism: (
+      <>
+        The verifier has exactly the budget it had for generating, and its natural method is to
+        re-derive the answer and compare. So its verdict inherits the generator's failure mode
+        precisely. This is the argument against relying on a second model to review the first: it is
+        not an independent check, it is the same check run twice, and the second run is as likely to
+        be wrong as the first.
+      </>
+    ),
+    questions: [
+      {
+        q: 'But LLM-as-judge works in practice — we use it.',
+        a: (
+          <>
+            It works where judging really is easier than doing: tone, format, whether an answer is on
+            topic, whether a citation is present. It stops working where checking needs the same work
+            as solving. The practical rule is to know which of the two your judge is doing, and to
+            measure it on correct answers as well as wrong ones.
+          </>
+        ),
+      },
+      {
+        q: 'How do we avoid the trap in our own evaluations?',
+        a: (
+          <>
+            Always report both halves. A checker that never passes good work is as broken as one that
+            never catches bad work, and only one of those shows up in a catch rate. Here the false
+            accept rate is zero at every width, which looks like success and is an artefact of
+            refusing everything.
+          </>
+        ),
+      },
+      {
+        q: 'So what should we trust?',
+        a: (
+          <>
+            Something that runs: the test suite, the type checker, the solver, the query. Its effort
+            scales with the problem, and it does not produce a confident narration of a result it did
+            not actually establish.
+          </>
+        ),
+      },
+    ],
+  },
 }

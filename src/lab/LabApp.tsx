@@ -12,6 +12,9 @@ import DistillSection from './DistillSection'
 import LoraSection from './LoraSection'
 import ForgettingSection from './ForgettingSection'
 import SpeculativeSection from './SpeculativeSection'
+import WhatFitsSection from './WhatFitsSection'
+import StructureNoiseSection from './StructureNoiseSection'
+import VerifierBudgetSection from './VerifierBudgetSection'
 import RlvrSection from './RlvrSection'
 import SiteNav from '../components/SiteNav'
 import { tabOf, tabFromUrl, tabUrl, type Tab } from './tabRoute'
@@ -24,6 +27,7 @@ const GROUPS: { label: string; blurb: string; tabs: Tab[] }[] = [
   { label: 'Intervene', blurb: 'poke the circuit and watch what breaks or moves', tabs: ['head ablation', 'injury & recovery', 'steering'] },
   { label: 'Adapt', blurb: 'change what it does — cheaply, or destructively', tabs: ['distillation', 'LoRA fine-tuning', 'forgetting', 'reward learning (RLVR)'] },
   { label: 'Scale & serve', blurb: 'structure, emergence, and faster inference', tabs: ['mixture of experts', 'advanced grokking', 'speculative decoding'] },
+  { label: 'Limits', blurb: 'what a fixed budget can and cannot reach', tabs: ['what fits', 'structure vs noise', "verifier's budget"] },
 ]
 
 const btn =
@@ -224,6 +228,9 @@ export default function LabApp() {
             {tab === 'forgetting' && <ForgettingSection />}
             {tab === 'reward learning (RLVR)' && <RlvrSection />}
             {tab === 'speculative decoding' && <SpeculativeSection />}
+            {tab === 'what fits' && <WhatFitsSection />}
+            {tab === 'structure vs noise' && <StructureNoiseSection />}
+            {tab === "verifier's budget" && <VerifierBudgetSection />}
           </div>
         </>
       )}

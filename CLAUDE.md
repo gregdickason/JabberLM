@@ -122,10 +122,11 @@ and its px→rem conversion, and why any demo added to the registry must avoid p
 `{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
 query makes each embed countable in analytics.
 
-Seventeen demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
+Nineteen demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
 `agent-loop` (§3), `prompt-injection` (§4), `adder` (§5), `lora`, `tokenizer`, `embeddings`,
 `head-ablation`, `warehouse`, and the Part I/II spine added for the blog series — `next-token`,
-`attention`, `hallucination`, `instruction`, `rag`, `quantisation`. The explain-page frames run on
+`attention`, `hallucination`, `instruction`, `rag`, `quantisation`, plus the two measuring (not
+training) Limits tabs — `what-fits` and `verifiers-budget`. The explain-page frames run on
 the bundled three-skill model via `WithBundled` in `EmbedApp`. All but
 `tictactoe` declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
 use them would otherwise reflow the host page mid-demo; the box scrolls if a narrow host squeezes it)
@@ -304,8 +305,15 @@ regardless of the task, so anything harder must go to more passes or to the harn
 verifying the first has the same fixed budget, so trust has to come from execution, not from a model's
 opinion. Sikka & Sikka, "Hallucination Stations". The honest version — chain-of-thought lifts the
 per-pass bound only linearly per token, Merrill & Sabharwal — is exactly what the adder shows: one pass
-fails at 4 digits, the loop succeeds at 25. The **Limits** lab group in `docs/OPUS-LIMITS-PROMPT.md`
-makes it measurable.) `runAdderWith(solve, …)`
+fails at 4 digits, the loop succeeds at 25. The **Limits** lab group makes it measurable:
+`what fits` (the adder answering three ways across ten widths — and chain-of-thought BEATING a single
+pass at 1-2 digits, measured, which is why the strong claim is not stated anywhere in the copy),
+`structure vs noise` (rule 110 / rule 30 / random at matched length and alphabet — epiplexity;
+**the automaton row width must stay well under the model's context window**, since predicting a cell
+needs the row above it, and at width 64 in a 32-char window all three flatten onto the noise floor and
+the demo says nothing), and `verifier's budget` (a checker whose error-catch rate is a flat 100% and
+which is nonetheless worthless, because it rejects correct answers just as readily). Corpora in
+`src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.) `runAdderWith(solve, …)`
 takes the column solver as a parameter precisely so tests can prove this — a solver wrong on one
 column yields an answer wrong in exactly that digit; a solver that always says `0 0` yields zeros.
 If the harness were secretly adding, those tests would pass wrongly. Same rule as the tic-tac-toe

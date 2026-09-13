@@ -25,13 +25,19 @@ export const TABS = [
   'forgetting',
   'reward learning (RLVR)',
   'speculative decoding',
+  'what fits',
+  'structure vs noise',
+  "verifier's budget",
 ] as const
 export type Tab = (typeof TABS)[number]
 
 export const DEFAULT_TAB: Tab = 'neurons'
 
+// Apostrophes are dropped rather than becoming a separator, so "verifier's budget" gives
+// `verifiers-budget` and not `verifier-s-budget`. Matches the explain page's slug (ui.tsx).
+// No existing tab contains one, so no published slug changes.
 export const slug = (t: string) =>
-  t.replace(/[()]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
+  t.replace(/['"()]/g, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()
 
 export const tabOf = (s: string | null | undefined): Tab | undefined =>
   TABS.find((t) => slug(t) === (s ?? '').toLowerCase())

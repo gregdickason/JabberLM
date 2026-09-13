@@ -197,3 +197,80 @@ table should list all **seventeen** demos.
   model files, but the `gen:*` scripts cannot run in this environment — `npx vite-node` fails to
   resolve, which is pre-existing and unrelated to this work.
 - The live-training demos (lab grokking, RLVR, capstone SFT→RL) were not run to completion.
+
+---
+
+# Limits group (added 14 Sept 2026)
+
+Three new lab tabs. Two measure and need no training; one trains for about a minute.
+
+## L1. Routing
+
+- `/lab.html?tab=what-fits`, `?tab=structure-vs-noise`, `?tab=verifiers-budget` each open the
+  right tab. The legacy `#verifiers-budget` form should work too.
+- The tab strip should show a fifth group, **Limits**, last, with the visible blurb "what a fixed
+  budget can and cannot reach".
+- Every one of the thirteen older tabs must still open — the slug function changed (it now drops
+  apostrophes) and a test asserts nothing moved, but click a few anyway.
+
+## L2. What fits
+
+Open `/lab.html?tab=what-fits`. It sweeps automatically on load, one width per frame, taking
+roughly ten seconds; rows should appear progressively rather than all at the end.
+
+Expected shape, from the measured run:
+
+| digits | one pass | writing the working | the loop |
+|---|---|---|---|
+| 1 | ~33% | ~50% | 100% |
+| 2 | 0% | ~33% | 100% |
+| 3–4 | 0% | 0% | 100% |
+| 6 and up | 0% | *no room* | 100% |
+
+The three things to check, because they are the argument:
+
+1. **Amber beats red at one and two digits.** If it does not, the chain-of-thought point is lost
+   and the copy is wrong.
+2. **Amber hits zero at three digits**, where the working still fits (56 characters in a 96
+   window). The copy says it fails before running out of room; confirm the table agrees.
+3. **From six digits the trace column reads "no room"** and the char count turns red, because a
+   full trace needs more than 96 characters. That is a structural ceiling, not a failure.
+
+## L3. Structure vs noise
+
+Open `/lab.html?tab=structure-vs-noise` and press **Train all three**. Give it a minute.
+
+- Three held-out curves must separate in this order, low to high: **rule 110**, then **rule 30**,
+  then **random bits**. At around 600 steps the measured values were 0.576 / 0.772 / 0.871.
+- If all three sit on top of each other near 0.77, something has changed the row width or the
+  context window and the demo is broken. That is the one failure mode to watch for.
+- It should auto-pause, either "✓ settled" or "reached step cap". **↺ Reset** must re-run it.
+- Tick **also run the same poems forwards and backwards**. It rebuilds and re-runs. Forward must
+  end up *below* reversed (measured 1.789 vs 2.090 at 900 steps). If reversed wins, tell me — that
+  is what happens when the corpus is too short and gets memorised.
+
+## L4. The verifier's budget
+
+Open `/lab.html?tab=verifiers-budget`. Sweeps on load, about seven seconds.
+
+- Left chart: the grey "caught the wrong answer" line should be **flat at 100%** across every
+  width, while the green "accepted the right answer" line collapses. That contrast is the whole
+  tab — if grey is not flat at 100, the lesson does not land.
+- Right chart: "checking in JavaScript" flat at 100, "checking with the loop" at or near 100,
+  "one pass" near zero throughout, and "writing the working" present only for widths 1–4.
+
+## L5. Embeds
+
+- `/embed.html?demo=what-fits` and `/embed.html?demo=verifiers-budget` should each render the
+  chart with no heading or prose, and finish their sweep unaided.
+- **Both frame sizes are guesses** — no browser was available while building. Check for a large
+  empty band at the bottom or an immediate scrollbar, and tell me which needs adjusting.
+- `teachers.html?lesson=what-fits` and `?lesson=verifiers-budget` should each show a full lesson.
+
+## L6. Copy and cross-links
+
+- `/harness.html?section=where-this-leaves-you` should now link to the **Limits group**, not the
+  bare lab.
+- `/glossary.html` should have a **Limits** group with three entries: fixed compute budget,
+  epiplexity, time-bounded entropy. Each links into the right tab.
+- `/series.html` should list **27** posts, with a new post 21, "What fits in one pass".

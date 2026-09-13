@@ -207,6 +207,15 @@ export const POSTS: Post[] = [
   {
     n: 21,
     part: 4,
+    title: 'What fits in one pass',
+    idea: 'A model does the same work on every question however hard it is, so hard work has to go somewhere else — and a second model checking the first inherits the same blind spot.',
+    status: 'planned',
+    tryIt: { label: 'where one pass runs out', href: './lab.html?tab=what-fits' },
+    embed: 'what-fits',
+  },
+  {
+    n: 22,
+    part: 4,
     title: 'What it costs',
     idea: 'The smallest model that clears the bar, the cache, and the precision cliff.',
     status: 'planned',
@@ -214,7 +223,7 @@ export const POSTS: Post[] = [
     embed: 'quantisation',
   },
   {
-    n: 22,
+    n: 23,
     part: 4,
     title: 'Play it, then look inside',
     idea: 'Two same-size agents, one lesson: training budget, not parameter count, was the lever.',
@@ -223,7 +232,7 @@ export const POSTS: Post[] = [
     embed: 'tictactoe',
   },
   {
-    n: 23,
+    n: 24,
     part: 4,
     title: 'The concept nobody labelled',
     idea: 'Nobody told it which items are fragile. Its embeddings cluster by fragility anyway.',
@@ -232,15 +241,15 @@ export const POSTS: Post[] = [
     embed: 'warehouse',
   },
   {
-    n: 24,
+    n: 25,
     part: 5,
     title: 'Emergence',
     idea: 'From a number line assembling itself to the argument about scale.',
     status: 'planned',
-    tryIt: { label: 'watch it grok, again', href: './lab.html?tab=advanced-grokking' },
+    tryIt: { label: 'structure, noise, and the observer', href: './lab.html?tab=structure-vs-noise' },
   },
   {
-    n: 25,
+    n: 26,
     part: 5,
     title: 'The strange loop',
     idea: 'The agent loop pointed back at itself, and what Hofstadter would make of it.',
@@ -248,7 +257,7 @@ export const POSTS: Post[] = [
     tryIt: { label: 'steer a representation', href: './lab.html?tab=steering' },
   },
   {
-    n: 26,
+    n: 27,
     part: 5,
     title: "What we can and can't claim",
     idea: 'Prediction or understanding — argued with the mechanism in view, refusing both slogans.',

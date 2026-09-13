@@ -104,3 +104,65 @@ Listed here so the next session does not have to re-derive them from the evaluat
 - **`npx vite-node` cannot resolve in this environment**, so no `gen:*` model script was run and
   no model was retrained. `npm run stats` confirms the committed numbers match the shipped model
   files, which is the part that mattered here.
+
+---
+
+## Limits group (14 Sept 2026)
+
+**13. The strong form of the complexity theorem is not stated anywhere in the copy.**
+Sikka & Sikka argue a transformer *unavoidably* hallucinates on tasks above O(n³). The build
+measured the counter-example before writing a word: with the adder, writing the working out
+(chain of thought) scores 50% at one digit and 33% at two, against 33% and 0% for a single
+pass. Extra passes demonstrably extend what fits. So every tab states the defensible version —
+work per pass is fixed, passes are the only currency, the supply is finite — and the "what
+fits" copy names the overclaim explicitly and says why it is wrong. Merrill & Sabharwal is
+cited beside Sikka & Sikka on all three tabs.
+
+**14. The automaton row width is 12, not 64, and that is load-bearing.**
+First build used 64-cell rows in a 32-character context window and the demo said nothing: rule
+110, rule 30 and random bits all sat together at ~0.77 held-out loss. The cause is structural
+rather than a tuning problem — predicting a cell needs its three neighbours in the row above,
+about `width + 1` characters earlier, so a row wider than the context window makes the rule
+invisible and every corpus looks like noise. At width 12 in a 48-character window the
+separation is clean (measured at 600 steps: 110 → 0.576, 30 → 0.772, random → 0.871). The
+constraint is commented in `automata.ts`, in the section component, in GUIDE §9 and in
+CLAUDE.md, because it will silently destroy the demo if someone widens the rows.
+
+**15. Rule 30 is described as "much nearer the noise floor", not "at" it.**
+The draft copy claimed rule 30 was indistinguishable from random. Measurement says otherwise:
+0.772 against a 0.871 floor is a real gap. The honest version is better for the argument
+anyway — there is a spectrum of extractability, and rule 30 would likely improve with a bigger
+model or a longer run, which is precisely the observer-dependence the tab is about.
+
+**16. Forward-versus-reversed uses `JABBER_POEMS`, not a repeated `JABBERWOCKY`.**
+The first attempt repeated one 700-character poem to length. Both directions memorised it and
+reversed came out *easier* (0.158 vs 0.264) — an artefact, not an ordering effect. On the
+90,000-character non-repeated corpus the effect is real and stable: forward 1.789, reversed
+2.090 at 900 steps. Had it not reproduced, the feature was going to be cut rather than shipped
+with a claim the site could not support.
+
+**17. The verifier tab measures discrimination, and leads with the trap.**
+The spec asked for verification accuracy against width. Measured, that is degenerate: this
+model accepts a wrong answer 0% of the time at every width and by every method, so its
+error-catch rate is a flat 100%. Rather than drop the tab, the flat line became the lesson —
+a checker that rejects everything catches every error and is worth nothing — with the gap
+between accepting a truth and accepting a lie plotted as the only informative quantity. This
+is the LLM-as-judge failure mode, and it is a stronger result than the one specified.
+
+**18. Widths, samples and step budgets, all measured rather than guessed.**
+`what fits` and `verifier's budget` sweep 6 and 8 sums per width (12-second and 7-second
+sweeps in node, chunked one width per animation frame so the table fills progressively).
+`structure vs noise` caps at 1,000 steps with a plateau gate at epsilon 0.03; three runs at
+600 steps took 66 seconds in node, so the on-page estimate is "give it a minute". The spec
+guessed 1,500 steps, which would have been closer to three minutes with the ordering runs on.
+
+**19. `verifier's budget` slug required changing the tab slug function.**
+The label contains an apostrophe, which the lab's slug function turned into a separator
+(`verifier-s-budget`). The explain page's slug already stripped apostrophes, so the two were
+inconsistent; the lab's now matches. No existing tab contains an apostrophe, so no published
+slug changed — asserted by a test.
+
+**20. Frame sizes for the two new embeds are unmeasured.**
+No browser was available, so `what-fits` (62×46rem) and `verifiers-budget` (62×34rem) were
+sized from their content. Both need the visual check in the test walkthrough. The training tab
+is deliberately not embeddable: a frame that needs a minute of training is workshop material.

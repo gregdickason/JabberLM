@@ -28,6 +28,7 @@ export const GROUPS = [
   'Agents and tools',
   'Cost and serving',
   'Looking inside',
+  'Limits',
 ] as const
 export type Group = (typeof GROUPS)[number]
 
@@ -431,6 +432,34 @@ export const TERMS: Term[] = [
     short:
       'A technique for untangling those overlapping concepts into a longer list of cleaner ones, so features can be named and tracked.',
     see: { label: 'train a dictionary', href: './lab.html?tab=dictionary-sae' },
+  },
+  // ---- Limits -------------------------------------------------------------
+  {
+    id: 'fixed-compute-budget',
+    term: 'Fixed compute budget',
+    group: 'Limits',
+    short:
+      'A model does the same amount of work on every question, however hard the question is. One pass costs what it costs, set by the length of the input and the size of the model, and difficulty does not enter into it.',
+    more: 'So anything needing more computation than one pass can hold must be split into more passes, or handed to something outside the model whose effort grows with the problem. That is the argument for a harness.',
+    see: { label: 'watch one pass run out', href: './lab.html?tab=what-fits' },
+  },
+  {
+    id: 'epiplexity',
+    term: 'Epiplexity',
+    group: 'Limits',
+    short:
+      'The structure in a piece of data that a learner with a given amount of compute can actually extract. It is a property of the pair — this data, that observer — rather than of the data on its own.',
+    more: 'It is the answer to a problem in classical information theory: running a deterministic rule is supposed to add no information, yet synthetic data, self-play and simulation plainly help a bounded model. They add nothing to an unlimited observer and a great deal to a real one.',
+    see: { label: 'see it separate', href: './lab.html?tab=structure-vs-noise' },
+  },
+  {
+    id: 'time-bounded-entropy',
+    term: 'Time-bounded entropy',
+    group: 'Limits',
+    short:
+      'The part of a signal a bounded observer cannot predict, whether or not it is truly random. A deterministic sequence it has no way to crack counts as noise to it, and looks exactly like noise.',
+    more: 'Which is why a model reporting that something looks unstructured tells you about the model, not about the thing.',
+    see: { label: 'rule 30 versus random', href: './lab.html?tab=structure-vs-noise' },
   },
   {
     id: 'steering',

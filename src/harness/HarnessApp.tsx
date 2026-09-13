@@ -158,8 +158,12 @@ export default function HarnessApp() {
               Handing work off is not a trick to get round the model. For a reader with a fixed budget,
               the result of running the code is new information it could not have produced by thinking
               harder. The{' '}
-              <a className="text-sky-400 hover:underline" href="./lab.html">lab</a> is where the rule
-              becomes measurable on this site's own models.
+              <a className="text-sky-400 hover:underline" href="./lab.html?tab=what-fits">
+                lab's Limits group
+              </a>{' '}
+              makes the rule measurable on this site's own models: where one pass runs out, what a
+              learner this size can extract from data at all, and why a second model checking the
+              first inherits the same blind spot.
             </p>
             <footer className="mx-auto max-w-2xl border-t border-slate-800 px-0 py-6 text-[11px] text-slate-400">
               This tool-caller was trained in the browser's own engine on{' '}

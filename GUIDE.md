@@ -57,7 +57,7 @@ below.
 | **New to AI** (`explain.html`) | a no-maths explainer for people who *use* AI at work | [6](#6-new-to-ai--explainhtml) |
 | **How it works** (`learn.html`) | one example followed through a real model, step by step | [7](#7-how-it-works--learnhtml) |
 | **Tools & agents** (`harness.html`) | a model that calls tools, loops, gets hijacked, and reasons | [8](#8-tools--agents--harnesshtml) |
-| **Lab** (`lab.html`) | thirteen interpretability and training demos | [9](#9-the-lab--labhtml) |
+| **Lab** (`lab.html`) | sixteen interpretability, training and limits demos | [9](#9-the-lab--labhtml) |
 | **Capstone** (`capstone.html`) | two agents you play with, then look inside | [10](#10-the-capstone--capstonehtml) |
 | **For teachers** (`teachers.html`) | session plans and embeddable demos | [11](#11-teaching-with-it--teachershtml) |
 
@@ -422,7 +422,7 @@ it ran tools, and it held state. Most systems need all three.
 
 ## 9. The lab — `lab.html`
 
-Thirteen tabs, grouped into four themes. Each is addressable: `lab.html?tab=head-ablation` opens that
+Sixteen tabs, grouped into five themes. Each is addressable: `lab.html?tab=head-ablation` opens that
 tab directly. Sections that train do so live, on the main thread, and stop themselves when the
 held-out curve converges.
 
@@ -469,6 +469,38 @@ held-out curve converges.
 - **Speculative decoding** — a 17K draft model proposes K tokens, a 90K target verifies all K in one
   forward pass. Greedy decoding makes the output bit-for-bit identical to running the target alone,
   with ~2.3× fewer target forward passes at K=4.
+
+**Limits.** What a fixed budget can and cannot reach. One forward pass costs a fixed amount of work,
+set by the length of the input and the width of the model, and never by how hard the question is —
+so anything harder than one pass holds must be split across more passes or handed outside the model
+altogether. These three make that measurable rather than asserted.
+
+- **What fits** — the adder answering the same sums three ways across ten widths: outright, by
+  writing its working, and through the harness loop. One set of weights, nothing trained. Answering
+  outright fails almost everywhere, *including the four-digit sums it was trained on*. Writing the
+  working genuinely beats it at one and two digits — that is chain of thought buying real
+  computation — then collapses at three, well before the working stops fitting in the 96-character
+  window. The loop is correct at every width including 25 digits. The honest reading is on the page:
+  the popular claim that transformers simply *cannot* exceed some complexity is too strong, because
+  extra passes demonstrably extend what fits; what is true is that work per pass is fixed, passes are
+  the only currency, and they run out.
+- **Structure vs noise** — three corpora of identical length over an identical alphabet: rule 110,
+  rule 30, and true random bits. Two are produced by a deterministic three-line rule, so classically
+  they carry no more information than the noise. The same tiny model trains on each and the held-out
+  curves separate: 110 well below the floor, random at it, and rule 30 — every bit as deterministic
+  as 110 — much nearer the noise. How much structure is present has no answer until you say who is
+  looking and for how long. An optional fourth run reads the same poems forwards and backwards:
+  identical characters, measurably harder one way round. **Note for anyone editing this**: the row
+  width must stay well under the model's context window, since predicting a cell needs the row above
+  it. At width 64 in a 32-character window all three corpora flatten onto the noise floor and the
+  demo says nothing.
+- **The verifier's budget** — the adder shown a sum and a claimed answer. It never accepts a wrong
+  one, at any width, so its error-catch rate is a flat 100% and it looks like a flawless reviewer.
+  It is not: it rejects correct answers just as readily, because its own recomputation disagrees with
+  everything. A checker that says no to everything catches every error and is worth nothing. The
+  second chart plots the only part that carries information — the gap between accepting a truth and
+  accepting a lie — by method. This is the argument against trusting one model to review another's
+  work, and it is why the site puts checking in JavaScript.
 
 ## 10. The capstone — `capstone.html`
 

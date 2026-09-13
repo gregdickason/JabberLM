@@ -18,6 +18,8 @@ import InstructionDemo from '../explain/InstructionDemo'
 import RagDemo from '../explain/RagDemo'
 import QuantizationDemo from '../explain/QuantizationDemo'
 import { loadDemoModel } from '../explain/loadDemoModel'
+import WhatFitsSection from '../lab/WhatFitsSection'
+import VerifierBudgetSection from '../lab/VerifierBudgetSection'
 import type { Trainer } from '../engine/trainer'
 
 // The embeddable shell: a JabberLM wordmark, then the demo. Nothing else — no nav, no
@@ -125,6 +127,9 @@ const RENDER: Record<DemoId, () => React.ReactNode> = {
   rag: () => <RagDemo />,
   quantisation: () => <QuantizationDemo />,
   'flaky-harness': () => <FlakyDemo autoRun />,
+  // Both sweep on mount and need no training, so a frame shows a finished chart unaided.
+  'what-fits': () => <WhatFitsSection embed />,
+  'verifiers-budget': () => <VerifierBudgetSection embed />,
   warehouse: () => (
     <WithModel
       load={loadWarehouseModel}

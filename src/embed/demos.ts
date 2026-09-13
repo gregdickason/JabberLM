@@ -26,6 +26,8 @@ export type DemoId =
   | 'rag'
   | 'quantisation'
   | 'flaky-harness'
+  | 'what-fits'
+  | 'verifiers-budget'
 
 export interface Demo {
   id: DemoId
@@ -162,6 +164,21 @@ export const DEMOS: Demo[] = [
     source: { label: 'Tools & agents §2', href: './harness.html?section=robust' },
     frame: { w: 48, h: 20 },
     font: 'sans',
+  },
+  // --- Limits: the two tabs that measure rather than train, so a frame can carry them ------
+  {
+    id: 'what-fits',
+    title: 'Where one forward pass runs out',
+    source: { label: 'Lab — Limits', href: './lab.html?tab=what-fits' },
+    frame: { w: 62, h: 46 },
+    font: 'mono',
+  },
+  {
+    id: 'verifiers-budget',
+    title: "A checker that catches every error and is worth nothing",
+    source: { label: 'Lab — Limits', href: './lab.html?tab=verifiers-budget' },
+    frame: { w: 62, h: 34 },
+    font: 'mono',
   },
 ]
 

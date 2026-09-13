@@ -69,12 +69,13 @@ file, never in the post.
 | 18 | IV | Giving it tools | function calling; the harness; "a model's answer is a guess, a tool's output is a computation"; robustness | `harness-tools` | `harness.html#tools` | exists (`flaky-harness` needed) |
 | 19 | IV | Loop it, and it's an agent | the loop; prompt injection; typed output; authorise consequential actions | `agent-loop`, `prompt-injection` | `harness.html#loop`, `#injection` | exists |
 | 20 | IV | Reasoning in a loop | the model does every sum, the harness holds the place; chain-of-thought named; error compounding | `adder` | `harness.html#reasoning-loop` | exists |
-| 21 | IV | What it costs | inference economics: smallest model that clears the bar, KV cache, quantisation, distillation, speculative decoding | `quantisation` | `explain.html#inference`, `lab.html?tab=speculative-decoding` | **needed** |
-| 22 | IV | Play it, then look inside | the tic-tac-toe agent; check layer; budget not size; the heads that learned to look at danger | `tictactoe` | `capstone.html#play` | exists |
-| 23 | IV | The concept nobody labelled | the warehouse agent; relational attention; SFT then RL; embeddings cluster by a hidden attribute | `warehouse` | `capstone.html#warehouse` | exists |
-| 24 | V | Emergence | the number line and the grokking jump → scale and emergent abilities; scaling laws as prose | `grokking` (reuse) | `lab.html?tab=advanced-grokking` | reuse |
-| 25 | V | The strange loop | Hofstadter; the agent loop pointed at itself; steering as intervening on a self-representation | — | `harness.html#loop`, `lab.html?tab=steering` | prose |
-| 26 | V | What we can and can't claim | prediction or understanding; the Chinese Room with the mechanism in view; refuse both slogans | — | — | prose |
+| 21 | IV | What fits in one pass | fixed work per pass; chain of thought buys more and runs out; a second model checking the first inherits the same blind spot | `what-fits`, `verifiers-budget` | `lab.html?tab=what-fits` | **exists** |
+| 22 | IV | What it costs | inference economics: smallest model that clears the bar, KV cache, quantisation, distillation, speculative decoding | `quantisation` | `explain.html#inference`, `lab.html?tab=speculative-decoding` | **needed** |
+| 23 | IV | Play it, then look inside | the tic-tac-toe agent; check layer; budget not size; the heads that learned to look at danger | `tictactoe` | `capstone.html#play` | exists |
+| 24 | IV | The concept nobody labelled | the warehouse agent; relational attention; SFT then RL; embeddings cluster by a hidden attribute | `warehouse` | `capstone.html#warehouse` | exists |
+| 25 | V | Emergence | the number line and the grokking jump → scale and emergent abilities; scaling laws as prose | `grokking` (reuse) | `lab.html?tab=advanced-grokking` | reuse |
+| 26 | V | The strange loop | Hofstadter; the agent loop pointed at itself; steering as intervening on a self-representation | — | `harness.html#loop`, `lab.html?tab=steering` | prose |
+| 27 | V | What we can and can't claim | prediction or understanding; the Chinese Room with the mechanism in view; refuse both slogans | — | — | prose |
 
 Short anchors in the Try-it column (`learn.html#attention`, `harness.html#tools`, `#loop`, `#injection`,
 `capstone.html#play`, `#warehouse`) are the **stable ids D3 asks you to add**. Until then the real anchors are
