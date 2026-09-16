@@ -274,3 +274,24 @@ Open `/lab.html?tab=verifiers-budget`. Sweeps on load, about seven seconds.
 - `/glossary.html` should have a **Limits** group with three entries: fixed compute budget,
   epiplexity, time-bounded entropy. Each links into the right tab.
 - `/series.html` should list **27** posts, with a new post 21, "What fits in one pass".
+
+---
+
+# The prediction demo's two decoding rules (16 Sept 2026)
+
+Open `/explain.html?section=prediction`.
+
+1. Press **Keep taking the top bar**. It should write, then fall into a repeating groove, and an
+   amber note should appear naming the block it is repeating — from the default prompt that is
+   `"the stood "`. The note must say this is not the model being small or undertrained.
+2. Press **Choose in proportion instead**. The same weights should now write plausible
+   Jabberwocky-style verse. Press it twice more: each press should give something different.
+3. Edit the text box by hand. The note should disappear, since it no longer describes what is on
+   screen.
+4. Check `/explain.html?section=randomness` directly below reads as a continuation of that, not a
+   restatement of it.
+5. `/embed.html?demo=next-token` gets the same two buttons — worth one look, since the frame was
+   sized before the third button existed.
+
+The point to protect: a reader must never leave §1 thinking the bundled model is broken. If the
+amber note does not appear when the groove does, that is a bug worth reporting.
