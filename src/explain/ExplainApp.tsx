@@ -157,6 +157,12 @@ export default function ExplainApp() {
               A language model estimates how likely <em>every</em> possible next piece of text is, then
               picks one. It looks nothing up. It predicts what tends to follow.
             </p>
+            <p>
+              Then comes a choice that matters more than it sounds: having worked out those
+              likelihoods, <em>how</em> should it pick? Always taking the most likely character is
+              the obvious answer and the wrong one. Try both buttons below and watch what happens
+              to the writing.
+            </p>
             {loaded ? <NextTokenDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>
               A fluent answer is a prediction. It is not a fact and not a citation. Authority comes from
@@ -166,8 +172,11 @@ export default function ExplainApp() {
 
           <Section n={2} id="randomness" title="Why the same question gives different answers">
             <p>
-              Sampling adds randomness to the choice of next piece. The <em>temperature</em> setting
-              controls how much. Low temperature repeats. High temperature varies.
+              That is the groove from the section above, and this is the dial that governs it.{' '}
+              <em>Sampling</em> means choosing the next piece in proportion to the likelihoods rather
+              than always taking the highest, and <em>temperature</em> sets how adventurously. At zero
+              it always takes the most likely one and repeats itself. Higher, and it reaches further
+              down the list.
             </p>
             {loaded ? <RandomnessDemo trainer={loaded.trainer} /> : <DemoLoading />}
             <Callout>

@@ -166,3 +166,22 @@ slug changed — asserted by a test.
 No browser was available, so `what-fits` (62×46rem) and `verifiers-budget` (62×34rem) were
 sized from their content. Both need the visual check in the test walkthrough. The training tab
 is deliberately not embeddable: a frame that needs a minute of training is workshop material.
+
+**21. The repeating "the stood the stood" output is greedy decoding, not an undertrained model.**
+Reported from the live site as a model that needed more training. Measured before changing
+anything: the same weights, same prompt, at temperature 0 give "…the stood the stood the stood",
+and at temperature 0.5 give "snicker-snack, / And burbles trang shere were septers trurn the
+world finds disprace" — good Jabberwocky. The model was fine. `NextTokenDemo`'s "Let it write a
+bit" took the argmax every step, which is deterministic and must loop once the text re-enters a
+state it has seen. No retraining was done, and none was warranted.
+
+The fix makes the failure the lesson instead of hiding it. The demo now offers both decoding
+rules side by side ("Keep taking the top bar" / "Choose in proportion instead"), detects the
+groove, quotes the repeating block back to the reader, and says plainly that this is not the
+model being small. The teachers' lesson for `next-token` already framed it this way; the page
+copy simply had not. §1 now sets the choice up and §2 picks the thread up, so the two sections
+join rather than repeat.
+
+`repeatingTail`/`readable` live in `src/lib/repetition.ts` with unit tests, including the real
+greedy output as a fixture. `readable` rotates a block caught mid-word ("d the stoo") to start at
+a word boundary ("the stood ") so the quote reads the way a person would say it.

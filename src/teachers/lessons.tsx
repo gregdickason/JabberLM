@@ -381,7 +381,8 @@ export const LESSONS: Record<DemoId, Lesson> = {
       { do: 'Read the bars before touching anything.', see: <>A distribution, not an answer. The model has an opinion about every character, including the unlikely ones. Say the number out loud: this is the model’s entire output.</> },
       { do: 'Press “Write the next character” four or five times.', see: <>Each press takes the tallest bar, appends it, and re-runs. The text grows one character at a time and the bars change every press, because the question changed.</> },
       { do: 'Clear the box and type “sort 6 9 2 => ”.', see: <>The distribution concentrates: on a task it genuinely learned, one bar dominates. Compare with the middle of a poem, where several characters are plausible. Confidence is visible, and it varies by what is being asked.</> },
-      { do: 'Press “Let it write a bit”.', see: <>Twenty-four characters, always taking the top bar. It often falls into a repeating groove — which is the argument for the next section: always taking the most likely character is not the best way to use a distribution.</> },
+      { do: 'Press “Keep taking the top bar”.', see: <>It writes, and then falls into a repeating groove — "the stood the stood the stood". The page names the block it is repeating and explains it, so nobody leaves thinking the model is broken. Ask the room why always choosing the most likely character must eventually loop.</> },
+      { do: 'Press “Choose in proportion instead”.', see: <>The same weights, the same bars, proper verse. This is the moment the lesson lands: what changed was not the model but how its output was read. Press it twice more for three different poems.</> },
     ],
     mechanism: (
       <>

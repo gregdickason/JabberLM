@@ -77,6 +77,15 @@ export const TERMS: Term[] = [
     see: { label: 'the randomness demo', href: './explain.html?section=randomness' },
   },
   {
+    id: 'greedy-decoding',
+    term: 'Greedy decoding',
+    group: 'The basics',
+    short:
+      'Always taking the single most likely next token. It sounds like the safest choice and is the reason a model falls into repeating itself: the rule is deterministic, so once the text re-enters a state it has been in before, the same continuation must follow, for ever.',
+    more: 'Sampling in proportion to the likelihoods breaks the loop. Same weights, different reading of the same numbers — which is why repetitive output is usually a decoding setting rather than a badly trained model.',
+    see: { label: 'watch it loop, then not', href: './explain.html?section=prediction' },
+  },
+  {
     id: 'hallucination',
     term: 'Hallucination',
     group: 'The basics',

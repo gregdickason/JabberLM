@@ -324,7 +324,13 @@ Walk it in order. The sections build on each other.
 1. **It predicts the next piece of text.** The bundled model's probability for every possible next
    character, given what you typed. Type a few characters of a poem line and watch the distribution
    sharpen. This is the whole objective: one distribution over the next token, sampled, appended,
-   repeated.
+   repeated. Two buttons carry it on, and the contrast is the point. **Keep taking the top bar** is
+   greedy decoding, and it reliably falls into a groove — "the stood the stood the stood" — which
+   the page catches, quotes back, and explains, because every reader's first thought is that the
+   model is broken. It is not: greedy decoding is deterministic, so once the text re-enters a state
+   it has been in before the same continuation must follow for ever. **Choose in proportion
+   instead** samples from the same bars and writes proper verse from the same weights. That
+   contrast sets up section 2.
 2. **Why the same question gives different answers.** Two runs side by side. Run A is temperature 0
    and identical every click. Run B uses your temperature and a fresh seed. Variation is a sampling
    choice, not a property of the weights.
