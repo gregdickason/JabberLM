@@ -253,11 +253,11 @@ export default function WhatFitsSection({ embed = false }: { embed?: boolean }) 
           prohibition — work per pass is fixed, extra passes are the only currency, and the supply
           is finite. Build accordingly: check whether the task fits, break it up if it does not, and
           hand the parts that still do not to something whose effort scales. Then ask who checks the
-          result, which is the{' '}
+          result — which is{' '}
           <a className="text-sky-400 hover:underline" href="./lab.html?tab=verifiers-budget">
-            next tab
+            the verifier's budget
           </a>
-          .
+          , the third tab in this group.
         </p>
         <p className="text-slate-500">
           Method: {SAMPLE} sums per width, drawn from a fixed seed so the sweep repeats exactly, so
