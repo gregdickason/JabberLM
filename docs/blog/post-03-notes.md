@@ -70,3 +70,64 @@ I set the iframe to 740px, which is a guess.
 the post table in `docs/blog/OPUS-PROMPT.md` matches. The closing line promises post 4 on choosing
 the next token, which is what the registry says post 4 is, and it now has the two-button greedy
 versus sampled demo to point at.
+
+---
+
+# The LinkedIn cut (20 Sept 2026)
+
+Greg rewrote the post for LinkedIn, dropped the embed (LinkedIn cannot host an iframe) and cut to
+a single link (LinkedIn suppresses reach on posts carrying several). Both correct calls. Two
+things followed from them.
+
+## Why there are now two files
+
+- **`post-03-linkedin.txt`** — copy-paste ready, plain text, no markup. **LinkedIn renders no
+  Markdown**, so every `*ocean*` in the source would have shown as literal asterisks on the page,
+  and every `##` as hashes. That was about twenty places. This version uses double quotes for
+  words-as-words and capitalised lines for section breaks.
+- **`post-03-words-as-coordinates.md`** — the book copy. Keeps Greg's rewrite, with the mechanics
+  repaired (see below).
+
+I did not use Unicode bold characters for emphasis, which is the usual LinkedIn trick. Screen
+readers announce them as "mathematical bold small a" or skip them entirely, so a post using them
+is unreadable to anyone on assistive technology. Structure and short paragraphs do the same job.
+
+## Numbers for the LinkedIn version
+
+490 words, 2,735 characters. LinkedIn's limit is 3,000, so there are about 265 spare. The opening
+line is 80 characters, comfortably above the "see more" fold on mobile, which is where the hook
+has to land. Longest sentence is 27 words, down from 42.
+
+## Post this as the first comment
+
+The body says "Link in the comments", which is the standard way round LinkedIn's penalty on
+outbound links. Comment text:
+
+> The live component: https://jabberlm.com/explain?section=embeddings
+>
+> Type your own words into it. If you want it for your own site or a training deck, it embeds as a
+> single iframe — there is a copy-paste snippet at https://jabberlm.com/teachers
+
+If you would rather have the link inline, put the URL bare on its own line rather than in
+brackets. LinkedIn's auto-linker sometimes swallows a trailing `)` into the URL and breaks it.
+
+## What was repaired in the Markdown version
+
+All mechanical, none of it substance:
+
+1. **The answers block was malformed.** `**` at the start of a line is not a bold opener, so it
+   rendered as a literal `**` and the arithmetic answer was swallowed into the first bullet.
+   Verified by rendering it through `marked` before and after.
+2. **The predict-first beat did not work.** The text promised the answer was "at bottom of this
+   blog" and it sat three lines below the question, visible while the reader was still reading it.
+   The answers now genuinely close the post, under their own heading, in both versions.
+3. **Typo:** "Turn a word into list of numbers".
+4. **A 42-word sentence** split into three. The longitude, latitude and height additions are kept
+   — they are better anchors than what I had originally.
+5. **"on one principle based on seeing how close words appear to each other with meaning"** cut.
+   It did not parse, and the bold sentence immediately after it already states the principle.
+6. **"(caveat for JabberLM)"** and **"For all models -"** turned into prose. The second carried a
+   good point — this is true of every model with embeddings, not a quirk of the demo — which now
+   reads as the closing line of the answers.
+
+Rendered check after the repairs: no stray `**`, four clean headings, one link.
