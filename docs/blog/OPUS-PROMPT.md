@@ -51,7 +51,7 @@ file, never in the post.
 |---|---|---|---|---|---|---|
 | 1 | I | The smallest possible transformer | one mechanism the whole way up; memorise / hallucinate / generalise in one 90K model | — | `index.html?dataset=sort` | published |
 | 2 | I | It doesn't see letters | tokens; why big models miss the r's; char-level as the honest counter-example | `tokenizer` | `explain.html#tokens` | exists |
-| 3 | I | Words as places | embeddings as geometry; king − man + woman; bias in the geometry | `embeddings` | `explain.html#embeddings` | exists |
+| 3 | I | Words as coordinates — how meaning becomes maths | embeddings as geometry; king − man + woman; bias in the geometry | `embeddings` | `explain.html?section=embeddings` | **drafted** |
 | 4 | I | The reflex | next-token prediction as a weighted roll; temperature; "a fluent answer is a prediction, not a fact" | `next-token` | `explain.html#prediction` | **needed** |
 | 5 | I | What it can see | attention as the only step where information moves between tokens; the context window; why it "forgets" | `attention` (explain §3 tint) | `learn.html#attention` | **needed** |
 | 6 | I | The rest of the block | MLP, residual stream, layers, logits → softmax; the whole forward pass in glass | `step-through` | playground Step Through | **needed** |

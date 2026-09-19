@@ -53,9 +53,9 @@ export const POSTS: Post[] = [
   {
     n: 3,
     part: 1,
-    title: 'Words as places',
-    idea: 'Meaning as geometry: similar words sit close, and directions carry meaning.',
-    status: 'planned',
+    title: 'Words as coordinates — how meaning becomes maths',
+    idea: 'Meaning as geometry: similar words sit close, and directions carry meaning. King minus man plus woman lands on queen, and nobody taught it about royalty.',
+    status: 'draft',
     tryIt: { label: 'the word map', href: './explain.html?section=embeddings' },
     embed: 'embeddings',
   },

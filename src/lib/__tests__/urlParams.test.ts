@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { paramString, paramInt, paramOneOf, paramDigits, paramNumber } from '../urlParams'
+import { paramString, paramInt, paramOneOf, paramDigits, paramNumber, paramWords } from '../urlParams'
 import { sectionFromUrl, sectionUrl, knownSection } from '../sectionRoute'
 
 describe('paramString', () => {
@@ -57,6 +57,27 @@ describe('paramNumber', () => {
     expect(paramNumber('?a=23,498', 'a', '1')).toBe('23498')
     expect(paramNumber('?a=abc', 'a', '1')).toBe('1')
     expect(paramNumber(`?a=${'9'.repeat(80)}`, 'a', '1')).toHaveLength(30)
+  })
+})
+
+describe('paramWords', () => {
+  const fb = ['king', 'man', 'woman']
+  it('accepts commas, spaces and plus, and lower-cases', () => {
+    expect(paramWords('?analogy=paris,france,italy', 'analogy', fb, 3)).toEqual(['paris', 'france', 'italy'])
+    expect(paramWords('?analogy=Paris%20France%20Italy', 'analogy', fb, 3)).toEqual(['paris', 'france', 'italy'])
+    expect(paramWords('?analogy=paris+france+italy', 'analogy', fb, 3)).toEqual(['paris', 'france', 'italy'])
+  })
+  it('falls back on the wrong count', () => {
+    expect(paramWords('?analogy=paris,france', 'analogy', fb, 3)).toEqual(fb)
+    expect(paramWords('?analogy=a,b,c,d', 'analogy', fb, 3)).toEqual(fb)
+  })
+  it('rejects anything that is not a bare word', () => {
+    expect(paramWords('?analogy=paris,france,<script>', 'analogy', fb, 3)).toEqual(fb)
+    expect(paramWords('?analogy=1,2,3', 'analogy', fb, 3)).toEqual(fb)
+  })
+  it('falls back when absent or empty', () => {
+    expect(paramWords('', 'analogy', fb, 3)).toEqual(fb)
+    expect(paramWords('?analogy=', 'analogy', fb, 3)).toEqual(fb)
   })
 })
 

@@ -3,7 +3,7 @@ import { loadWordVectors, nearest, analogy, type WordVectors } from './embedding
 import { pca2 } from '../interp/pca'
 import Scatter from '../viz/Scatter'
 import { card } from './ui'
-import { paramString } from '../lib/urlParams'
+import { paramString, paramWords } from '../lib/urlParams'
 
 // Words to offer as quick-picks / analogy presets — all confirmed in the bundled subset.
 const PICKS = ['king', 'queen', 'paris', 'dog', 'ocean', 'music', 'computer', 'war']
@@ -27,7 +27,12 @@ export default function EmbeddingsDemo() {
   const [wv, setWv] = useState<WordVectors | null>(null)
   const [status, setStatus] = useState('loading real word vectors…')
   const [word, setWord] = useState(() => paramString(location.search, 'word', 'king'))
-  const [ana, setAna] = useState<[string, string, string]>(['king', 'man', 'woman'])
+  // ?analogy=paris,france,italy opens the demo on a specific one, so a post can link to the
+  // example it just quoted.
+  const [ana, setAna] = useState<[string, string, string]>(
+    () =>
+      paramWords(location.search, 'analogy', ['king', 'man', 'woman'], 3) as [string, string, string],
+  )
 
   useEffect(() => {
     let cancelled = false

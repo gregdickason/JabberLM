@@ -69,6 +69,24 @@ export function paramDigits(
   return ns.some((n) => Number.isNaN(n)) ? fallback : ns
 }
 
+/**
+ * A fixed-length list of plain words, e.g. `?analogy=king,man,woman` (spaces and `+` also work).
+ * Anything with the wrong count, or a token that is not a bare word, yields the fallback — so a
+ * mistyped link from a blog post lands on the demo's own example rather than an error.
+ */
+export function paramWords(
+  search: string,
+  key: string,
+  fallback: string[],
+  count: number,
+): string[] {
+  const raw = new URLSearchParams(search).get(key)
+  if (raw == null) return fallback
+  const parts = raw.toLowerCase().trim().split(/[\s,+]+/).filter(Boolean)
+  if (parts.length !== count) return fallback
+  return parts.every((p) => /^[a-z][a-z'-]{0,30}$/.test(p)) ? parts : fallback
+}
+
 /** `?a=123&b=456` for the adder: digit strings only, capped so the loop stays quick. */
 export function paramNumber(search: string, key: string, fallback: string, maxDigits = 30): string {
   const raw = (new URLSearchParams(search).get(key) ?? '').replace(/[^0-9]/g, '')
