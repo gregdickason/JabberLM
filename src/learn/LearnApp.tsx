@@ -210,7 +210,17 @@ export default function LearnApp() {
               vectors. Nothing enforces this; it comes from the data.
             </p>
             <p>
-              That grid of vectors, <em>plus</em> a position signal, is the{' '}
+              A token's embedding is the same row of numbers wherever it turns up: the vector for{' '}
+              <span className="font-mono">e</span> as the first character of a line is identical to the
+              one for <span className="font-mono">e</span> as the fortieth. So by itself the grid records
+              <em> what</em> the characters are and nothing about the order they came in. That is what the{' '}
+              <em>position signal</em> is for — the second grid below, labelled{' '}
+              <span className="font-mono">positional contribution</span>. It is another vector, added on
+              top, that says <em>where</em> in the input this token sits: first, second, third. Without
+              it the model would read the line as a bag of characters.
+            </p>
+            <p>
+              That grid of vectors, plus that position signal, is the{' '}
               <Gloss id="residual-stream">residual stream</Gloss>. It is best read as a running total that each
               position carries through the model: every later step reads the total, works out a small adjustment,
               and <em>adds</em> that adjustment back in. Nothing is overwritten, which is why the grid below is
