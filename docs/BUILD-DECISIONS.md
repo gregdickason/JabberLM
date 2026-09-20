@@ -289,3 +289,30 @@ Glossary gains **proper scoring rule** and **reward model**; the RLHF entry now 
 been updated when the instruction-tuning section was added, so it was missing an entry and
 misnumbered from 5 onward against the live page. Fixed, and the new section documented. Worth a
 check whenever a section is inserted: the guide lists them by hand.
+
+**32. The calibration tab now opens from cache, and the cache is test-verified.**
+It previously measured live on mount, one model at a time, so the reliability chart had one line
+until a sweep finished and the other only after switching agents and waiting again. Full sweeps of
+both agents over all 4,520 positions are now cached in `src/data/calibration.ts`, so both curves
+are present on load. `src/data/__tests__/calibration.test.ts` recomputes them from the shipped
+weights and fails on drift — including an explicit assertion that the undertrained agent still
+returns an identical distribution on every example board, since the headline copy depends on it.
+
+**33. The two measures are shown per-board, not just in aggregate.**
+The statistical version (two curves on a reliability chart) did not land. There is now a worked
+position: nine cells with the model's probability in each, the optimal ones outlined, and the two
+readings side by side — **34.2%** on the move it picked, **99.8%** across the three equally-good
+moves. Switching to the undertrained agent on the same panel shows the nine numbers not changing
+between three unrelated boards, which is the most direct statement of the finding available.
+
+**34. The tab's copy no longer narrates how we got here.**
+An earlier version explained that a first attempt had been wrong and corrected in review. That
+belongs in this log, not on a teaching page: a reader wants the outcome. The history is preserved
+in entry 27 and in the dispatch notes.
+
+**35. `src/types/node-fs.d.ts`, a deliberate three-line file.**
+The calibration test is the first thing under `src/` to read a file from disk, and
+`tsconfig.app.json` covers all of `src` with no `@types/node` installed, so `tsc -b` failed.
+Adding node's full type surface to a browser app's config to satisfy a test is the wrong trade,
+and importing the 1.3 MB model JSON directly would make TypeScript infer a structural type for a
+megabyte of weights on every check. Declaring the single function used is the smallest honest fix.

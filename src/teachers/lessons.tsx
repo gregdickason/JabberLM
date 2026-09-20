@@ -837,4 +837,122 @@ export const LESSONS: Record<DemoId, Lesson> = {
       },
     ],
   },
+
+  calibration: {
+    headline: 'A confidence score that is the same number on every board, and nobody noticed for weeks.',
+    model: (
+      <>
+        Both tic-tac-toe agents, swept over all <b>4,520</b> non-terminal positions. The number
+        under test is the agent's own confidence in the move it chose — one forward pass, a softmax
+        over the nine cell tokens, the probability on its top pick. Exactly the number the capstone
+        has been displaying next to every move it makes. "Optimal" comes from the same minimax
+        oracle the agents were trained against, so the scoring is not a second opinion.
+      </>
+    ),
+    tests: (
+      <>
+        Whether a confidence number means anything. This is the question that decides if software
+        can act on a model's answer without a person checking it: above some threshold act, below
+        it escalate. Everything else about a decision model is downstream of whether that number
+        can carry a threshold.
+      </>
+    ),
+    steps: [
+      {
+        do: 'Ask the room what a confidence score is for, before showing anything.',
+        see: (
+          <>
+            Someone will say "so you know when to trust it". Good — that is the claim about to be
+            tested, and it is the one the whole design rests on.
+          </>
+        ),
+      },
+      {
+        do: 'Switch the agent to undertrained, then click between the three positions.',
+        see: (
+          <>
+            <b>The nine numbers do not change.</b> Three completely different boards, one identical
+            distribution. Its stated confidence ranges from 17.4158% to 17.4225% across every
+            position in the game. It is not reading the board, so the number cannot possibly track
+            it — and it had been on screen for weeks looking exactly like a measurement.
+          </>
+        ),
+      },
+      {
+        do: 'Ask what threshold you would set on that number.',
+        see: (
+          <>
+            There isn't one. Every decision falls on the same side of any line you draw. This is the
+            moment the lesson lands: a number can look like evidence and carry none.
+          </>
+        ),
+      },
+      {
+        do: 'Switch to the well-trained agent, on the three-best-moves position.',
+        see: (
+          <>
+            <b>34.2%</b> on the move it picked, <b>99.8%</b> across the three moves that are
+            equally good. Both describe the same model on the same board. It has split its belief
+            correctly, and reading only the top pick makes that look like doubt.
+          </>
+        ),
+      },
+      {
+        do: 'Now the reliability chart, and the two coloured lines.',
+        see: (
+          <>
+            Score only the top pick and the model looks wildly under-confident, far above the
+            honest diagonal. Score the probability across every equally-good move and it sits close
+            to it. Same weights, same positions, opposite verdicts — because 46.8% of positions have
+            more than one right answer.
+          </>
+        ),
+      },
+    ],
+    mechanism: (
+      <>
+        Cross-entropy, which these models are trained on, is a <em>proper scoring rule</em>: the
+        only way to minimise it is to state the probabilities you actually believe, so pre-training
+        yields roughly-honest numbers for free. Preference tuning does not have that property — the
+        model is scored by another model predicting which answer a human rater preferred, and a
+        rater can judge fluency and confidence far more easily than correctness. So the reward is
+        highest for what looks right, and calibration is something you then have to go after
+        deliberately.
+      </>
+    ),
+    questions: [
+      {
+        q: 'Which number is the right one to use?',
+        a: (
+          <>
+            It depends on the claim being made. "Higher confidence means higher accuracy" is about
+            ranking, and the top pick tests it fine. "0.9 means nine times in ten" is about
+            probability, and only the mass across all acceptable answers tests that. Most real
+            tasks — routing a ticket, grading a risk — have several defensible answers, so the two
+            come apart constantly.
+          </>
+        ),
+      },
+      {
+        q: 'Would a bigger model fix the constant one?',
+        a: (
+          <>
+            Training did, and the two agents here are the same size. The undertrained one has barely
+            learned to read the board at all, so its output is nearly the same whatever it sees.
+            More capacity is not what it needed.
+          </>
+        ),
+      },
+      {
+        q: 'Is the flat number a bug?',
+        a: (
+          <>
+            No, and that is the uncomfortable part. Nothing failed, nothing threw, the demo worked.
+            A number was displayed to four significant figures for weeks and meant nothing, which is
+            only discoverable by checking it against outcomes.
+          </>
+        ),
+      },
+    ],
+  },
 }

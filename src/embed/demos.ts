@@ -28,6 +28,7 @@ export type DemoId =
   | 'flaky-harness'
   | 'what-fits'
   | 'verifiers-budget'
+  | 'calibration'
 
 export interface Demo {
   id: DemoId
@@ -178,6 +179,13 @@ export const DEMOS: Demo[] = [
     title: "A checker that catches every error and is worth nothing",
     source: { label: 'Lab — Limits', href: './lab.html?tab=verifiers-budget' },
     frame: { w: 62, h: 34 },
+    font: 'mono',
+  },
+  {
+    id: 'calibration',
+    title: 'Does the confidence number mean anything?',
+    source: { label: 'Lab — Limits', href: './lab.html?tab=calibration' },
+    frame: { w: 64, h: 52 },
     font: 'mono',
   },
 ]

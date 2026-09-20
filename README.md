@@ -196,7 +196,7 @@ framing; we supply the thing that works.
 
 - **`?demo=<id>`** picks the demo (`src/embed/demos.ts` is the registry; `embed.html` with no `demo`
   lists what exists). Query string, so each embedded demo is countable in analytics on its own — same
-  reason the lab's tabs use one. Nineteen ship today:
+  reason the lab's tabs use one. Twenty ship today:
 
   | `?demo=` | what it is | box at `scale=1` | at the default `scale=1.25` |
   |---|---|---|---|

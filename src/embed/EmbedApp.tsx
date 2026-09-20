@@ -20,6 +20,7 @@ import QuantizationDemo from '../explain/QuantizationDemo'
 import { loadDemoModel } from '../explain/loadDemoModel'
 import WhatFitsSection from '../lab/WhatFitsSection'
 import VerifierBudgetSection from '../lab/VerifierBudgetSection'
+import CalibrationSection from '../lab/CalibrationSection'
 import type { Trainer } from '../engine/trainer'
 
 // The embeddable shell: a JabberLM wordmark, then the demo. Nothing else — no nav, no
@@ -130,6 +131,8 @@ const RENDER: Record<DemoId, () => React.ReactNode> = {
   // Both sweep on mount and need no training, so a frame shows a finished chart unaided.
   'what-fits': () => <WhatFitsSection embed />,
   'verifiers-budget': () => <VerifierBudgetSection embed />,
+  // Cached sweeps, so this one renders complete on load with no measurement wait.
+  calibration: () => <CalibrationSection embed />,
   warehouse: () => (
     <WithModel
       load={loadWarehouseModel}

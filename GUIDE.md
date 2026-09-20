@@ -511,19 +511,24 @@ altogether. These three make that measurable rather than asserted.
   width must stay well under the model's context window, since predicting a cell needs the row above
   it. At width 64 in a 32-character window all three corpora flatten onto the noise floor and the
   demo says nothing.
-- **Calibration** — the tic-tac-toe agent's confidence number, checked against how often it is
-  actually right, over all 4,520 board positions. The undertrained agent's confidence is a
-  **constant**: 17.4158% to 17.4225%, one value to four decimal places on every board it has ever
-  been shown, displayed all the while as though it were a measurement. The well-trained agent's
-  does vary and ranks honestly — 71.5% when its move is optimal against 48.1% when it is not.
-  **A first version of this tab also called it badly under-confident, and that was a measurement
-  error caught in review**: 46.8% of positions have more than one optimal move, so scoring the
-  model's top-1 probability against "was the top pick optimal" manufactures fake under-confidence
-  out of a model that is correctly splitting its belief. Score the mass it put across all the
-  equally-good moves and it is roughly honest. Both curves are now plotted, because which one is
-  right depends on whether you are testing a *ranking* claim ("higher confidence means higher
-  accuracy") or a *probability* claim ("0.9 means nine times in ten") — and those come apart
-  exactly when more than one answer is acceptable, which is the normal case in real work.
+- **Calibration** — the agent's own confidence number, checked against how often it is actually
+  right, over all 4,520 non-terminal positions. Opens on cached full sweeps of both agents, so both
+  curves are there immediately; the figures live in `src/data/calibration.ts` and a unit test
+  re-derives them from the shipped weights, so a retrain fails the build rather than leaving a
+  stale chart.
+
+  The undertrained agent's confidence is a **constant** — 17.4158% to 17.4225%, one value to four
+  decimal places across the whole game. The per-board panel shows it directly: click between three
+  completely different positions and the nine numbers do not move. It is not reading the board, so
+  the number cannot track it, and no threshold can be set on it.
+
+  The well-trained agent's does vary and ranks honestly, 71.5% when its move is optimal against
+  48.1% when not. Whether it is *calibrated* then depends on how you score it, because 46.8% of
+  positions have more than one optimal move. On the worked position it puts **34.2%** on the move
+  it picked and **99.8%** across the three that are equally good — the same model, read two ways,
+  looking unsure or nearly certain. Both curves are plotted: the top-pick reading tests a *ranking*
+  claim, the mass reading tests a *probability* claim, and they come apart whenever more than one
+  answer is acceptable, which is the normal case in real work.
 - **The verifier's budget** — the adder shown a sum and a claimed answer. It never accepts a wrong
   one, at any width, so its error-catch rate is a flat 100% and it looks like a flawless reviewer.
   It is not: it rejects correct answers just as readily, because its own recomputation disagrees with

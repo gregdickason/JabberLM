@@ -122,11 +122,12 @@ and its px→rem conversion, and why any demo added to the registry must avoid p
 `{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
 query makes each embed countable in analytics.
 
-Nineteen demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
+Twenty demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
 `agent-loop` (§3), `prompt-injection` (§4), `adder` (§5), `lora`, `tokenizer`, `embeddings`,
 `head-ablation`, `warehouse`, and the Part I/II spine added for the blog series — `next-token`,
 `attention`, `hallucination`, `instruction`, `rag`, `quantisation`, plus the two measuring (not
-training) Limits tabs — `what-fits` and `verifiers-budget`. The explain-page frames run on
+training) Limits tabs — `what-fits`, `verifiers-budget` and `calibration` (the last renders from
+cached sweeps in `src/data/calibration.ts`, so it is complete on load). The explain-page frames run on
 the bundled three-skill model via `WithBundled` in `EmbedApp`. All but
 `tictactoe` declare a **fixed box** (`frame: {w,h}` in rem — content that appears as you
 use them would otherwise reflow the host page mid-demo; the box scrolls if a narrow host squeezes it)

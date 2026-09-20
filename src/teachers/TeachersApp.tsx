@@ -110,7 +110,7 @@ const PAGES = [
     mins: 'explore',
     audience: 'technical',
     moment:
-      'Ablate the critical head and watch a learned skill collapse in real time. For a business-minded room, the Limits group lands harder: a checker that catches 100% of errors and is worthless.',
+      'Ablate the critical head and watch a learned skill collapse in real time. For a business-minded room the Limits group lands harder — in calibration, switch to the undertrained agent and click between three different boards: the nine confidence numbers do not change. A score that had been on screen for weeks meaning nothing.',
   },
   {
     href: './capstone.html',
