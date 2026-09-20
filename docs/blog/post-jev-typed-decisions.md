@@ -8,14 +8,24 @@ something lands that is worth stopping for.*
 A new model called **Jev** arrived this week that does not predict the next token. It does not
 write at all.
 
-You give it a question and a fixed list of allowed answers, and it returns one of them in a single
-pass, with a probability attached. TypeSafe AI, the lab behind it, says it therefore **cannot
-hallucinate**: the valid answers are fixed in the schema in advance, so an invalid one is
-impossible. They report a 0% structured output error rate.
+You give it a question and a list of allowed answers, and it returns one of them in a single pass
+with a confidence score. TypeSafe AI says it **"can't hallucinate"**, because the valid answers are
+fixed in a schema in advance.
 
-No quarrel with the engineering. It is a genuinely interesting design, and the constraint is real.
-But I have been running a model of that shape on this site for weeks without thinking to call it
-one, and what mine does is worth putting beside that claim.
+That claim is narrower than the coverage around it suggests, and it is worth reading their own
+words. They report a 0% structured output error rate and then say plainly: *"Our number is not
+empirical. Schema matching is guaranteed, thus we can confidently add 0% into the plots."* They are
+not claiming the answers are right. They are claiming the answers are well-formed, and saying
+openly that this holds by construction rather than by measurement. That is more careful than most
+launch material, and it deserves crediting before anyone argues with it.
+
+So the load-bearing claim is the other one. Their model card says **"Calibrated: higher confidence
+means higher accuracy"**, and they trained for it deliberately — Reinforcement Learning for
+Calibrated Decisions. If correctness is not guaranteed, the confidence score is what tells your
+software when to escalate. Unlike the 0%, that is testable.
+
+I have been running a model of the same shape on this site for weeks without thinking to call it
+one. I went and tested it, and got humbled twice.
 
 ## What ours does
 
@@ -23,14 +33,20 @@ The [tic-tac-toe agent](https://jabberlm.com/capstone?section=play) does not wri
 text for something to parse. One forward pass, and the harness reads the scores for the nine cell
 tokens and nothing else. One of a fixed set of answers, with a probability. A typed decision.
 
-It is impossible for it to return a malformed move.
+I ship two of them, one deliberately undertrained. Neither can return a malformed move.
 
-In **60% of board positions**, the cell it picks is already occupied.
+The undertrained one picks a cell that is **already occupied in 60% of positions**. But that is the
+weaker example and I want to be fair about it: an occupied cell is *illegal*, and legality is
+exactly the sort of thing a schema can encode. I could have offered the model only the empty cells.
+I chose not to, so the checking layer has something to catch.
 
-The schema did its job perfectly. Every answer was structurally valid. Most of them were nonsense,
-and the game is only playable because ordinary code checks each move against the rules before
-applying it. A schema constrains the *shape* of an answer. It has nothing to say about whether the
-answer is true.
+The failure no schema reaches is the well-trained one. It returns a legal, perfectly well-formed
+move that is simply **worse**, in about 2% of positions. Nobody can design that away, because the
+question is which of the allowed answers is right — and that is the whole of what a schema cannot
+express.
+
+So there are three failures here, and only the first is cured for free: **malformed** (impossible by
+construction), **illegal** (encodable, if you bother), and **legal but wrong** (never encodable).
 
 ## The confidence number is worse
 
@@ -42,35 +58,35 @@ It ranges from **17.4158% to 17.4225%**.
 It is the same number every time. It does not vary with the board, because it is not looking at the
 board. And it had been sitting on the screen for weeks looking exactly like a measurement.
 
-The well-trained version of the same agent is more interesting. Its confidence genuinely varies,
-and it ranks honestly: **71.5%** when the move it is about to play is optimal, **48.1%** when it is
-not. That gap is useful — you could route the low-confidence cases elsewhere and catch most of the
-mistakes. But at a stated 30% it plays the optimal move about **96%** of the time. The number is
-badly wrong as a probability while being genuinely useful as an ordering.
+The well-trained version is more interesting. Its confidence genuinely varies, and it ranks
+honestly: **71.5%** when the move it is about to play is optimal, **48.1%** when it is not. That is
+precisely the property TypeSafe claims, and mine has it — you could route the low-confidence cases
+elsewhere and catch most of the mistakes.
 
-Which is worth separating, because "calibrated" gets used for three different things. Does the
-number vary at all? Does it rank? Does 0.9 mean right nine times in ten? A model can pass any of
-those and fail the others, and only the last is what the word literally claims.
+Then I wrote that it was *also* badly under-confident, because at a stated 30% it plays the optimal
+move about 96% of the time. A reviewer pointed out that this was my own measurement error, and they
+were right. Nearly half of tic-tac-toe positions have **several equally good moves**, so a model
+that correctly splits its belief three ways shows 0.33 on each and is then marked correct. Score
+the probability it placed across *all* the good moves and the same model is roughly honest.
+
+The model never changed. The scoring rule did, and the verdict went from badly broken to broadly
+fine. Which is the real lesson here, and it is the question I would most like to put to anyone
+selling a confidence score.
 
 ## What I would like to know
 
-Last month I built [a demo](https://jabberlm.com/lab?tab=verifiers-budget) of a checker that
-catches 100% of wrong answers. It is worthless. It rejects correct answers just as eagerly, because
-it is wrong about everything equally. A perfect-looking score, measuring nothing.
+Not a gotcha. I got this wrong twice on a model I built myself, and a reviewer had to tell me.
 
-So when I see a 0% structured output error rate I recognise the shape, and I would genuinely like
-to know:
+- **When several answers are acceptable, what does "higher confidence means higher accuracy" mean,
+  and how was it scored?** Routing a ticket, grading a risk, choosing a next action: several
+  answers are usually defensible, and that is exactly where my own measurement fell over.
+- **The workflow benchmark uses the average of two frontier models as the reference answer.** Does
+  68% mean agreement with those two, rather than correctness?
+- **On the third of decisions that come out wrong, where does the confidence sit?** That is the
+  number that decides whether escalation works, and it is the one I would put on the homepage.
 
-- Does "cannot hallucinate" mean it cannot emit an **invalid** value, or cannot emit a **wrong**
-  one? Those are very different promises, and only the first follows from a schema.
-- The published accuracy is 67.8%. What does the confidence score do on the third of decisions that
-  are wrong?
-- When the set of valid answers includes ones that are wrong in the world — as our nine cells do —
-  what catches it? If the answer is a checking layer, what did the schema buy?
-- And does *calibrated* mean 0.9 is right nine times in ten? That is testable. It is the test I
-  have just failed on my own model.
-
-Genuine questions. I would rather be corrected than right.
+Genuine questions. I would rather be corrected than right, and I now have the track record to prove
+it.
 
 **Try it →** the calibration measurement is live at
 [jabberlm.com/lab?tab=calibration](https://jabberlm.com/lab?tab=calibration). Switch between the two

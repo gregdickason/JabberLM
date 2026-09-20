@@ -314,18 +314,27 @@ needs the row above it, and at width 64 in a 32-char window all three flatten on
 the demo says nothing), and `verifier's budget` (a checker whose error-catch rate is a flat 100% and
 which is nonetheless worthless, because it rejects correct answers just as readily), and
 `calibration` (the tic-tac-toe confidence number against how often it is actually right, over all
-4,520 states — **the undertrained agent's is a CONSTANT, 17.4158% to 17.4225%, one value to 4dp on
-every board**, while the strong one ranks well (71.5% when optimal vs 48.1% when not) and is still
-badly under-confident (says 30%, is right 96%); figures in `MEASURED.ttt.confidence`). Corpora in
+4,520 non-terminal states — **the undertrained agent's is a CONSTANT, 17.4158% to 17.4225%, one
+value to 4dp on every board**, while the strong one ranks well (71.5% when optimal vs 48.1% when
+not). **A published draft also called the strong model "badly under-confident" and that was a
+measurement artifact: 46.8% of states have more than one optimal move, so scoring TOP-1 probability
+against set-membership manufactures fake under-confidence. Score the mass on the optimal set and it
+is roughly honest.** Both measures are now on the tab, because which is right depends on whether
+you are testing a RANKING claim or a PROBABILITY claim; see the header comment in
+`CalibrationSection.tsx` and `MEASURED.ttt.confidence.ties`.) Corpora in
 `src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.)
 
 **A transformer is not necessarily a language model**, and the site now says so where it matters
 (capstone recap, glossary `next-token-prediction`). `readCells` in `tictactoe-agent.ts` is already
 a **typed-decision** model — one forward pass, a softmax over nine cell tokens, a probability per
 option, no generation and no parsing — which is the shape TypeSafe's Jev sells as
-"cannot hallucinate". The site's standing refutation is that the undertrained agent's answers are
-100% schema-valid and 60% illegal. Keep that framing: a schema constrains the SHAPE of an answer,
-never its truth — the same argument already made for typed tool output in `HarnessApp` §4. `runAdderWith(solve, …)`
+"cannot hallucinate". **Get the argument right, because an early draft did not.** There are THREE failures and a schema
+cures only the first: **malformed** (impossible by construction), **illegal** (the undertrained
+agent's occupied cells — NOT cured here, but it could be, by offering only the legal cells; we
+deliberately do not, so the check layer has something to catch), and **legal-but-worse** (the strong
+agent, ~2% of positions — no schema can ever exclude this, since the question is which allowed
+answer is right). Cite the third as the real limit; citing the second invites "you wrote a bad
+schema". Same shape as the typed-tool-output argument in `HarnessApp` §4. `runAdderWith(solve, …)`
 takes the column solver as a parameter precisely so tests can prove this — a solver wrong on one
 column yields an answer wrong in exactly that digit; a solver that always says `0 0` yields zeros.
 If the harness were secretly adding, those tests would pass wrongly. Same rule as the tic-tac-toe

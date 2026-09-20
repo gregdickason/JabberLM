@@ -165,7 +165,23 @@ export const MEASURED = {
      */
     confidence: {
       weak: { min: 17.42, max: 17.42, spreadPp: 0.007, mean: 17.4, saidWhenOptimal: 17.4, saidWhenNot: 17.4 },
-      strong: { min: 20.4, max: 100, spreadPp: 79.6, mean: 71.1, saidWhenOptimal: 71.5, saidWhenNot: 48.1, eceP: 26.8 },
+      strong: { min: 20.4, max: 100, spreadPp: 79.6, mean: 71.1, saidWhenOptimal: 71.5, saidWhenNot: 48.1 },
+      /**
+       * WHY THERE IS NO SINGLE "IS IT CALIBRATED" NUMBER HERE, and why an earlier draft was wrong.
+       *
+       * 46.8% of the 4,520 states have MORE THAN ONE optimal move (mean 1.96, up to 9). So a model
+       * that correctly splits its probability across three equally-good moves shows a top-1
+       * confidence near 0.33 and is scored "right" — which reads as wild under-confidence and is
+       * nothing of the sort. Measured both ways on the strong model:
+       *
+       *   top-1 probability      stated 27% -> optimal 92%   (looks badly under-confident)
+       *   mass on the optimal set  mass 26% -> optimal 12%   (roughly honest, slightly over)
+       *
+       * Which measure is right depends on which claim is being tested. For "higher confidence
+       * means higher accuracy" (a RANKING claim) top-1 is fine. For "0.9 means nine times in ten"
+       * (a PROBABILITY claim) only the set mass is meaningful. The tab shows both for that reason.
+       */
+      ties: { multiOptimalPct: 46.8, meanOptimalMoves: 1.96 },
     },
   },
 } as const

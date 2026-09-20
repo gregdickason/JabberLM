@@ -14,7 +14,7 @@ import ConceptMap from './ConceptMap'
 import TicTacToe from './TicTacToe'
 import Inspector from './Inspector'
 import { type Board } from '../data/tictactoe'
-import { BUNDLES } from '../data/modelStats'
+import { BUNDLES, MEASURED } from '../data/modelStats'
 import { useSectionRoute } from '../lib/useSectionRoute'
 
 // ---- live two-phase trainer knobs (from the offline Phase-0 sweep) ----------
@@ -198,15 +198,25 @@ export default function CapstoneApp() {
             agent does not write a move out as text for something to parse. It runs{' '}
             <b>one forward pass</b>, and the harness reads the scores for the nine cell tokens and
             nothing else — a <b>typed decision</b>, one of a fixed set of answers, with a
-            probability attached. That is the confidence strip above. Fixing the set of answers in
-            advance makes a malformed answer impossible, and you have just watched the undertrained
-            agent pick an already-occupied cell in most positions anyway. A schema constrains the{' '}
-            <em>shape</em> of an answer. It has nothing to say about whether the answer is true.
-            Whether that confidence number means anything is measured in{' '}
+            probability attached. That is the confidence strip above.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Fixing the answers in advance buys something real: a malformed move is now impossible
+            rather than merely unlikely, and no parsing can fail. It is worth being precise about
+            what it does <em>not</em> buy, because there are three different failures here and only
+            the first is cured. A <b>malformed</b> answer is impossible by construction. An{' '}
+            <b>illegal</b> answer — the occupied cells the undertrained agent keeps choosing — is
+            not cured, but it could be: we could have offered it only the empty cells, and we
+            deliberately did not, so the check layer has something to catch. The third is the one no
+            schema reaches. The well-trained agent picks a <b>legal move that is simply worse</b> in
+            about {Math.round(100 - MEASURED.ttt.strong.optimal)}% of positions, and there is no way
+            to write a schema that excludes it, because the whole question is which of the allowed
+            answers is right. Constraining the shape of an answer says nothing about its truth.
+            Whether the confidence number tells you when to worry is measured in{' '}
             <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
               the lab
             </a>
-            , and the short version is that for this model it is the same number every time.
+            , and the answer is not the obvious one.
           </p>
         </section>
 

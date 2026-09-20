@@ -232,3 +232,31 @@ built one.
 `src/data/series.ts` gains `kind: 'dispatch'` and a date. The series is a ladder and a topical post
 is not a rung, so it renders with a dot and a date rather than a number. Post 1 promised to use
 headlines as a way in; this is the mechanism for doing that without corrupting the sequence.
+
+**27. The calibration tab shipped with a measurement error, and the fix is left visible.**
+An external review caught it. The tab scored top-1 probability against "was the top pick in the
+optimal set", and concluded the strong model was badly under-confident. It is not: **46.8% of the
+4,520 states have more than one optimal move**, so a model correctly splitting its belief across
+three equally-good moves reads 0.33 and is scored right. Measured both ways, the same model goes
+from "stated 26% → 92% optimal" (looks wildly shy) to "mass 26% → 12% optimal" (slightly
+over-confident). Both curves are now on the chart, and the copy says the tab got it wrong, because
+the correction is a better lesson than the original claim: the model did not change, the scoring
+rule did, and the verdict flipped.
+
+What survived: the weak model's constant confidence, which no scoring choice explains, and the
+ranking gap, which ties would understate rather than inflate.
+
+**28. Citing illegal moves as the limit of schemas was the wrong argument.**
+Also from the review, also right. An occupied cell is illegal, and legality is precisely what a
+schema can encode — offer only the empty cells and the 60% disappears. The unanswerable case is
+**legal but worse** (the strong agent, ~2% of positions), which no schema can exclude because the
+question is which allowed answer is right. Capstone copy, the post and CLAUDE.md now lead with
+that and keep the occupied cells as the secondary, deliberately-unfixed illustration.
+
+**29. Read the vendor's own material, not the coverage.**
+The draft attacked a 0% structured-output error rate. TypeSafe's own post says of it: *"Our number
+is not empirical. Schema matching is guaranteed."* They also claim calibration as *"higher
+confidence means higher accuracy"* — a ranking claim, not a probability one — so the draft's
+headline question was aimed at something they had not said. Three of the four questions were
+rewritten. The strongest surviving one came from their own benchmark note: the reference answer is
+the average of two frontier models, so ~68% is agreement rather than correctness.

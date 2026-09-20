@@ -504,10 +504,15 @@ altogether. These three make that measurable rather than asserted.
   actually right, over all 4,520 board positions. The undertrained agent's confidence is a
   **constant**: 17.4158% to 17.4225%, one value to four decimal places on every board it has ever
   been shown, displayed all the while as though it were a measurement. The well-trained agent's
-  does vary and ranks honestly — 71.5% when its move is optimal against 48.1% when it is not — and
-  is still badly wrong as a probability, playing the optimal move ~96% of the time when it claims
-  30%. The lesson is that "calibrated" bundles three separate questions: does the number vary at
-  all, does it rank, and does 0.9 mean nine times in ten. A model can pass any and fail the others.
+  does vary and ranks honestly — 71.5% when its move is optimal against 48.1% when it is not.
+  **A first version of this tab also called it badly under-confident, and that was a measurement
+  error caught in review**: 46.8% of positions have more than one optimal move, so scoring the
+  model's top-1 probability against "was the top pick optimal" manufactures fake under-confidence
+  out of a model that is correctly splitting its belief. Score the mass it put across all the
+  equally-good moves and it is roughly honest. Both curves are now plotted, because which one is
+  right depends on whether you are testing a *ranking* claim ("higher confidence means higher
+  accuracy") or a *probability* claim ("0.9 means nine times in ten") — and those come apart
+  exactly when more than one answer is acceptable, which is the normal case in real work.
 - **The verifier's budget** — the adder shown a sum and a claimed answer. It never accepts a wrong
   one, at any width, so its error-catch rate is a flat 100% and it looks like a flawless reviewer.
   It is not: it rejects correct answers just as readily, because its own recomputation disagrees with

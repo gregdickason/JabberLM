@@ -12,6 +12,20 @@ import type { CharTokenizer } from '../engine/tokenizer'
 /**
  * Calibration — does the confidence number mean anything?
  *
+ * ── A correction worth reading before editing this file ─────────────────────────────────────
+ * The first version of this tab scored the model's TOP-1 probability against "was the top-1 move
+ * in the optimal set", concluded the strong model was badly under-confident, and published it.
+ * That was a measurement artifact. 46.8% of the 4,520 states have more than one optimal move
+ * (mean 1.96), so a model that correctly spreads its probability over three equally-good moves
+ * shows ~0.33 and is scored right — which looks like under-confidence and is not.
+ *
+ * Both measures are now on screen, because which one is correct depends on which claim is being
+ * tested, and that turns out to be the whole lesson:
+ *   - "higher confidence means higher accuracy" is a RANKING claim; top-1 tests it fine.
+ *   - "0.9 means nine times in ten" is a PROBABILITY claim; only the mass on the optimal set
+ *     tests it, and by that measure this model is roughly honest rather than wildly shy.
+ * ────────────────────────────────────────────────────────────────────────────────────────────
+ *
  * The capstone agent already shows a confidence per cell. This asks the question nobody asks of
  * such a number: when it says 30%, is it right 30% of the time?
  *
@@ -52,6 +66,8 @@ interface Bucket {
 }
 interface Sweep {
   buckets: Bucket[]
+  massBuckets: Bucket[]
+  tiePct: number
   n: number
   min: number
   max: number
@@ -63,7 +79,7 @@ interface Sweep {
 }
 
 /** The agent's own decision, read the way the capstone reads it: one pass, nine options. */
-function readTop(model: Model, tok: CharTokenizer, board: Board): { top: number; conf: number } {
+function readTop(model: Model, tok: CharTokenizer, board: Board): { top: number; conf: number; probs: number[] } {
   const ids = tok.encode(ticPrompt(board))
   const { logits } = model.forward(
     ids.slice(Math.max(0, ids.length - model.cfg.contextLen)),
@@ -81,7 +97,7 @@ function readTop(model: Model, tok: CharTokenizer, board: Board): { top: number;
   const probs = exps.map((e) => e / sum)
   let top = 0
   for (let c = 1; c < 9; c++) if (probs[c] > probs[top]) top = c
-  return { top, conf: probs[top] }
+  return { top, conf: probs[top], probs }
 }
 
 const btn = 'rounded px-2 py-0.5 text-[11px]'
@@ -124,6 +140,12 @@ export default function CalibrationSection() {
     const confSum = new Array(BUCKETS).fill(0)
     const optHit = new Array(BUCKETS).fill(0)
     const legHit = new Array(BUCKETS).fill(0)
+    // second measure: how much probability the model put on the optimal SET, which is the only
+    // one that can test "0.9 means nine times in ten" when several answers are equally right
+    const mCnt = new Array(BUCKETS).fill(0)
+    const mSum = new Array(BUCKETS).fill(0)
+    const mHit = new Array(BUCKETS).fill(0)
+    let ties = 0
     let min = 1
     let max = 0
     let mean = 0
@@ -139,8 +161,15 @@ export default function CalibrationSection() {
       if (cancelRef.current) return
       await new Promise((r) => requestAnimationFrame(() => r(null)))
       for (const b of states.slice(i, i + CHUNK)) {
-        const { top, conf } = readTop(t.model, t.tok, b)
-        const isOpt = optimalMoves(b).includes(top)
+        const { top, conf, probs } = readTop(t.model, t.tok, b)
+        const opt = optimalMoves(b)
+        if (opt.length > 1) ties++
+        const isOpt = opt.includes(top)
+        const mass = opt.reduce((a, c) => a + probs[c], 0)
+        const mi = Math.min(BUCKETS - 1, Math.floor(mass * BUCKETS))
+        mCnt[mi]++
+        mSum[mi] += mass
+        if (isOpt) mHit[mi]++
         const isLegal = legalMoves(b).includes(top)
         const bi = Math.min(BUCKETS - 1, Math.floor(conf * BUCKETS))
         cnt[bi]++
@@ -165,21 +194,28 @@ export default function CalibrationSection() {
     }
 
     const n = states.length
-    const buckets: Bucket[] = []
-    for (let i = 0; i < BUCKETS; i++) {
-      if (!cnt[i]) continue
-      buckets.push({
-        lo: (100 * i) / BUCKETS,
-        n: cnt[i],
-        meanConf: (100 * confSum[i]) / cnt[i],
-        pctOptimal: (100 * optHit[i]) / cnt[i],
-        pctLegal: (100 * legHit[i]) / cnt[i],
-      })
+    const mk = (c: number[], s: number[], h: number[]): Bucket[] => {
+      const out: Bucket[] = []
+      for (let i = 0; i < BUCKETS; i++) {
+        if (!c[i]) continue
+        out.push({
+          lo: (100 * i) / BUCKETS,
+          n: c[i],
+          meanConf: (100 * s[i]) / c[i],
+          pctOptimal: (100 * h[i]) / c[i],
+          pctLegal: (100 * (legHit[i] ?? 0)) / c[i],
+        })
+      }
+      return out
     }
+    const buckets = mk(cnt, confSum, optHit)
+    const massBuckets = mk(mCnt, mSum, mHit)
     setSweeps((s) => ({
       ...s,
       [which]: {
         buckets,
+        massBuckets,
+        tiePct: (100 * ties) / n,
         n,
         min: 100 * min,
         max: 100 * max,
@@ -214,14 +250,14 @@ export default function CalibrationSection() {
           ],
         },
         {
-          label: 'how often the move was actually optimal',
+          label: 'scored on its top pick only',
           color: COLORS.optimal,
           points: cur.buckets.map((b) => ({ x: b.meanConf, y: b.pctOptimal })),
         },
         {
-          label: 'how often it was even legal',
+          label: 'scored on all the moves that were equally good',
           color: COLORS.legal,
-          points: cur.buckets.map((b) => ({ x: b.meanConf, y: b.pctLegal })),
+          points: cur.massBuckets.map((b) => ({ x: b.meanConf, y: b.pctOptimal })),
         },
       ]
     : []
@@ -329,7 +365,9 @@ export default function CalibrationSection() {
           <div>
             <div className="mb-1 text-[11px] text-slate-400">
               <b>Does it mean what it says?</b> Grey is what a perfectly honest number would look
-              like. Above the line is under-confident, below it is over-confident.
+              like: above it is under-confident, below it is over-confident. The two coloured lines
+              are the <em>same model</em>, scored two different ways — and the gap between them is
+              the trap this tab is really about.
             </div>
             <LineChart series={reliability} width={460} height={200} yLabel="% actually" />
             <div className="text-[11px] text-slate-500">stated confidence →</div>
@@ -355,17 +393,31 @@ export default function CalibrationSection() {
           most of the mistakes.
         </p>
         <p>
-          <b className="text-slate-300">And it still does not mean what it says.</b> Look at the
-          left of the reliability chart: at a stated 30% this model plays the optimal move about
-          96% of the time. It is not over-confident, which is what everyone expects — it is badly{' '}
-          <em>under</em>-confident. "0.3" is not a probability here. It is a rank.
+          <b className="text-slate-300">Whether it "means what it says" depends on how you score
+          it, and that is the part worth slowing down for.</b> Read only the top pick and this
+          model looks wildly shy: at a stated 30% it plays an optimal move about 96% of the time.
+          But <b>{MEASURED.ttt.confidence.ties.multiOptimalPct}% of positions have more than one
+          optimal move</b> — {MEASURED.ttt.confidence.ties.meanOptimalMoves} on average. A model
+          that correctly spreads its belief over three equally good moves shows 0.33 on each and is
+          then marked right, which manufactures the appearance of under-confidence out of nothing.
+          Score the probability it put on <em>all</em> the equally-good moves and the same model is
+          roughly honest, and slightly over-confident at the bottom end.
         </p>
         <p>
-          That split is the useful thing to carry away, because "calibrated" gets used for three
-          different properties. <b>Does the number vary?</b> <b>Does it rank — higher when the
-          answer is better?</b> <b>Does 0.9 mean right nine times in ten?</b> A model can pass any
-          of those and fail the others, and only the third is what the word literally claims. Ask
-          which one a vendor means.
+          This tab got that wrong on the first attempt, published it, and had it caught in review.
+          It is left visible rather than quietly fixed because the mistake is the more useful
+          artifact: the model did not change, the scoring rule did, and the verdict flipped from
+          badly broken to broadly fine.
+        </p>
+        <p>
+          So "calibrated" is really three questions. <b>Does the number vary at all?</b>{' '}
+          <b>Does it rank — higher when the answer is more likely right?</b>{' '}
+          <b>Does 0.9 literally mean nine times in ten?</b> A model can pass any and fail the
+          others, they need different measurements, and the second and third come apart hard the
+          moment more than one answer is acceptable — which is the normal case in real work.
+          Routing a support ticket, grading a risk, choosing a next action: several answers are
+          usually defensible. Worth asking which of the three a vendor means, and how they scored
+          it when several answers were right.
         </p>
         <p>
           The same question, asked of the language model elsewhere on this site, gives a third

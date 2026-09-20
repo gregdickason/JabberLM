@@ -1,43 +1,39 @@
 A new model called Jev landed this week that does not predict the next token. It does not write at all.
 
-You give it a question and a fixed list of allowed answers, and it returns one of them in a single pass, with a probability attached. TypeSafe AI, the lab behind it, says it therefore cannot hallucinate: the valid answers are fixed in the schema in advance, so an invalid one is impossible. They report a 0% structured output error rate.
+You give it a question and a list of allowed answers; it returns one, in a single pass, with a confidence score. TypeSafe AI says it "can't hallucinate", because the valid answers are fixed in a schema in advance.
 
-No quarrel with the engineering — it is a genuinely interesting design. But I have been running a model of that shape on my own site for weeks without thinking to call it one, and what mine does is worth putting beside that claim.
+That claim is narrower than the coverage suggests. They report a 0% structured output error rate, then say plainly: "Our number is not empirical. Schema matching is guaranteed." They are not claiming the answers are right, only well-formed — and say openly that this is true by construction.
 
-WHAT OURS DOES
+So the load-bearing claim is the other one: "Calibrated: higher confidence means higher accuracy". If correctness is not guaranteed, confidence is what tells you when to escalate — and unlike the 0%, it is testable.
 
-The tic-tac-toe agent on JabberLM does not write its move out as text. One forward pass, and the harness reads the scores for the nine cells and nothing else. One of a fixed set of answers, with a probability. A typed decision.
+I tested it on my own model and got humbled twice.
 
-It is impossible for it to return a malformed move.
+WHAT MINE DOES
 
-In 60% of board positions, the cell it picks is already occupied.
+The tic-tac-toe agent on JabberLM is the same shape: one pass, nine allowed answers, a probability on each. I ship two versions, one deliberately undertrained. Neither can return a malformed move.
 
-The schema did its job perfectly. Every answer was structurally valid. Most were nonsense, and the game is only playable because ordinary code checks each move against the rules first.
+The undertrained one picks an already-occupied cell in 60% of positions — the weaker example, and I want to be fair about it. An occupied cell is illegal, and legality is exactly what a schema can encode. I could have offered only the empty ones.
 
-THE CONFIDENCE NUMBER IS WORSE
+The failure no schema reaches is the well-trained one: a legal, well-formed move that is simply worse, in about 2% of positions. Nobody designs that away, because the question is which allowed answer is right.
 
-That agent displays how confident it is. I finally measured whether the number means anything, across all 4,520 reachable positions.
+THE CONFIDENCE NUMBER
 
-It ranges from 17.4158% to 17.4225%.
+The undertrained agent shows how confident it is. Across all 4,520 non-terminal positions it runs from 17.4158% to 17.4225%.
 
-It is the same number every time. It does not vary with the board, because it is not looking at the board. It had been sitting on the screen for weeks looking exactly like a measurement.
+The same number every time. It does not vary with the board because it is not looking at the board, and it had sat on screen for weeks looking like a measurement.
 
-The well-trained version is more interesting. Its confidence varies and it ranks honestly: 71.5% when its move is optimal, 48.1% when it is not. Useful. But at a stated 30% it is right 96% of the time — badly wrong as a probability, genuinely useful as an ordering.
+The well-trained one does vary, and ranks honestly: 71.5% when its move is optimal, 48.1% when not. That is the property TypeSafe claims, and mine has it.
 
-WHAT I WOULD LIKE TO KNOW
+Then I wrote that it was also badly under-confident: at a stated 30% it was right 96% of the time. A reviewer pointed out this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
 
-I built a demo last month of a checker that catches 100% of wrong answers. It is worthless — it rejects correct ones just as eagerly. A perfect-looking score, measuring nothing.
+WHAT I WOULD LIKE TO ASK
 
-So when I see 0% structured output error rate, I recognise the shape, and I would genuinely like to know:
+Not a gotcha. I got this wrong twice on a model I built.
 
-Does "cannot hallucinate" mean it cannot emit an invalid value, or cannot emit a wrong one? Those are very different promises and only the first follows from a schema.
+When several answers are acceptable — routing a ticket, grading a risk — what does "higher confidence means higher accuracy" mean, and how was it scored?
 
-The published accuracy is 67.8%. What does the confidence score do on the third of decisions that are wrong?
+The workflow benchmark uses two frontier models averaged as the reference answer. Does 68% mean agreement with them, rather than correctness?
 
-When the valid answers include ones that are wrong in the world, as our nine cells do, what catches it? If the answer is a checking layer, what did the schema buy?
+And on the third of decisions that come out wrong, where does confidence sit?
 
-And does calibrated mean 0.9 is right nine times in ten? That is testable. It is the test I just failed on my own model.
-
-Genuine questions. I would rather be corrected than right.
-
-Link in the comments.
+Links to my site and TypeSafe's own write-up in the comments. I would rather be corrected than right, and I now have the track record to prove it.
