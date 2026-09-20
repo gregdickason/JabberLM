@@ -217,13 +217,19 @@ someone choosing their first threshold?
 deciding when to act without review — because that is what makes both failures matter rather than
 being curiosities. The capstone says the same in one line.
 
-## Verification status of the quote — read before publishing
+## Verification status of the quote — RESOLVED
 
-The FAQ **question** is confirmed verbatim on typesafe.ai. The **answer** is JS-rendered and could
-not be fetched, so the wording in the post is Greg's reading of the page, corroborated across
-several independent write-ups ("cannot invent a category outside that list", "guarantees the shape
-of the output, not its correctness", "a confidence score your code can gate on"). The post
-paraphrases rather than quoting the answer directly, except for the question title, which is quoted.
+The FAQ **question** was confirmed verbatim by fetching typesafe.ai. The **answer** is JS-rendered
+and could not be fetched here, so it was flagged for checking. **Greg confirmed on 20 September
+2026 that he copy-pasted the answer directly from the live page**, so the wording is verified at
+source. Independent write-ups corroborate the substance ("cannot invent a category outside that
+list", "guarantees the shape of the output, not its correctness", "a confidence score your code can
+gate on").
 
-**Check the exact wording against the live page before posting**, since the piece turns on being
-scrupulous about what they actually said.
+Their answer, as published:
+
+> Yes. Jev guarantees the shape of its answers, not that every decision is correct. If you provide
+> a list of categories, it can't invent a category outside that list, but it can choose the wrong
+> one. Uncertainty is a feature! You can use Jev's provided probabilities and confidence to set the
+> threshold for when your software acts autonomously and when it needs further review: higher for
+> higher-stakes decisions, lower when errors are less costly.
