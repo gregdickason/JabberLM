@@ -312,8 +312,20 @@ pass at 1-2 digits, measured, which is why the strong claim is not stated anywhe
 **the automaton row width must stay well under the model's context window**, since predicting a cell
 needs the row above it, and at width 64 in a 32-char window all three flatten onto the noise floor and
 the demo says nothing), and `verifier's budget` (a checker whose error-catch rate is a flat 100% and
-which is nonetheless worthless, because it rejects correct answers just as readily). Corpora in
-`src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.) `runAdderWith(solve, …)`
+which is nonetheless worthless, because it rejects correct answers just as readily), and
+`calibration` (the tic-tac-toe confidence number against how often it is actually right, over all
+4,520 states — **the undertrained agent's is a CONSTANT, 17.4158% to 17.4225%, one value to 4dp on
+every board**, while the strong one ranks well (71.5% when optimal vs 48.1% when not) and is still
+badly under-confident (says 30%, is right 96%); figures in `MEASURED.ttt.confidence`). Corpora in
+`src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.)
+
+**A transformer is not necessarily a language model**, and the site now says so where it matters
+(capstone recap, glossary `next-token-prediction`). `readCells` in `tictactoe-agent.ts` is already
+a **typed-decision** model — one forward pass, a softmax over nine cell tokens, a probability per
+option, no generation and no parsing — which is the shape TypeSafe's Jev sells as
+"cannot hallucinate". The site's standing refutation is that the undertrained agent's answers are
+100% schema-valid and 60% illegal. Keep that framing: a schema constrains the SHAPE of an answer,
+never its truth — the same argument already made for typed tool output in `HarnessApp` §4. `runAdderWith(solve, …)`
 takes the column solver as a parameter precisely so tests can prove this — a solver wrong on one
 column yields an answer wrong in exactly that digit; a solver that always says `0 0` yields zeros.
 If the harness were secretly adding, those tests would pass wrongly. Same rule as the tic-tac-toe

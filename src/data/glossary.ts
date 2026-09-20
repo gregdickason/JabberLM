@@ -55,7 +55,8 @@ export const TERMS: Term[] = [
     term: 'Next-token prediction',
     group: 'The basics',
     short:
-      'The one thing a language model does: score every possible next token, pick one, add it to the text, repeat. Everything else in this glossary is in service of that loop.',
+      'The one thing a language model does: score every possible next token, pick one, add it to the text, repeat. Almost everything else in this glossary is in service of that loop.',
+    more: 'It is the job, not the hardware. The same transformer can be read as a single typed decision instead of a writer, and some recent models are trained only to do that — so "a language model predicts the next token" stays true while "every transformer does" does not.',
     see: { label: 'watch it choose', href: './explain.html?section=prediction' },
   },
   {
@@ -451,6 +452,42 @@ export const TERMS: Term[] = [
       'A model does the same amount of work on every question, however hard the question is. One pass costs what it costs, set by the length of the input and the size of the model, and difficulty does not enter into it.',
     more: 'So anything needing more computation than one pass can hold must be split into more passes, or handed to something outside the model whose effort grows with the problem. That is the argument for a harness.',
     see: { label: 'watch one pass run out', href: './lab.html?tab=what-fits' },
+  },
+  {
+    id: 'calibration',
+    term: 'Calibration',
+    group: 'Limits',
+    short:
+      'Whether a stated confidence matches how often the answer is actually right. A model that says 90% and is right 90% of the time is calibrated; one that says 90% and is right half the time is not, however useful it is otherwise.',
+    more: 'Worth separating three things that all get called calibrated: does the number vary at all, does it rank (higher when the answer is better), and does 0.9 literally mean nine times in ten. A model can pass any of those and fail the others.',
+    see: { label: 'measure it on a real model', href: './lab.html?tab=calibration' },
+  },
+  {
+    id: 'typed-decision',
+    term: 'Typed decision',
+    also: 'constrained output, structured output',
+    group: 'Limits',
+    short:
+      'Fixing the set of answers a model may give before it answers — one of these five categories, a score out of ten, yes or no — so anything outside the set is impossible rather than merely unlikely.',
+    more: 'It removes malformed answers, which is a real gain. It does nothing about wrong ones: the tic-tac-toe agent picks from nine legal-looking cells and still names an occupied one most of the time.',
+    see: { label: 'watch a schema-valid wrong answer', href: './capstone.html?section=play' },
+  },
+  {
+    id: 'autoregressive',
+    term: 'Autoregressive',
+    group: 'Limits',
+    short:
+      'Producing an answer one piece at a time, each piece conditioned on the pieces already produced. It is how language models generate text, and it is why a long answer costs more than a short one.',
+    more: 'Not every transformer is used this way. Read a single forward pass as a score over a fixed set of options and the same network makes one typed decision instead of writing.',
+  },
+  {
+    id: 'system-1-2',
+    term: 'System 1 and System 2',
+    group: 'Limits',
+    short:
+      "Kahneman's names for fast automatic judgement and slow deliberate reasoning. Borrowed by the field for models that answer in one shot versus models that work through steps before answering.",
+    more: 'This site has both: the tic-tac-toe agent decides a move in a single pass, and the adder works one column at a time through a loop. The second is slower, costs more, and reaches problems the first cannot.',
+    see: { label: 'the slow one', href: './lab.html?tab=what-fits' },
   },
   {
     id: 'epiplexity',

@@ -162,12 +162,12 @@ there's nothing to add to the repo. It reports referrers (e.g. LinkedIn), top pa
 
 The beacon only ever reports a URL, built from **`pathname + search`** — a `#fragment` is invisible to
 it — so anything that happens *inside* a page (a tab, a section, a demo you ran) is unmeasurable by
-default. The lab's sixteen demos are the exception: they route through **`lab.html?tab=<slug>`**
+default. The lab's seventeen demos are the exception: they route through **`lab.html?tab=<slug>`**
 (`src/lab/tabRoute.ts`), and the beacon patches `history.pushState`, so switching tabs registers as its
 own pageview and "which demo did anyone actually open?" becomes answerable. Two rules that module's
 comments spell out, both read off the beacon source: **push** (a `replaceState` is not a navigation and
 reports nothing) and push an **absolute** path (it resolves a relative URL to the bare origin, which
-would collapse all sixteen tabs into one entry). Old `lab.html#slug` links still resolve. The same fix
+would collapse all seventeen tabs into one entry). Old `lab.html#slug` links still resolve. The same fix
 now covers the other in-page surfaces: the explain / learn / harness / capstone sections route through
 **`?section=<slug>`** (`src/lib/sectionRoute.ts`), and old `#slug` links still resolve there too.
 

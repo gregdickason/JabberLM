@@ -13,8 +13,18 @@
 
 export type PostStatus = 'published' | 'draft' | 'planned'
 
+/**
+ * A rung on the ladder, or a dispatch. Dispatches are written when something happens — a model
+ * launches, an incident lands — and are deliberately off-sequence: post 1 promised to use a
+ * headline as a way in and then show the mechanism underneath. They carry a date rather than a
+ * number, so the ladder stays readable as a ladder.
+ */
+export type PostKind = 'rung' | 'dispatch'
+
 export type Post = {
   n: number
+  kind?: PostKind
+  date?: string // dispatches only — when it was written
   part: 1 | 2 | 3 | 4 | 5
   title: string
   idea: string // the one thing this post is for
@@ -33,6 +43,16 @@ export const PARTS: Record<number, string> = {
 }
 
 export const POSTS: Post[] = [
+  {
+    n: 0,
+    kind: 'dispatch',
+    date: '20 September 2026',
+    part: 1,
+    title: 'A model that does not predict the next token',
+    idea: "Jev returns one of a fixed set of answers in a single pass and its makers say it cannot hallucinate. We have been running a typed-decision model on this site for weeks without calling it one, so here is what ours does — and what we would genuinely like to know.",
+    status: 'draft',
+    tryIt: { label: 'is the confidence number real?', href: './lab.html?tab=calibration' },
+  },
   {
     n: 1,
     part: 1,

@@ -295,3 +295,50 @@ Open `/explain.html?section=prediction`.
 
 The point to protect: a reader must never leave §1 thinking the bundled model is broken. If the
 amber note does not appear when the groove does, that is a bug worth reporting.
+
+---
+
+# Calibration tab and the Jev dispatch (20 Sept 2026)
+
+## C1. The tab
+
+`/lab.html?tab=calibration`. It opens on the **undertrained** agent and sweeps ~900 boards in a few
+seconds, with a "measuring…" note.
+
+Expected, and the whole point of the tab:
+
+- **Undertrained:** the range tile reads roughly `17.4% – 17.4%` and says *it barely moves at all*.
+  The histogram is a **single bar**. The "said when right / wrong" tile shows the same number twice
+  and says *no difference — it cannot tell you*. If the histogram shows a spread here, something is
+  wrong.
+- Switch to **well-trained**. It re-sweeps. The histogram now spreads across most of the range, the
+  reliability curve sits **well above** the grey diagonal, and the said-right/said-wrong tile shows
+  roughly `71% / 48%`.
+
+The reliability chart's grey line is the "if the number meant what it says" reference. The green
+line being above it means under-confident, which is the counter-intuitive finding and should be
+stated in the copy below the chart.
+
+## C2. Cross-links and copy
+
+- `/capstone.html?section=play` — below the board there should now be a paragraph naming the typed
+  decision, and saying the schema made a malformed move impossible while the agent still picks an
+  occupied cell in most positions. It links to the calibration tab.
+- The capstone recap's "All of it is next-token prediction" line should now carry the asterisk about
+  a transformer not having to be used that way.
+- `/glossary.html` — the Limits group should now have **calibration**, **typed decision**,
+  **autoregressive** and **System 1 and System 2**.
+- `/explain.html?section=inference` — a new paragraph on the Jevons argument at the end, before the
+  callout.
+- `/series.html` — a dispatch row at the top of Part 1 with a dot instead of a number and an amber
+  "dispatch · 20 September 2026" tag.
+
+## C3. The dispatch
+
+`docs/blog/post-jev-linkedin.txt` is copy-paste ready: 513 words, 2,847 characters, no Markdown,
+link held for the first comment (text in `post-jev-notes.md`).
+
+The three numbers that must be right, because the post is a public challenge to someone else's
+claim and they will be checked: **60%** of positions get an occupied cell, confidence ranges
+**17.4158% to 17.4225%**, and the strong model says **71.5% / 48.1%**. All three are in
+`post-jev-notes.md` with their measurement, and all three are reproduced by the tab.

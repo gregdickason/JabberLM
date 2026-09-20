@@ -1,0 +1,43 @@
+A new model called Jev landed this week that does not predict the next token. It does not write at all.
+
+You give it a question and a fixed list of allowed answers, and it returns one of them in a single pass, with a probability attached. TypeSafe AI, the lab behind it, says it therefore cannot hallucinate: the valid answers are fixed in the schema in advance, so an invalid one is impossible. They report a 0% structured output error rate.
+
+No quarrel with the engineering — it is a genuinely interesting design. But I have been running a model of that shape on my own site for weeks without thinking to call it one, and what mine does is worth putting beside that claim.
+
+WHAT OURS DOES
+
+The tic-tac-toe agent on JabberLM does not write its move out as text. One forward pass, and the harness reads the scores for the nine cells and nothing else. One of a fixed set of answers, with a probability. A typed decision.
+
+It is impossible for it to return a malformed move.
+
+In 60% of board positions, the cell it picks is already occupied.
+
+The schema did its job perfectly. Every answer was structurally valid. Most were nonsense, and the game is only playable because ordinary code checks each move against the rules first.
+
+THE CONFIDENCE NUMBER IS WORSE
+
+That agent displays how confident it is. I finally measured whether the number means anything, across all 4,520 reachable positions.
+
+It ranges from 17.4158% to 17.4225%.
+
+It is the same number every time. It does not vary with the board, because it is not looking at the board. It had been sitting on the screen for weeks looking exactly like a measurement.
+
+The well-trained version is more interesting. Its confidence varies and it ranks honestly: 71.5% when its move is optimal, 48.1% when it is not. Useful. But at a stated 30% it is right 96% of the time — badly wrong as a probability, genuinely useful as an ordering.
+
+WHAT I WOULD LIKE TO KNOW
+
+I built a demo last month of a checker that catches 100% of wrong answers. It is worthless — it rejects correct ones just as eagerly. A perfect-looking score, measuring nothing.
+
+So when I see 0% structured output error rate, I recognise the shape, and I would genuinely like to know:
+
+Does "cannot hallucinate" mean it cannot emit an invalid value, or cannot emit a wrong one? Those are very different promises and only the first follows from a schema.
+
+The published accuracy is 67.8%. What does the confidence score do on the third of decisions that are wrong?
+
+When the valid answers include ones that are wrong in the world, as our nine cells do, what catches it? If the answer is a checking layer, what did the schema buy?
+
+And does calibrated mean 0.9 is right nine times in ten? That is testable. It is the test I just failed on my own model.
+
+Genuine questions. I would rather be corrected than right.
+
+Link in the comments.

@@ -136,6 +136,12 @@ export const MEASURED = {
   adderLoop: { pct: 100, n: 0, of: 'whole sums at 4, 6, 10, 15 and 25 digits, through the loop' },
   adderSinglePass: { pct: 0, n: 0, of: 'whole sums in one pass, at every width tested' },
   adderSelfTrace: { pct: 10, n: 0, of: 'its own written working at 4 digits' },
+  /**
+   * The three-skill model's own confidence on held-out sorts — mean top-character probability
+   * across the answer — split by whether the answer was right. The gap is real and far too
+   * small to act on: it is 94% confident on the ones it gets wrong.
+   */
+  multitaskSortConfidence: { whenRight: 98.0, whenWrong: 93.9, nRight: 132, nWrong: 13 },
   /** Warehouse: unseen baskets (a rule-covering held-out split). */
   warehouseHeldOut: { pct: 90, n: 16, of: 'unseen baskets' },
   warehouseTrain: { pct: 98, n: 0, of: 'baskets it trained on' },
@@ -146,6 +152,21 @@ export const MEASURED = {
     strong: { legal: 100, optimal: 98, win: 89, block: 92, vsRandom: 100, vsPerfect: 94, losingLines: 9 },
     /** Mean attention on the opponent's threat cell, over the must-block boards. */
     threatFocus: { weak: 0.2, strong: 0.79, boards: 1_484 },
+    /**
+     * Calibration of the confidence number the agent shows for its chosen cell, swept over all
+     * 4,520 states (scripts/… equivalent run offline; see docs/BUILD-DECISIONS.md entry 22).
+     *
+     * The weak model's confidence is a CONSTANT: 17.4158% to 17.4225% across every board, a
+     * spread of 0.007 percentage points. It does not vary with the position at all, so it
+     * cannot carry information about it — while being displayed as though it did.
+     *
+     * The strong model's varies, and ranks correctly (higher when it is about to be right), but
+     * is badly under-confident as a probability: at a stated 30% it is optimal ~96% of the time.
+     */
+    confidence: {
+      weak: { min: 17.42, max: 17.42, spreadPp: 0.007, mean: 17.4, saidWhenOptimal: 17.4, saidWhenNot: 17.4 },
+      strong: { min: 20.4, max: 100, spreadPp: 79.6, mean: 71.1, saidWhenOptimal: 71.5, saidWhenNot: 48.1, eceP: 26.8 },
+    },
   },
 } as const
 

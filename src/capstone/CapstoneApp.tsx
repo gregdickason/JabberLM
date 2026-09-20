@@ -193,6 +193,21 @@ export default function CapstoneApp() {
           <div className="rounded-lg border border-slate-800 bg-slate-900/40 p-4">
             <TicTacToe onLookInside={setInspectBoard} />
           </div>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Worth naming what just happened, because it is a shape you will meet being sold. The
+            agent does not write a move out as text for something to parse. It runs{' '}
+            <b>one forward pass</b>, and the harness reads the scores for the nine cell tokens and
+            nothing else — a <b>typed decision</b>, one of a fixed set of answers, with a
+            probability attached. That is the confidence strip above. Fixing the set of answers in
+            advance makes a malformed answer impossible, and you have just watched the undertrained
+            agent pick an already-occupied cell in most positions anyway. A schema constrains the{' '}
+            <em>shape</em> of an answer. It has nothing to say about whether the answer is true.
+            Whether that confidence number means anything is measured in{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
+              the lab
+            </a>
+            , and the short version is that for this model it is the same number every time.
+          </p>
         </section>
 
         {/* look inside the agent — the interpretability payoff (Part III tools on the Part IV agent) */}
@@ -364,7 +379,11 @@ export default function CapstoneApp() {
           </ul>
           <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
             Attention, generalisation, agents, SFT→RL and interpretability, in {BUNDLES.tictactoe.paramsLabel}{' '}
-            parameters. All of it is next-token prediction at a size you can see through.
+            parameters. All of it is next-token prediction at a size you can see through — with one
+            asterisk worth keeping: a transformer does not have to be used this way. Read only the
+            nine cell scores, as this page does, and the same network is a classifier rather than a
+            writer. The architecture is the general thing; predicting the next token is the job we
+            usually give it.
           </p>
           <p className="max-w-3xl text-[11px] leading-relaxed text-slate-400">
             Where to go next: the{' '}

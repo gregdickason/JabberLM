@@ -185,3 +185,50 @@ join rather than repeat.
 `repeatingTail`/`readable` live in `src/lib/repetition.ts` with unit tests, including the real
 greedy output as a fixture. `readable` rotates a block caught mid-word ("d the stoo") to start at
 a word boundary ("the stood ") so the quote reads the way a person would say it.
+
+---
+
+## Calibration tab and the Jev dispatch (20 Sept 2026)
+
+**22. The measurement contradicted the plan, and the plan lost.**
+The brief predicted the undertrained tic-tac-toe agent would be over-confident. It is not. Swept
+over all 4,520 reachable states, its confidence in its own chosen cell ranges from **17.4158% to
+17.4225%** — a spread of 0.0068 of a percentage point, and **one distinct value at four decimal
+places**. It is not a poor estimate. It is a constant that was being rendered on screen as though
+it were a measurement, and had been for weeks.
+
+The strong model then split a distinction the plan had treated as one thing. It **ranks** honestly
+(71.5% mean confidence when its move is optimal against 48.1% when it is not) and is **badly
+calibrated** (at a stated 30% it plays the optimal move ~96% of the time — under-confident, not
+over). So the tab is built around three questions rather than one: does the number vary, does it
+rank, does 0.9 mean nine times in ten. That is a better lesson than the one commissioned.
+
+Full sweep recorded in `MEASURED.ttt.confidence`. The method reproduces the shipped
+`MEASURED.ttt.weak.legal` of 40% exactly, which is what validates it.
+
+**23. The tab sweeps every 5th state, not all of them.**
+A full 4,520-state sweep is ~17s per model in the browser, too slow for a mount sweep. A
+deterministic stride of 5 gives 904 states in a few seconds, chunked per animation frame like
+`what fits`. The copy quotes the full-sweep figures from `MEASURED` and says on the page that the
+on-screen sweep is a sample.
+
+**24. A second measurement that is not on the tab but changed what the copy may claim.**
+The three-skill model on held-out sorts is 98.0% confident when right and 93.9% when wrong
+(n 132/13). So confidence does carry a signal for the language model too — a real one, and far too
+small to act on. This slightly complicates `lessons.tsx`'s *"A confabulated answer and a correct one
+are produced by the same process at the same confidence."* Left unedited, because that sentence is
+about generated text rather than a classifier and four percentage points does not rescue it, but
+recorded here so a future editor does not sharpen it further without knowing.
+
+**25. Naming a vendor, which the site had not done before.**
+Greg's call, and the register is his: name the claim, show our own numbers, rebut humbly with
+genuine questions. Every question in the dispatch is answerable and none is rhetorical. Nothing is
+asserted about Jev that is not quoted from TypeSafe's own material or its published benchmark
+table. What keeps the humility honest is that we shipped a worthless 100% metric ourselves in the
+verifier's-budget tab, so we recognise the shape of "0% structured output error rate" from having
+built one.
+
+**26. Dispatches are a new post kind, deliberately off the ladder.**
+`src/data/series.ts` gains `kind: 'dispatch'` and a date. The series is a ladder and a topical post
+is not a rung, so it renders with a dot and a date rather than a number. Post 1 promised to use
+headlines as a way in; this is the mechanism for doing that without corrupting the sequence.

@@ -28,6 +28,7 @@ export const TABS = [
   'what fits',
   'structure vs noise',
   "verifier's budget",
+  'calibration',
 ] as const
 export type Tab = (typeof TABS)[number]
 

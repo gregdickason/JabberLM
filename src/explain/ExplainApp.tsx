@@ -393,10 +393,27 @@ export default function ExplainApp() {
             <KVCostDemo />
             <p className="mt-4 font-semibold text-slate-200">3. Shrink the weights themselves.</p>
             <QuantizationDemo />
+            <p className="mt-4 font-semibold text-slate-200">
+              And the lever that works the other way.
+            </p>
+            <p>
+              Everything above spends less on the work you already have. There is an argument that
+              runs in the opposite direction, and it is old enough to have a name. In 1865 the
+              economist William Jevons noticed that more efficient steam engines did not reduce
+              Britain's coal use — they increased it, because cheap steam power was suddenly worth
+              using for things nobody would have used it for before. The same thing is being
+              predicted for machine decisions: make one cheap enough and you stop reserving it for
+              the occasional important question, and start putting one inside every loop, every
+              form validation, every routing choice. Whether that saves you money depends entirely
+              on which effect is larger, and that is a question about your product rather than
+              about the model.
+            </p>
             <Callout>
               A token you do not recompute costs nothing. For high-volume tasks, compare a small
               fine-tuned or distilled model against a large generalist. Cache long prompts you reuse.
               Output tokens cost more than input tokens, so terse answers are cheaper than long ones.
+              And when something gets dramatically cheaper, budget for using more of it rather than
+              for the same usage at a lower price.
             </Callout>
           </Section>
 

@@ -57,7 +57,7 @@ below.
 | **New to AI** (`explain.html`) | a no-maths explainer for people who *use* AI at work | [6](#6-new-to-ai--explainhtml) |
 | **How it works** (`learn.html`) | one example followed through a real model, step by step | [7](#7-how-it-works--learnhtml) |
 | **Tools & agents** (`harness.html`) | a model that calls tools, loops, gets hijacked, and reasons | [8](#8-tools--agents--harnesshtml) |
-| **Lab** (`lab.html`) | sixteen interpretability, training and limits demos | [9](#9-the-lab--labhtml) |
+| **Lab** (`lab.html`) | seventeen interpretability, training and limits demos | [9](#9-the-lab--labhtml) |
 | **Capstone** (`capstone.html`) | two agents you play with, then look inside | [10](#10-the-capstone--capstonehtml) |
 | **For teachers** (`teachers.html`) | session plans and embeddable demos | [11](#11-teaching-with-it--teachershtml) |
 
@@ -428,7 +428,7 @@ it ran tools, and it held state. Most systems need all three.
 
 ## 9. The lab — `lab.html`
 
-Sixteen tabs, grouped into five themes. Each is addressable: `lab.html?tab=head-ablation` opens that
+Seventeen tabs, grouped into five themes. Each is addressable: `lab.html?tab=head-ablation` opens that
 tab directly. Sections that train do so live, on the main thread, and stop themselves when the
 held-out curve converges.
 
@@ -500,6 +500,14 @@ altogether. These three make that measurable rather than asserted.
   width must stay well under the model's context window, since predicting a cell needs the row above
   it. At width 64 in a 32-character window all three corpora flatten onto the noise floor and the
   demo says nothing.
+- **Calibration** — the tic-tac-toe agent's confidence number, checked against how often it is
+  actually right, over all 4,520 board positions. The undertrained agent's confidence is a
+  **constant**: 17.4158% to 17.4225%, one value to four decimal places on every board it has ever
+  been shown, displayed all the while as though it were a measurement. The well-trained agent's
+  does vary and ranks honestly — 71.5% when its move is optimal against 48.1% when it is not — and
+  is still badly wrong as a probability, playing the optimal move ~96% of the time when it claims
+  30%. The lesson is that "calibrated" bundles three separate questions: does the number vary at
+  all, does it rank, and does 0.9 mean nine times in ten. A model can pass any and fail the others.
 - **The verifier's budget** — the adder shown a sum and a claimed answer. It never accepts a wrong
   one, at any width, so its error-catch rate is a flat 100% and it looks like a flawless reviewer.
   It is not: it rejects correct answers just as readily, because its own recomputation disagrees with

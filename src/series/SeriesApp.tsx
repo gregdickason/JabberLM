@@ -13,6 +13,7 @@ import { PARTS, POSTS, publishedCount, type Post } from '../data/series'
 
 function Row({ p }: { p: Post }) {
   const done = p.status === 'published'
+  const dispatch = p.kind === 'dispatch'
   return (
     <li className="flex gap-3 border-t border-slate-800 py-3">
       <span
@@ -20,8 +21,9 @@ function Row({ p }: { p: Post }) {
           'mt-0.5 w-6 shrink-0 text-right font-mono text-[12px] ' +
           (done ? 'text-sky-300' : 'text-slate-600')
         }
+        title={dispatch ? 'a dispatch — written when it happened, off the ladder' : undefined}
       >
-        {p.n}
+        {dispatch ? '·' : p.n}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
@@ -32,6 +34,11 @@ function Row({ p }: { p: Post }) {
           ) : (
             <span className={'text-[13px] font-semibold ' + (done ? 'text-slate-100' : 'text-slate-400')}>
               {p.title}
+            </span>
+          )}
+          {dispatch && (
+            <span className="rounded border border-amber-800 px-1 text-[10px] uppercase tracking-wide text-amber-500">
+              dispatch{p.date ? ` · ${p.date}` : ''}
             </span>
           )}
           {!done && (
@@ -73,8 +80,10 @@ export default function SeriesApp() {
           whose seed you cannot already see at the bottom.
         </p>
         <p className="mt-2 text-[12px] text-slate-500">
-          {publishedCount()} of {POSTS.length} posts published. The demos below are live whether or
-          not the post that uses them is written yet — that is the point of the site.
+          {publishedCount()} of {POSTS.filter((p) => p.kind !== 'dispatch').length} rungs published,
+          plus the occasional dispatch when something happens that is worth stopping for. The demos
+          below are live whether or not the post that uses them is written yet — that is the point
+          of the site.
         </p>
 
         {parts.map((n) => (

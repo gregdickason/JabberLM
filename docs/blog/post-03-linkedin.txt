@@ -34,7 +34,7 @@ THE ANSWERS
 
 Nearest to "ocean" is "sea" at 0.88, then "seas" at 0.85, then "coast". That is similarity on a scale where 1 would mean identical.
 
-And the arithmetic works. King minus man plus woman lands on queen, scoring 0.86. Paris minus France plus Italy lands on Rome, at 0.84.
+And the arithmetic works. King minus man plus woman equals queen, scoring 0.86. Paris minus France plus Italy equals Rome, at 0.84.
 
 Nobody taught any of these models about royalty, or about capital cities. Those directions fell out of the text on their own.
 

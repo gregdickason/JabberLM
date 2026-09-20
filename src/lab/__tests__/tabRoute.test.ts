@@ -62,3 +62,11 @@ describe('the Limits tabs', () => {
     expect(tabFromUrl('?tab=structure-vs-noise', '')).toBe('structure vs noise')
   })
 })
+
+describe('the calibration tab', () => {
+  it('has the slug the capstone and the post link to', () => {
+    expect(slug('calibration')).toBe('calibration')
+    expect(tabFromUrl('?tab=calibration', '')).toBe('calibration')
+    expect(tabFromUrl('', '#calibration')).toBe('calibration')
+  })
+})
