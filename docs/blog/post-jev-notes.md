@@ -303,3 +303,50 @@ measurement (17.4158%–17.4225%) carries the piece, as it should: it is the one
 nobody else has.
 
 LinkedIn version: 2,947 of 3,000 characters, disclosure included.
+
+---
+
+# Economic reframe (21 September 2026)
+
+Greg rewrote the post around the economic argument, which is the right call for his audience, and
+asked for a critique plus the BERT point checked. Both of his factual claims about the clone
+ecosystem turned out to be true and sharper than he had them.
+
+## Verified this session
+
+| claim | status |
+|---|---|
+| "at least 6 clones in the last 2 days" | **Confirmed.** Six named within ~48 hours of the 15 Sept launch: Laya, Bespoke Nimble, Jevlike, Kev-0.5B, OpenJev, DiffusionGemmaJev. |
+| "at least one uses an advanced form of the old BERT model" | **Confirmed and improved.** The leading one, Laya, is **ModernBERT-large, 421M params** — literally a modernised BERT. Jevlike is embedding-only; Bespoke Nimble is the outlier, a LoRA on a decoder (Qwen3.5-9B). |
+| laya-mlx | **Real.** An Apple MLX port of Laya, which Greg has run locally. That is a much stronger credential than commentary and now appears in the post. |
+
+The BERT detail does real work: the strongest open clone being an encoder from the BERT family is
+the cleanest possible evidence that the *shape* is old and the calibration training is the new
+part. It is also the same argument the site now makes on the capstone — scoring a fixed set of
+allowed answers is how multiple-choice benchmarks have been done for years.
+
+## What the critique changed
+
+1. **"It also tells you the probability that it is right"** — removed. That is the strong
+   probability claim, TypeSafe do not make it (theirs is "higher confidence means higher
+   accuracy", a ranking claim), and it is precisely what our own measurement shows can be false.
+   Asserting it in paragraph three gave away the one thing this post is uniquely placed to say.
+2. **Half-quoting them, twice.** "Says it therefore cannot hallucinate" and the bare 0% both
+   omitted their own qualifications. Both now carry the FAQ answer and the "not empirical" line.
+   Credit for having read the source is worth more than the rhetorical win.
+3. **The occupied-cell detail is gone**, replaced by the constant 17.4%. An occupied cell is
+   *illegal*, and legality is exactly what a schema can encode — it is the weak example, as an
+   earlier reviewer established. The constant confidence is the finding nobody else has.
+4. **The business case now names its own dependency.** Routing low-confidence cases to a human is
+   the whole economic argument, and it only works if the confidence is real. Saying so, immediately
+   after showing a confidence that was not, is what makes the post more than commentary.
+5. Speed and cost figures attributed as TypeSafe's own; "quicker and faster" fixed; "the Jev guys"
+   dropped; disclosure restored; the long ECONOMIC VALUE block split into three; and the title
+   question now gets answered in the last line.
+
+## Files
+
+`post-jev-linkedin_v1.txt` is the live version, 2,986 of 3,000 characters. The earlier draft is
+kept as `post-jev-linkedin-v0-superseded.txt` — it is the calibration-first framing, still the
+better skeleton for the book chapter, where there is no character limit and the measurement can
+carry more weight.
