@@ -9,8 +9,20 @@ A new model called **Jev** arrived this week that does not predict the next toke
 write at all.
 
 You give it a question and a list of allowed answers, and it returns one of them in a single pass
-with a confidence score. TypeSafe AI says it **"can't hallucinate"**, because the valid answers are
-fixed in a schema in advance.
+with a confidence score.
+
+Strip away the framing and the mechanism is not new. Run one forward pass, read the scores for just
+the allowed answers, ignore the rest of the vocabulary, and softmax over what is left. That is
+roughly how multiple-choice benchmarks have been scored for years. Architecturally this is a
+**classifier**, a very capable one.
+
+I know it is not new because I have been running the naive version of it for weeks without
+noticing. The [tic-tac-toe agent](https://jabberlm.com/capstone?section=play) does exactly that:
+one pass, read the scores for the nine cells, softmax. I had never thought to call it a typed
+decision.
+
+So the interesting claim is not the shape. TypeSafe says Jev **"can't hallucinate"**, because the
+valid answers are fixed in a schema in advance.
 
 That claim is narrower than the coverage around it suggests, and it is worth reading their own
 words. They report a 0% structured output error rate and then say plainly: *"Our number is not
@@ -21,8 +33,12 @@ launch material, and it deserves crediting before anyone argues with it.
 
 So the load-bearing claim is the other one. Their model card says **"Calibrated: higher confidence
 means higher accuracy"**, and they trained for it deliberately — Reinforcement Learning for
-Calibrated Decisions. If correctness is not guaranteed, the confidence score is what tells your
-software when to escalate. Unlike the 0%, that is testable.
+Calibrated Decisions — positioned against the known problem that the preference tuning which makes
+a model helpful also damages its calibration. If correctness is not guaranteed, the confidence
+score is what tells your software when to escalate. Unlike the 0%, that is testable.
+
+That is a coherent thing to build and a coherent thing to sell. It is also, as it turns out, an
+awkward thing to verify.
 
 I have been running a model of the same shape on this site for weeks without thinking to call it
 one. I went and tested it, and got humbled twice.

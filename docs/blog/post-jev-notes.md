@@ -150,3 +150,40 @@ Checking TypeSafe's own write-up rather than the coverage changed the piece subs
   it is his call how to word it.
 - The earlier edits "for the weakly trained model" and "the Jev guys" are both gone: both models
   are now introduced at the top of that section, and the register no longer needs the nickname.
+
+---
+
+# Framing round (20 September 2026)
+
+A second conversation sharpened the thesis, and the post was restructured around it.
+
+**The mechanism is old; the calibration claim is the new part.** Reading a model's scores over
+just the allowed answers and softmaxing over those is how multiple-choice benchmarks have been
+scored for years. Architecturally Jev is a classifier. The post now leads with that, and with the
+fact that JabberLM has been running the naive version of exactly that mechanism for weeks —
+`readCells` is one pass, nine cells, a softmax. That is a stronger opening than the schema argument
+because it is generous, verifiable and hard to dismiss, and it makes the calibration question the
+obvious one rather than a pivot.
+
+**What was deliberately kept out.** An early instinct was to call Jev "a decision tree with Monte
+Carlo weighting". Both halves are wrong and easy to refute: a tree's outputs are fixed at training
+time, whereas Jev takes new questions and new answer sets per request (up to 255 options), which
+needs learned language representations; and Monte Carlo needs a simulator, which exists for a
+tic-tac-toe board and not for "is this ticket angry". The probabilities almost certainly come from
+the network's own output distribution. Putting the guess in the post would have handed a reviewer
+an easy win.
+
+**The useful corollary**, which is now in the tab copy: Monte Carlo estimates are calibrated if the
+simulator is right, whereas learned probabilities are only as calibrated as training made them.
+That is precisely why the calibration test is the right one to run, and why TypeSafe going after it
+explicitly is a reasonable thing to do rather than a marketing flourish.
+
+**Site copy updated to match:** the capstone now says the same network read this way is a
+classifier and that the technique is old, and the calibration tab notes that a model's scores are
+trained to mean "how likely is this token next" rather than "how likely am I right" — which is why
+calibration has to be pursued on purpose.
+
+**Disclosure added** to the LinkedIn version at Greg's request, for one editing pass: *"JabberLM is
+a personal side project for teaching, unrelated to my work."* Final wording is his.
+
+Post is now 2,968 characters of LinkedIn's 3,000, including the disclosure.

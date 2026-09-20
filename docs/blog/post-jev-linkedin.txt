@@ -1,39 +1,39 @@
 A new model called Jev landed this week that does not predict the next token. It does not write at all.
 
-You give it a question and a list of allowed answers; it returns one, in a single pass, with a confidence score. TypeSafe AI says it "can't hallucinate", because the valid answers are fixed in a schema in advance.
+You give it a question and a list of allowed answers; it returns one, in a single pass, with a confidence score.
 
-That claim is narrower than the coverage suggests. They report a 0% structured output error rate, then say plainly: "Our number is not empirical. Schema matching is guaranteed." They are not claiming the answers are right, only well-formed — and say openly that this is true by construction.
+Strip away the framing and the mechanism is not new. Run one forward pass, read the scores for just the allowed answers, ignore the rest of the vocabulary, softmax over what is left. That is roughly how multiple-choice benchmarks have been scored for years. Architecturally this is a classifier — a very capable one.
 
-So the load-bearing claim is the other one: "Calibrated: higher confidence means higher accuracy". If correctness is not guaranteed, confidence is what tells you when to escalate — and unlike the 0%, it is testable.
+I know it is not new because I have been running the naive version for weeks without noticing. The tic-tac-toe agent on JabberLM does exactly that: one pass, read the scores for the nine cells, softmax. I had never thought to call it a typed decision.
 
-I tested it on my own model and got humbled twice.
+So the interesting claim is not the shape. TypeSafe says Jev "can't hallucinate", and that is narrower than the coverage suggests — they report a 0% structured output error rate, then say plainly: "Our number is not empirical. Schema matching is guaranteed." They are claiming the answers are well-formed, not right, and they say so.
 
-WHAT MINE DOES
+The load-bearing claim is the other one: "Calibrated: higher confidence means higher accuracy." They trained for it deliberately, positioned against the known problem that RLHF damages calibration. If correctness is not guaranteed, that number is what tells your software when to escalate — and unlike the 0%, it is testable.
 
-The tic-tac-toe agent on JabberLM is the same shape: one pass, nine allowed answers, a probability on each. I ship two versions, one deliberately undertrained. Neither can return a malformed move.
+So I tested mine, and got humbled twice.
 
-The undertrained one picks an already-occupied cell in 60% of positions — the weaker example, and I want to be fair about it. An occupied cell is illegal, and legality is exactly what a schema can encode. I could have offered only the empty ones.
+FIRST
 
-The failure no schema reaches is the well-trained one: a legal, well-formed move that is simply worse, in about 2% of positions. Nobody designs that away, because the question is which allowed answer is right.
-
-THE CONFIDENCE NUMBER
-
-The undertrained agent shows how confident it is. Across all 4,520 non-terminal positions it runs from 17.4158% to 17.4225%.
+My undertrained agent shows a confidence for the cell it picks. Across all 4,520 non-terminal positions that number runs from 17.4158% to 17.4225%.
 
 The same number every time. It does not vary with the board because it is not looking at the board, and it had sat on screen for weeks looking like a measurement.
 
 The well-trained one does vary, and ranks honestly: 71.5% when its move is optimal, 48.1% when not. That is the property TypeSafe claims, and mine has it.
 
-Then I wrote that it was also badly under-confident: at a stated 30% it was right 96% of the time. A reviewer pointed out this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
+SECOND
 
-WHAT I WOULD LIKE TO ASK
+I then wrote that it was badly under-confident, because at a stated 30% it was right 96% of the time. A reviewer pointed out this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
+
+The model never changed. The scoring rule did, and the verdict went from broken to fine.
+
+WHAT I WOULD ASK
 
 Not a gotcha. I got this wrong twice on a model I built.
 
 When several answers are acceptable — routing a ticket, grading a risk — what does "higher confidence means higher accuracy" mean, and how was it scored?
 
-The workflow benchmark uses two frontier models averaged as the reference answer. Does 68% mean agreement with them, rather than correctness?
+The workflow benchmark uses two frontier models averaged as the reference answer. Does 68% mean agreement rather than correctness?
 
-And on the third of decisions that come out wrong, where does confidence sit?
+And on the decisions that come out wrong, where does the confidence sit?
 
-Links to my site and TypeSafe's own write-up in the comments. I would rather be corrected than right, and I now have the track record to prove it.
+JabberLM is a personal side project for teaching, unrelated to my work. Links in the comments.

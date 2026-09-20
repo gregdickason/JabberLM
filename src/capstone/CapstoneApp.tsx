@@ -197,8 +197,20 @@ export default function CapstoneApp() {
             Worth naming what just happened, because it is a shape you will meet being sold. The
             agent does not write a move out as text for something to parse. It runs{' '}
             <b>one forward pass</b>, and the harness reads the scores for the nine cell tokens and
-            nothing else — a <b>typed decision</b>, one of a fixed set of answers, with a
-            probability attached. That is the confidence strip above.
+            nothing else, then turns those into a distribution — the confidence strip above. One of
+            a fixed set of answers, with a probability. A <b>typed decision</b>.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Read that way, the same network is a <b>classifier</b> rather than a writer, and the
+            technique is old: scoring multiple-choice answers by reading the scores for just the
+            allowed options has been standard for years. It is worth knowing because models are now
+            being sold on exactly this shape — one pass, a fixed set of answers, a confidence
+            attached — and the shape is not the new part. What would be new is the confidence
+            number being trained to mean something, which is{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
+              measurable
+            </a>
+            , and for this model is not true.
           </p>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
             Fixing the answers in advance buys something real: a malformed move is now impossible

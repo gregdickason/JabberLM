@@ -276,7 +276,10 @@ export default function CalibrationSection() {
         The capstone agent shows you a confidence for the cell it picks, and it is easy to read that
         as a measurement. This asks the question nobody asks of such a number:{' '}
         <b>when it says 30%, is it right 30% of the time?</b> The two shipped agents answer very
-        differently, and neither answer is the obvious one.
+        differently, and neither answer is the obvious one. The question matters beyond this toy:
+        reading a model's scores over a fixed set of allowed answers is how multiple-choice
+        benchmarks are scored and how a growing number of products now work, and in all of them the
+        confidence figure is doing the work that correctness cannot.
       </SectionIntro>
 
       {status && <p className="text-[11px] text-amber-400">{status}</p>}
@@ -428,7 +431,14 @@ export default function CalibrationSection() {
           actually meet is a model that is 94% sure and mistaken.
         </p>
         <p>
-          This tab pairs with{' '}
+          One reason a vendor might train for this deliberately: the scores a language model produces
+        are trained to mean "how likely is this token next", not "how likely am I right", and the
+        preference tuning that makes a model helpful is known to make that worse. So calibration is
+        a thing you have to go after on purpose. Which is a coherent thing to sell — and, as the two
+        measurements above show, a genuinely awkward thing to verify.
+        </p>
+        <p>
+        This tab pairs with{' '}
           <a className="text-sky-400 hover:underline" href="./lab.html?tab=verifiers-budget">
             the verifier's budget
           </a>
