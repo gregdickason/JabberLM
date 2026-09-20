@@ -187,3 +187,43 @@ calibration has to be pursued on purpose.
 a personal side project for teaching, unrelated to my work."* Final wording is his.
 
 Post is now 2,968 characters of LinkedIn's 3,000, including the disclosure.
+
+---
+
+# Thresholding round (20 September 2026)
+
+Greg spotted that TypeSafe's own FAQ answers the question the post was circling. It asks **"Can
+Jev still get things wrong?"** and answers yes: the shape of the answer is guaranteed, the
+correctness is not; it cannot invent a category outside your list, but it can choose the wrong one
+from inside it. Then it gives the operational advice — use the probabilities and confidence to set
+the threshold at which your software acts on its own versus sends the case for review, higher for
+higher-stakes decisions.
+
+**We had only half-covered this.** The post credited them for saying the 0% figure was "not
+empirical", which is the weaker of the two concessions. Publishing an argument that a schema
+guarantees valid-not-correct, while they say precisely that in their FAQ, would have read as
+though the post had not looked. Same failure the earlier review caught on the 0%; this one went one
+level deeper.
+
+**It improves the piece rather than weakening it.** The argument is no longer "they overclaim" —
+they do not. It is: their design is sound, it rests entirely on the confidence number being good
+enough to threshold on, and both of my mistakes are ways that number quietly fails to be. A
+constant confidence cannot carry a threshold at all. A confidence whose apparent calibration flips
+when you change the scoring rule leaves you unable to place the threshold even though nothing about
+the model changed. The closing question is now the genuinely useful one: what would you tell
+someone choosing their first threshold?
+
+**Site copy follows.** The calibration tab now opens its conclusion with what the number is *for* —
+deciding when to act without review — because that is what makes both failures matter rather than
+being curiosities. The capstone says the same in one line.
+
+## Verification status of the quote — read before publishing
+
+The FAQ **question** is confirmed verbatim on typesafe.ai. The **answer** is JS-rendered and could
+not be fetched, so the wording in the post is Greg's reading of the page, corroborated across
+several independent write-ups ("cannot invent a category outside that list", "guarantees the shape
+of the output, not its correctness", "a confidence score your code can gate on"). The post
+paraphrases rather than quoting the answer directly, except for the question title, which is quoted.
+
+**Check the exact wording against the live page before posting**, since the piece turns on being
+scrupulous about what they actually said.

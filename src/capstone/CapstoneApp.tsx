@@ -205,12 +205,13 @@ export default function CapstoneApp() {
             technique is old: scoring multiple-choice answers by reading the scores for just the
             allowed options has been standard for years. It is worth knowing because models are now
             being sold on exactly this shape — one pass, a fixed set of answers, a confidence
-            attached — and the shape is not the new part. What would be new is the confidence
-            number being trained to mean something, which is{' '}
+            attached — and the shape is not the new part. The confidence number is. It is what lets
+            software decide when to act on its own and when to ask a person, so it has to be worth
+            something, and whether it is turns out to be{' '}
             <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
               measurable
             </a>
-            , and for this model is not true.
+            . For this agent it is the same number on every board.
           </p>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
             Fixing the answers in advance buys something real: a malformed move is now impossible

@@ -431,7 +431,18 @@ export default function CalibrationSection() {
           actually meet is a model that is 94% sure and mistaken.
         </p>
         <p>
-          One reason a vendor might train for this deliberately: the scores a language model produces
+          <b>What the number is for.</b> The reason to care is not tidiness. A confidence score earns
+        its place by letting software decide <em>when to act on its own</em>: above some threshold
+        act, below it send the case to a person, and set the bar higher when the decision matters
+        more. That is a sound design and it is what these models are sold to do. Both failures above
+        break it, in different ways. A confidence that never varies cannot carry a threshold at all
+        — every decision lands on the same side of whatever line you draw. And a confidence whose
+        apparent calibration flips when you change how you score it leaves you unable to say where
+        the line should go, even though the model has not changed. Before trusting a threshold,
+        check that the number moves, and check what it was scored against.
+        </p>
+        <p>
+        One reason a vendor might train for this deliberately: the scores a language model produces
         are trained to mean "how likely is this token next", not "how likely am I right", and the
         preference tuning that makes a model helpful is known to make that worse. So calibration is
         a thing you have to go after on purpose. Which is a coherent thing to sell — and, as the two

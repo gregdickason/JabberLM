@@ -21,8 +21,15 @@ noticing. The [tic-tac-toe agent](https://jabberlm.com/capstone?section=play) do
 one pass, read the scores for the nine cells, softmax. I had never thought to call it a typed
 decision.
 
-So the interesting claim is not the shape. TypeSafe says Jev **"can't hallucinate"**, because the
-valid answers are fixed in a schema in advance.
+So the interesting claim is not the shape — and TypeSafe are clearer about this than most of the
+coverage of them. Their FAQ asks **"Can Jev still get things wrong?"** and answers yes: it
+guarantees the shape of its answers, not that every decision is correct. It cannot invent a
+category outside your list, but it can choose the wrong one from inside it.
+
+Their answer to that is the part worth testing. Use the confidence score to set a threshold: act
+automatically above it, send for review below it, and raise the bar when the decision matters more.
+Uncertainty as a feature rather than a defect. That is a sound design, and it is exactly the thing
+both of my own mistakes made impossible.
 
 That claim is narrower than the coverage around it suggests, and it is worth reading their own
 words. They report a 0% structured output error rate and then say plainly: *"Our number is not
@@ -79,15 +86,18 @@ honestly: **71.5%** when the move it is about to play is optimal, **48.1%** when
 precisely the property TypeSafe claims, and mine has it — you could route the low-confidence cases
 elsewhere and catch most of the mistakes.
 
-Then I wrote that it was *also* badly under-confident, because at a stated 30% it plays the optimal
-move about 96% of the time. A reviewer pointed out that this was my own measurement error, and they
+You cannot set a threshold on the undertrained one. Every decision falls on the same side of
+whatever line you draw.
+
+Then I wrote that the well-trained one was *also* badly under-confident, because at a stated 30% it
+plays the optimal move about 96% of the time. A reviewer pointed out that this was my own measurement error, and they
 were right. Nearly half of tic-tac-toe positions have **several equally good moves**, so a model
 that correctly splits its belief three ways shows 0.33 on each and is then marked correct. Score
 the probability it placed across *all* the good moves and the same model is roughly honest.
 
 The model never changed. The scoring rule did, and the verdict went from badly broken to broadly
-fine. Which is the real lesson here, and it is the question I would most like to put to anyone
-selling a confidence score.
+fine. That is a problem for thresholding specifically: a threshold is a number, and after that I no
+longer knew which number to pick.
 
 ## What I would like to know
 

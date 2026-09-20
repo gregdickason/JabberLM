@@ -2,38 +2,36 @@ A new model called Jev landed this week that does not predict the next token. It
 
 You give it a question and a list of allowed answers; it returns one, in a single pass, with a confidence score.
 
-Strip away the framing and the mechanism is not new. Run one forward pass, read the scores for just the allowed answers, ignore the rest of the vocabulary, softmax over what is left. That is roughly how multiple-choice benchmarks have been scored for years. Architecturally this is a classifier — a very capable one.
+Strip away the framing and the mechanism is not new. One forward pass, read the scores for just the allowed answers, ignore the rest of the vocabulary, softmax over what is left. That is roughly how multiple-choice benchmarks have been scored for years. Architecturally this is a classifier — a very capable one.
 
 I know it is not new because I have been running the naive version for weeks without noticing. The tic-tac-toe agent on JabberLM does exactly that: one pass, read the scores for the nine cells, softmax. I had never thought to call it a typed decision.
 
-So the interesting claim is not the shape. TypeSafe says Jev "can't hallucinate", and that is narrower than the coverage suggests — they report a 0% structured output error rate, then say plainly: "Our number is not empirical. Schema matching is guaranteed." They are claiming the answers are well-formed, not right, and they say so.
+So the interesting claim is not the shape, and TypeSafe are clearer about this than the coverage of them is. Their FAQ asks "Can Jev still get things wrong?" and answers yes: it guarantees the shape of its answers, not that every decision is correct. It cannot invent a category outside your list, but it can choose the wrong one from inside it.
 
-The load-bearing claim is the other one: "Calibrated: higher confidence means higher accuracy." They trained for it deliberately, positioned against the known problem that RLHF damages calibration. If correctness is not guaranteed, that number is what tells your software when to escalate — and unlike the 0%, it is testable.
+Their answer to that is the part worth testing. Use the confidence score to set a threshold: act automatically above it, send for review below, and put the bar higher when the decision matters more. Uncertainty as a feature rather than a defect.
 
-So I tested mine, and got humbled twice.
+That is the right design. It is also exactly what my own two mistakes made impossible.
 
-FIRST
+MINE NEVER VARIED
 
 My undertrained agent shows a confidence for the cell it picks. Across all 4,520 non-terminal positions that number runs from 17.4158% to 17.4225%.
 
-The same number every time. It does not vary with the board because it is not looking at the board, and it had sat on screen for weeks looking like a measurement.
+The same number every time. It does not vary with the board because it is not looking at the board, and it had sat on screen for weeks looking like a measurement. You cannot set a threshold on it. Every decision falls on the same side of any line you draw.
 
 The well-trained one does vary, and ranks honestly: 71.5% when its move is optimal, 48.1% when not. That is the property TypeSafe claims, and mine has it.
 
-SECOND
+THEN I MISREAD IT
 
-I then wrote that it was badly under-confident, because at a stated 30% it was right 96% of the time. A reviewer pointed out this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
+I wrote that it was badly under-confident: at a stated 30% it was right 96% of the time. A reviewer showed me this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
 
-The model never changed. The scoring rule did, and the verdict went from broken to fine.
+The model never changed. The scoring rule did, and the verdict went from broken to fine. Which is a problem, because a threshold is a number, and I no longer knew what number to pick.
 
-WHAT I WOULD ASK
+SO, GENUINELY
 
 Not a gotcha. I got this wrong twice on a model I built.
 
 When several answers are acceptable — routing a ticket, grading a risk — what does "higher confidence means higher accuracy" mean, and how was it scored?
 
-The workflow benchmark uses two frontier models averaged as the reference answer. Does 68% mean agreement rather than correctness?
-
-And on the decisions that come out wrong, where does the confidence sit?
+And what would you tell someone choosing their first threshold?
 
 JabberLM is a personal side project for teaching, unrelated to my work. Links in the comments.
