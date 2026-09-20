@@ -1,37 +1,31 @@
-A new model called Jev landed this week that does not predict the next token. It does not write at all.
+How can AI crush every benchmark we invent and still not be trusted to route a customer service ticket?
 
-You give it a question and a list of allowed answers; it returns one, in a single pass, with a confidence score.
+That is the best question I have heard about AI this year, and it comes from a talk by TypeSafe's founder — who co-authored GPT-4, ChatGPT and RLHF, and who cheerfully describes himself as one of the few people at OpenAI who hates on ChatGPT.
 
-Strip away the framing and the mechanism is not new. One forward pass, read the scores for just the allowed answers, ignore the rest of the vocabulary, softmax over what is left. That is roughly how multiple-choice benchmarks have been scored for years. Architecturally this is a classifier — a very capable one.
+His answer is to look at what each pile of tasks has in common. The ones AI is brilliant at are the ones whose goal is to please a human in the loop. The ones it fails at are the ones whose goal is to remove the human from the loop. Assistance versus automation.
 
-I know it is not new because I have been running the naive version for weeks without noticing. The tic-tac-toe agent on JabberLM does exactly that: one pass, read the scores for the nine cells, softmax. I had never thought to call it a typed decision.
+And the cause is not mysterious. RLHF — the algorithm behind essentially every model you use — collects human preferences and optimises for them. As he puts it: why do all LLMs require a human in the loop? "We literally put them in the loop."
 
-So the interesting claim is not the shape, and TypeSafe are clearer about this than the coverage of them is. Their FAQ asks "Can Jev still get things wrong?" and answers yes: it guarantees the shape of its answers, not that every decision is correct. It cannot invent a category outside your list, but it can choose the wrong one from inside it.
+The consequence is the sharp part. Overpromising is not a bug, it is structural: "no matter how wrong the models are, they will look right." A model that does not know errs toward whatever a human would rate well. Hence the lesson he says every business has already learned — do not use AI for decisions with stakes to your business.
 
-Their answer to that is the part worth testing. Use the confidence score to set a threshold: act automatically above it, send for review below, and put the bar higher when the decision matters more. Uncertainty as a feature rather than a defect.
+Then the argument I keep thinking about.
 
-That is the right design. It is also exactly what my own two mistakes made impossible.
+SaaS has barely changed since 2019. The LLM era mostly bolted a chatbot onto the side, which is exactly what you would predict from an assistance-native technology. We are automating the writing of software without making software any smarter. The building blocks are the same ones. "We used to think that software would get a lot smarter, not just cheaper to write."
 
-MINE NEVER VARIED
+If that is right, what stands between us and software that decides things is not intelligence. It is that we cannot tell when to believe it. Which makes the confidence number the whole ballgame — and is why TypeSafe train for calibrated decisions rather than for human preference.
 
-My undertrained agent shows a confidence for the cell it picks. Across all 4,520 non-terminal positions that number runs from 17.4158% to 17.4225%.
+So I went and looked at mine.
 
-The same number every time. It does not vary with the board because it is not looking at the board, and it had sat on screen for weeks looking like a measurement. You cannot set a threshold on it. Every decision falls on the same side of any line you draw.
+JabberLM, my teaching site, runs a tiny agent that makes exactly this kind of decision: one forward pass, nine allowed answers, a probability on each. I ship two versions of it.
 
-The well-trained one does vary, and ranks honestly: 71.5% when its move is optimal, 48.1% when not. That is the property TypeSafe claims, and mine has it.
+The undertrained one displays a confidence. Across all 4,520 positions, that number ranges from 17.4158% to 17.4225%.
 
-THEN I MISREAD IT
+The same number every time. It is not looking at the board. You cannot automate on that: any threshold you pick puts every decision on the same side of it. And it had been sitting on screen for weeks looking exactly like a measurement.
 
-I wrote that it was badly under-confident: at a stated 30% it was right 96% of the time. A reviewer showed me this was my measurement error. Nearly half of tic-tac-toe positions have several equally good moves, so a model splitting its belief three ways shows 33% and is marked right. Score the mass across all the good moves and it is roughly honest.
+The well-trained one does vary, and it ranks honestly — 71.5% when its move is optimal, 48.1% when not. Same architecture, same size. The difference is entirely in the training.
 
-The model never changed. The scoring rule did, and the verdict went from broken to fine. Which is a problem, because a threshold is a number, and I no longer knew what number to pick.
+Which is the whole argument in miniature. If automation is the goal, the confidence is not a nice extra on top of the answer. It is the product.
 
-SO, GENUINELY
-
-Not a gotcha. I got this wrong twice on a model I built.
-
-When several answers are acceptable — routing a ticket, grading a risk — what does "higher confidence means higher accuracy" mean, and how was it scored?
-
-And what would you tell someone choosing their first threshold?
+So, genuinely: what would you tell someone choosing their first threshold?
 
 JabberLM is a personal side project for teaching, unrelated to my work. Links in the comments.

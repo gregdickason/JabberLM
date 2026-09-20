@@ -233,3 +233,73 @@ Their answer, as published:
 > one. Uncertainty is a feature! You can use Jev's provided probabilities and confidence to set the
 > threshold for when your software acts autonomously and when it needs further review: higher for
 > higher-stakes decisions, lower when errors are less costly.
+
+---
+
+# Rewritten around the talk (20 September 2026)
+
+Greg supplied the transcript of TypeSafe's founder's talk. The post is now built on that argument
+rather than on our own measurement history, and it is a much better piece for it. Their case is
+more interesting than the launch material, and it is one JabberLM happens to be able to illustrate.
+
+## Their argument, as given
+
+1. **The field holds two incompatible views.** One: AI is going extraordinarily well, every
+   benchmark falling, autonomous operating time growing exponentially. Two: it is a bubble
+   generating no value, and everything is a chat app. Everyone agrees only that the other side is
+   mad.
+2. **The divide is explained by one thing.** The tasks AI excels at are those whose goal is to
+   *please a human in the loop*. The tasks it fails at — customer service decisions, apparently far
+   easier — are those whose goal is to *remove* the human. **Assistance versus automation.**
+3. **The cause is the training objective.** RLHF collects human preferences and optimises them.
+   "Why do all LLMs require a human in the loop? We literally put them in the loop."
+4. **So overpromising is structural, not a defect.** "No matter how wrong the models are, they will
+   look right." A model that does not know errs toward what a human would rate well. Hence: do not
+   use AI for decisions with stakes to your business.
+5. **The software consequence, which is the "evolution of smart software" part.** SaaS has barely
+   changed since 2019; the LLM era bolted a chatbot on the side, which is what you would predict
+   from an assistance-native technology. We are automating the *writing* of software without making
+   software *smarter*. "We used to think that software would get a lot smarter, not just cheaper to
+   write." He treats Garry Tan's "golden age of just-in-time software" as double-edged.
+6. **Three North Stars.** RLHF optimises human preference; RLVR optimises raw correctness;
+   TypeSafe optimises **calibrated decision-making**. Explicitly not RLVR, and he says even the API
+   shape differs.
+7. **On hallucination (Q&A).** Pre-training is not the problem — pre-trained models are "incredibly
+   intelligent". Hallucination is intrinsic to optimising human preference: an asymmetry in the
+   reward model, GAN-like, rewards confident mode-dropping because a model's uncertainty is easy to
+   spot and punish.
+
+## Why this suits the site better than the launch framing
+
+Point 4 is, almost word for word, what JabberLM's hallucination material already says — "a
+confabulated answer and a correct one are produced by the same process at the same confidence" —
+arrived at independently from a tiny model. Point 7 is the mechanism behind it. And the whole
+argument terminates exactly where our calibration tab begins: if automation needs us to know when
+to believe a model, the confidence number is the product, and ours is a constant.
+
+So the post no longer argues with anyone. It takes their argument seriously and shows the piece of
+it that a 130,000-parameter model can demonstrate.
+
+## Two things Greg should know
+
+**The Jevons connection is not in the talk.** He asked. The model is named for the Jevons paradox
+and the launch coverage leans on it, but the talk makes a different and better argument: not "make
+decisions cheap and people will use more of them" but "software should get *smarter*, not merely
+cheaper to write". The explain page's inference-economics paragraph still stands on its own as
+general teaching, but it should not be attributed to this talk.
+
+**A name discrepancy, so the post names nobody.** The auto-transcript renders the speaker as "Tiago
+Almeida"; TechCrunch and the other coverage say **Diogo** Almeida. Probably a transcription error,
+but the post says "TypeSafe's founder" rather than risk misnaming someone in a piece whose whole
+virtue is being careful with sources. Worth a ten-second check before publishing if you want to
+name him, since the credentials are load-bearing in the opening.
+
+## What changed in the post
+
+The personal-confession structure is gone — no "humbled twice", no FIRST/SECOND headings. The
+measurement error survives as one paragraph in the long version only, because it supports the
+thresholding point, and is cut entirely from the LinkedIn version for space. The headline
+measurement (17.4158%–17.4225%) carries the piece, as it should: it is the one fact here that
+nobody else has.
+
+LinkedIn version: 2,947 of 3,000 characters, disclosure included.
