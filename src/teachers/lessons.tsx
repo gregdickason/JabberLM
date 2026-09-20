@@ -990,13 +990,19 @@ export const LESSONS: Record<DemoId, Lesson> = {
         ),
       },
       {
-        do: 'Now read the last five, and the confidence beside them.',
+        do: 'Now read the five in the middle, and the confidence beside them. This is the moment.',
         see: (
           <>
-            Much lower. "The milk was warm when it arrived" is a quality complaint and a delivery
-            complaint; "you swapped my bread for one with nuts" is a substitution error and an
-            allergy report. The model is not failing — it is unsure about things that are
-            genuinely unclear, and saying so.
+            Each of these five is genuinely two-sided. "The milk was warm when it arrived" is a
+            quality complaint and a delivery complaint; "you swapped my bread for one with nuts"
+            is a substitution error and an allergy report. The design intent was that the model
+            would be unsure and the threshold would send them to a person.{' '}
+            <b>It mostly is not.</b> Two of the five split their belief and escalate; the other
+            three answer one reading at 77%, 80% and <b>98%</b> and get routed with nobody
+            watching. Ask the room why, then give them the answer: "arrived" is all over the
+            delivery training examples, so the wording is familiar even though the meaning is
+            unclear. The confidence is a report on the wording. That is the single most useful
+            thing in this demo and it is worth five minutes.
           </>
         ),
       },
@@ -1015,9 +1021,13 @@ export const LESSONS: Record<DemoId, Lesson> = {
         do: 'Read the last two rows, which are marked in red.',
         see: (
           <>
-            Both wrong. Their <em>phrasing</em> was held out — "i cannot find the bread at all"
-            shares no words with any training example for a missing item — and on that kind the
-            model manages {MEASURED.classifier.unseenPhrasing}%. It generalises over the noun and
+            Their <em>phrasing</em> was held out — "i cannot find the bread at all" shares almost
+            no words with any training example for a missing item — and on that kind the model
+            manages {MEASURED.classifier.unseenPhrasing}%. One of the two lands on the right route
+            and one does not; both come back under 70% and escalate, which is the threshold
+            working. Contrast that with the five above, where it did not: here the model does not
+            recognise the wording and says so, there it recognised the wording and was sure about
+            the wrong reading. It generalises over the noun and
             barely at all over the sentence, because at this size it is matching wording rather
             than meaning. Leaving these on screen is the point: every deployment has a boundary
             like this, and the work is finding where yours sits.
@@ -1037,9 +1047,15 @@ export const LESSONS: Record<DemoId, Lesson> = {
         do: 'Ask the room what breaks this whole design.',
         see: (
           <>
-            A confidence number that does not vary. Then show them the calibration tab, where this
-            site's own undertrained agent reports 17.4% on every board it has ever seen. The
-            threshold is a control only if the number underneath it is real.
+            Two answers, and take both. A confidence number that does not vary — show them the
+            calibration tab, where this site's own undertrained agent reports 17.4% on every board
+            it has ever seen. And a confidence number that varies with the wrong thing, which they
+            have just watched on the five ambiguous rows. Measured across the two held-out splits:
+            on unseen products it says {MEASURED.classifier.saidWhenRight}% when right and{' '}
+            {MEASURED.classifier.saidWhenWrong}% when wrong, thirty points of daylight; on unseen
+            phrasings, {MEASURED.classifier.saidWhenRightNovel}% and{' '}
+            {MEASURED.classifier.saidWhenWrongNovel}%, and no line separates those. It sorts best
+            where the model was already competent.
           </>
         ),
       },

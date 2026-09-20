@@ -417,7 +417,18 @@ export default function CapstoneApp() {
             rather than beside it, and it is a genuinely different proposition from a chat window.
           </p>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
-            Read the last two rows before believing any of it. This model generalises over the{' '}
+            It is also where the honest version of this argument gets uncomfortable. The five
+            messages in the middle of that table were written to be genuinely two-sided, and the
+            model is not unsure about most of them — it answers one reading at 98%, 80%, 77% and
+            routes them with nobody watching. Its confidence is a report on how familiar the
+            wording is, not on how ambiguous the situation is, so the threshold catches the cases
+            the model knows are hard and lets through the ones it does not know are hard. Nothing
+            about a fixed set of answers and a probability on each fixes that. It is the argument
+            for keeping a sample of the automated route under human review, permanently, rather
+            than only reviewing what the model hands over.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            The last two rows are the other half of the same limit. This model generalises over the{' '}
             <em>product</em> almost perfectly — {MEASURED.classifier.unseenProduct}% on items it has
             never seen — and over the <em>phrasing</em> hardly at all, managing{' '}
             {MEASURED.classifier.unseenPhrasing}% when the wording is new, against{' '}

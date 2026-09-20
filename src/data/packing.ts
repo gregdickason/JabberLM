@@ -16,14 +16,24 @@
  * So messages are composed from per-category TEMPLATES and a shared ITEMS list. That produces
  * hundreds of distinct messages per route and forces the model onto the signal that generalises.
  *
- * The held-out split is deliberately hard: it uses templates the model never saw AND items it
- * never saw, so a held-out message is novel in both its phrasing and its nouns.
+ * There are TWO held-out splits, and keeping them apart is the whole result. `heldOutMessages`
+ * varies the NOUN (trained phrasings, never-seen products) and the model scores 97.9%.
+ * `unseenPhrasingMessages` varies the WORDING (trained products, never-seen phrasings) and it
+ * scores 39.6%. The first version conflated them and hid a near-perfect result behind a
+ * near-useless one.
  *
  * ── What it is built to demonstrate ──────────────────────────────────────────────────────────
  *  1. Routing most messages correctly, so the economics are plausible rather than hypothetical.
  *  2. A handful of messages are **genuinely ambiguous** — they belong to two categories and a
- *     person could argue either. Those should come back with the belief split, and a confidence
- *     threshold should send them to a human. That is the escalation design working as intended.
+ *     person could argue either. The design intent was that the model would split its belief and
+ *     the threshold would escalate them.
+ *
+ *     MEASURED, AND IT LARGELY DOES NOT. Three of the five come back at 77% or more on one of the
+ *     two readings and are routed automatically. The confidence reports how familiar the WORDING
+ *     is, not how ambiguous the meaning is — "the milk was warm when it arrived" carries
+ *     "arrived", which saturates the delivery templates, so it answers delivery at 98%. That is
+ *     now what the demo and the capstone copy say, because it is what the weights do, and it is a
+ *     sharper lesson than the one originally planned. Asserted in `classifier-model.test.ts`.
  *
  * The high-stakes route is included on purpose: ALLERGY. Getting that wrong is not a refund, it
  * is a safety incident, which is the argument for a per-category threshold rather than one number.
@@ -258,8 +268,8 @@ export const AMBIGUOUS: Message[] = [
 
 /**
  * The rows the demo shows: one unseen-product message per route (which the model handles), the
- * ambiguous ones (which it should be unsure about), and two unseen-phrasing ones (which it gets
- * wrong, and which the copy owns).
+ * ambiguous ones (where it is mostly NOT unsure, which is the demo's sharpest moment), and two
+ * unseen-phrasing ones (where it is unsure, correctly).
  */
 export function demoMessages(): Message[] {
   const held = heldOutMessages()

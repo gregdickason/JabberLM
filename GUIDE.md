@@ -584,17 +584,28 @@ than beside it.
 
 The threshold slider is the demo. Above it a message is routed and nobody looks; below it a person
 does. Nothing shown was trained on. The first eight name products the model has never seen, and on
-that kind it scores **97.9%**. The next five are **deliberately ambiguous** — "the milk was warm
-when it arrived" is both a quality complaint and a delivery complaint — so they come back with a
-split belief and escalate, which is the design working rather than failing. Push the slider to 99%
-and it automates nothing; push it to 30% and the ambiguous ones go through on a coin-flip.
+that kind it scores **97.9%**.
 
-The last two rows are the honest limit and are deliberately left on screen. Their *phrasing* was
-held out — "i cannot find the bread at all" shares no words with anything it trained on — and on
-that kind the model manages **39.6%**, against 12.5% for guessing. It generalises over the noun and
-hardly at all over the sentence, because at this size it matches wording rather than meaning. The
-threshold earns its keep here: the model says 98% on what it gets right and 68% on what it gets
-wrong, and that gap is the only thing a threshold can live in.
+The next five were written to be **deliberately ambiguous** — "the milk was warm when it arrived"
+is both a quality complaint and a delivery complaint — and the design intent was that they would
+come back with a split belief and escalate. Measured on the shipped weights, three of the five do
+not. They answer one of the two readings at 77%, 80% and **98%** and get routed automatically. The
+reason is worth the page it takes: "arrived" saturates the delivery training examples, so the
+*wording* is familiar even where the *meaning* is unclear, and the confidence is a report on the
+wording. Push the slider to 99% and it automates nothing; push it to 30% and everything goes
+through on a coin-flip.
+
+The last two rows are the same limit from the other side. Their *phrasing* was held out — "i cannot
+find the bread at all" shares almost no words with anything it trained on — and on that kind the
+model manages **39.6%**, against 12.5% for guessing. One lands right and one does not, and both
+escalate, because here it does not recognise the wording and says so. It generalises over the noun
+and hardly at all over the sentence, because at this size it matches wording rather than meaning.
+
+Two measurements say where a threshold can and cannot help. On unseen products the model says 98%
+when right and 68% when wrong — thirty points of daylight to put a line through. On unseen
+phrasings, 91% and 80%, and no line separates those. A confidence score sorts best exactly where
+the model was already competent, which is the part of the commercial pitch that has to be tested
+rather than assumed.
 
 It closes by naming its own dependency: a threshold is a control only if the confidence varies with
 the input, and the lab's calibration tab shows this site's own undertrained agent reporting the same

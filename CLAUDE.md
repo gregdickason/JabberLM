@@ -326,11 +326,20 @@ you are testing a RANKING claim or a PROBABILITY claim; see the header comment i
 `src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.)
 
 **The capstone closes on `#embedded`, the commercial case.** `ClassifierDemo` + `src/data/packing.ts`
-(pure, unit-tested): 64 short grocery-order messages over **eight** routes, `note <msg> => <digit>`,
-read as a softmax over the eight route characters — the same typed decision as the game agent's nine
-cells. `public/classifier-model.json` via `npm run gen:classifier`. Five held-out messages are
-**deliberately ambiguous** (they sit across two categories) and a confidence threshold should send
-them to a person: that is the escalation design working, not failing, and it is the demo's point.
+(pure, unit-tested): **960** grocery-order messages over **eight** routes, generated from per-route
+templates crossed with a product list, `note <msg> => <digit>`, read as a softmax over the eight
+route characters — the same typed decision as the game agent's nine cells.
+`public/classifier-model.json` via `npm run gen:classifier`; it **ships trained** and the demo only
+fetches and deserialises it. Two held-out splits, kept apart because the model does wildly
+differently on them: unseen PRODUCT **97.9%**, unseen PHRASING **39.6%** (chance 12.5) — at this
+size it matches wording, not meaning. Five hand-written messages sit across two routes and were
+meant to escalate; **measured, three of the five do not** — they answer one reading at 77/80/**98%**
+and route automatically, because the confidence reports how familiar the WORDING is, not how
+ambiguous the meaning is ("arrived" saturates the delivery templates). The copy says exactly that,
+on the page, in the lesson and in the guide. The two confidence gaps are the payoff: 98-vs-68 on
+the split it can do, 91-vs-80 on the split it cannot — a confidence score sorts best where the
+model was already competent. All of it is recomputed from the shipped weights in
+`src/data/__tests__/classifier-model.test.ts`, which is also the guard on the 4dp weight rounding.
 The section's argument is assistance-vs-automation, and it ends by naming its own dependency — a
 threshold is a control only if the confidence varies, which `lab?tab=calibration` shows it need not.
 

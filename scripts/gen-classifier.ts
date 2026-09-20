@@ -98,5 +98,20 @@ for (const m of demoMessages()) {
   )
 }
 
-writeFileSync(OUT, JSON.stringify(serialize(t, text)))
-console.log(`\nwrote ${OUT}`)
+// Ship it small. Two things matter and neither affects what the model predicts:
+//
+//  - ROUND the weights. Every other generator does (gen-model.ts, 4 dp by default); the first
+//    version of this script did not, and wrote a 1.99 MB file for 89K parameters — larger than
+//    the 128K-parameter tic-tac-toe bundle. At 4 dp it is 0.66 MB and the predictions are
+//    identical, category for category and percentage point for percentage point.
+//  - Store the ALPHABET, not the corpus. `deserialize` only uses `text` to rebuild the
+//    tokenizer, and `CharTokenizer` sorts the distinct characters — so any string with the same
+//    character set gives the same vocabulary and the same ids. Shipping the 173,440-character
+//    training corpus to every visitor bought nothing.
+const ROUND_F = 10 ** Number(process.env.ROUND_DP ?? 4)
+const alphabet = Array.from(new Set(Array.from(text))).sort().join('')
+const saved = serialize(t, alphabet)
+for (const p of saved.params) p.data = p.data.map((x) => Math.round(x * ROUND_F) / ROUND_F)
+const json = JSON.stringify(saved)
+writeFileSync(OUT, json)
+console.log(`\nwrote ${OUT} · ${(json.length / 1e6).toFixed(2)} MB · vocab ${alphabet.length}`)

@@ -380,5 +380,42 @@ room a threshold has, and it is now the closing argument of both the demo and th
 **39c. The ambiguous messages stay hand-written.**
 Five held-out messages sit across two routes on purpose — "the milk was warm when it arrived" is a
 quality complaint and a delivery complaint. Templates cannot generate genuine ambiguity, and these
-are the point of the demo: the model *should* be unsure, and the threshold should send them to a
-person. That is the escalation design working rather than failing.
+are the point of the demo.
+
+**40. The classifier ships trained, and shrank from 1.99MB to 0.66MB doing it.**
+"The model needs to ship trained, we won't train in browser." `ClassifierDemo` never trained — it
+fetches and deserialises `public/classifier-model.json` — but checking that surfaced a real defect:
+at 1.99MB (819KB gzipped) it was the largest file on the site despite having the fewest parameters
+(89,184, against tic-tac-toe's 127,872 at 1.3MB). Two causes, both in `scripts/gen-classifier.ts`:
+it never rounded weights (every other generator does, `ROUND_DP` defaulting to 4), and
+`serialize(t, text)` embedded the full 173,440-character corpus, which `deserialize` uses only to
+rebuild the tokenizer — and `CharTokenizer` sorts distinct characters, so the 37-character alphabet
+is equivalent. Swept 4/5/6 dp: **4dp gives 0.66MB (208KB gzipped) with identical accuracy and
+identical demo rows**, category for category and percentage for percentage. The generator now does
+both, and `src/data/__tests__/classifier-model.test.ts` recomputes every quoted number from the
+shipped file so the rounding cannot silently move one.
+
+**41. The ambiguous messages do NOT escalate, and the copy now says so. (Measurement over plan.)**
+Decision 39c and the copy built on it asserted that the five two-sided messages would come back
+with a split belief and route to a person — "the escalation design working rather than failing."
+Writing the test in decision 40 measured it for the first time. **Three of the five come back at
+77%, 80% and 98% on one of the two readings and are routed automatically.** Only two escalate.
+
+The cause is worth the words it takes, and it is the same cause as the 39.6% unseen-phrasing
+result: the confidence reports how familiar the WORDING is, not how ambiguous the MEANING is. "The
+milk was warm when it arrived" carries "arrived", which saturates the delivery templates, so the
+model answers delivery time at 98% and never weighs the other reading. Confirmed by the pair of
+confidence gaps, now both in `MEASURED.classifier`: on the unseen-PRODUCT split it says 98% when
+right and 68% when wrong (thirty points of daylight); on the unseen-PHRASING split, 91% and 80%,
+and no threshold separates those. A confidence score sorts best exactly where the model was
+already competent.
+
+Three options were on the table: tune the model until the ambiguous rows split, drop those rows, or
+publish the result. Published it. It is a sharper lesson than the one planned — a fixed answer set
+and a probability on each do not make a model know when it is out of its depth — it is the honest
+half of the section's own commercial argument, and it is the same discipline that overturned the
+rule-30 noise-floor claim and the "badly under-confident" calibration claim. Rewritten: the demo
+copy, the capstone `#embedded` prose (which gained a paragraph arguing for permanent sampled review
+of the automated route), the teachers lesson (steps 2, 4 and 6), GUIDE §11 and the CLAUDE.md
+summary. The test asserts the 3-of-5 split and the >95% top row, so a retrain that changes the
+story fails the build rather than quietly making the copy wrong.

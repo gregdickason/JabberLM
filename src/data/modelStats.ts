@@ -110,7 +110,7 @@ const META: Record<BundleId, Omit<Bundle, 'params' | 'paramsLabel' | 'dModel' | 
     label: 'the message classifier',
     genScript: 'npm run gen:classifier',
     taughtOn:
-      '64 short customer messages about grocery orders, each paired with one of eight route codes. It was never taught to write anything — the only thing it produces is a single character naming a route',
+      '960 short customer messages about grocery orders, generated from per-route templates crossed with a product list, each paired with one of eight route codes. It was never taught to write anything — the only thing it produces is a single character naming a route',
   },
   tictactoeStrong: {
     file: 'tictactoe-strong-model.json',
@@ -161,9 +161,20 @@ export const MEASURED = {
     unseenProduct: 97.9,
     unseenPhrasing: 39.6,
     chance: 12.5,
-    /** Mean stated confidence when right and when wrong, on the unseen-product split. */
+    /**
+     * Mean stated confidence when right and when wrong, on the unseen-PRODUCT split — the one
+     * the model can do. Thirty points of separation, which is what a threshold needs.
+     */
     saidWhenRight: 98,
     saidWhenWrong: 68,
+    /**
+     * The same two on the unseen-PHRASING split, where it cannot. The gap collapses to eleven
+     * points: the confidence tracks how familiar the WORDING is, not whether the answer is
+     * right, so it separates well exactly where the model was already doing well. That is the
+     * limit of a confidence threshold as a safety net, and it is the reason the demo shows both.
+     */
+    saidWhenRightNovel: 91,
+    saidWhenWrongNovel: 80,
     nTrain: 960,
     nUnseenProduct: 240,
     nUnseenPhrasing: 240,

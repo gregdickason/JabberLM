@@ -15,8 +15,18 @@ import type { CharTokenizer } from '../engine/tokenizer'
  * — the routing, and the threshold that decides when the routing is not trusted.
  *
  * The messages below the line are held out. Five of them are deliberately ambiguous, sitting
- * across two categories, and the model *should* be unsure about those. Watch them fall below the
- * threshold and route to a person: that is the design working, not failing.
+ * across two categories, and the design intent was that the model would be unsure about those
+ * and the threshold would send them to a person.
+ *
+ * MEASURED, AND IT IS NOT WHAT HAPPENS. Three of the five come back at 77% or more on one of the
+ * two readings, so at a sensible threshold they are routed automatically and nobody sees them.
+ * The confidence tracks how familiar the WORDING is, not how genuinely two-sided the message is:
+ * "the milk was warm when it arrived" contains "arrived", which saturates the delivery examples,
+ * so it answers delivery time at 98% and never weighs the other reading at all.
+ *
+ * That is the same failure as the unseen-phrasing rows at the bottom, and it is left on the page
+ * rather than tuned away, because a section arguing that a confidence threshold is a real control
+ * has to show where the control stops working.
  */
 
 /** One forward pass; softmax over the eight category tokens only. Same read as the game agent. */
@@ -117,12 +127,15 @@ export default function ClassifierDemo({ embed = false }: { embed?: boolean }) {
         )}
         {r.m.ambiguous && (
           <span className="text-[10px] text-slate-500">
-            (also reads as {CATEGORIES[catIndex(r.m.also!)].label} — {(100 * r.probs[second]).toFixed(0)}%)
+            (reads two ways — a person could file it as{' '}
+            {CATEGORIES[catIndex(r.top === catIndex(r.m.label) ? r.m.also! : r.m.label)].label};
+            second choice {CATEGORIES[second].label} {(100 * r.probs[second]).toFixed(0)}%)
           </span>
         )}
         {r.m.novelPhrasing && (
           <span className="text-[10px] text-rose-400">
             (a phrasing it never trained on — should be {CATEGORIES[catIndex(r.m.label)].label})
+            {r.top === catIndex(r.m.label) ? ' · right this time, and barely sure' : ''}
           </span>
         )}
       </div>
@@ -213,26 +226,40 @@ export default function ClassifierDemo({ embed = false }: { embed?: boolean }) {
             catalogue changes constantly, the ways people complain do not.
           </p>
           <p>
-            The next five are <b>deliberately ambiguous</b>, sitting across two routes, and at a
-            sensible threshold <b>{ambiguousCaught} of {ambiguousTotal}</b> go to a person instead
-            of being routed with false confidence. That is the escalation design working.
+            The next five were written by hand to sit across two routes, and they are the rows to
+            look at, because the model is mostly <em>not</em> unsure about them. At the threshold
+            above, <b>{ambiguousCaught} of {ambiguousTotal}</b> escalate. The rest are routed
+            automatically at high confidence, on one of the two readings, with nobody asked. The
+            first one is the clearest: "the milk was warm when it arrived" contains{' '}
+            <b>arrived</b>, a word all over the delivery examples, so it answers{' '}
+            <b>delivery time at 98%</b> and never weighs the complaint being about the milk.
           </p>
           <p>
-            The last two are the honest limit, and they are here rather than hidden. Their{' '}
-            <em>phrasing</em> was held out — "i cannot find the bread at all" shares no words with
-            anything it trained on — and on that kind it manages{' '}
-            <b>{MEASURED.classifier.unseenPhrasing}%</b>, against{' '}
-            {MEASURED.classifier.chance}% for guessing. At this size it is matching wording, not
-            meaning. It generalises over the noun and barely at all over the sentence.
+            The last two show the same thing from the other side. Their <em>phrasing</em> was held
+            out — "i cannot find the bread at all" shares almost no words with any training
+            wording for a missing item — and on that kind it manages{' '}
+            <b>{MEASURED.classifier.unseenPhrasing}%</b> against {MEASURED.classifier.chance}% for
+            guessing. One lands on the right route and one does not, and both come back under 70%,
+            so both escalate. One cause under both results: at this size it is matching wording
+            rather than meaning, and its confidence is a report on the wording.
           </p>
           <p>
-            Which makes the threshold do real work rather than decorative work. On the messages it
-            gets right this model says <b>{MEASURED.classifier.saidWhenRight}%</b>; on the ones it
-            gets wrong, <b>{MEASURED.classifier.saidWhenWrong}%</b>. That gap is what a threshold
-            has to live in. Drag it to 99% and almost everything escalates, which is safe and
-            automates nothing; drag it to 30% and the ambiguous ones go through on a coin-flip. The
-            number you pick is a commercial decision about the cost of being wrong — and it is only
-            a decision at all because the confidence moves.
+            So the threshold is a real control and a partial one, and the two numbers say where
+            the line is. On unseen products — the case it can do — it says{' '}
+            <b>{MEASURED.classifier.saidWhenRight}%</b> when right and{' '}
+            <b>{MEASURED.classifier.saidWhenWrong}%</b> when wrong, and thirty points of daylight
+            is somewhere to put a threshold. On unseen phrasings it says{' '}
+            <b>{MEASURED.classifier.saidWhenRightNovel}%</b> when right and{' '}
+            <b>{MEASURED.classifier.saidWhenWrongNovel}%</b> when wrong, and there is no line that
+            separates those. A confidence score sorts best exactly where the model was already
+            competent, and loses its grip where you most need it to hold.
+          </p>
+          <p>
+            Drag the slider and watch the trade run: at 99% almost everything escalates, which is
+            safe and automates nothing; at 30% the ambiguous ones go through on a coin-flip. Where
+            you set it is a commercial decision about the cost of being wrong. What this demo is
+            for is the part that is easy to skip — setting it carefully is not the same as being
+            safe, because some of what it lets through is confident and wrong.
           </p>
         </div>
       )}
