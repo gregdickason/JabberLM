@@ -240,7 +240,7 @@ export const TERMS: Term[] = [
     group: 'Training',
     short:
       'After instruction tuning, people rank competing answers and the model is nudged toward the preferred ones. Where tone, refusals and house style come from. It shapes behaviour, not accuracy.',
-    more: 'RLAIF replaces the human rankers with another model following a written rubric. DPO reaches a similar result without a separate reward model.',
+    more: 'RLAIF replaces the human rankers with another model following a written rubric. DPO reaches a similar result without a separate reward model. Worth knowing the cost: raters can see confidence more easily than correctness, so this stage reliably trades away a model\'s honest sense of its own uncertainty in exchange for being helpful — a good bargain with a person in the loop, and the wrong one for software deciding alone.',
   },
   {
     id: 'rlvr',
@@ -452,6 +452,23 @@ export const TERMS: Term[] = [
       'A model does the same amount of work on every question, however hard the question is. One pass costs what it costs, set by the length of the input and the size of the model, and difficulty does not enter into it.',
     more: 'So anything needing more computation than one pass can hold must be split into more passes, or handed to something outside the model whose effort grows with the problem. That is the argument for a harness.',
     see: { label: 'watch one pass run out', href: './lab.html?tab=what-fits' },
+  },
+  {
+    id: 'proper-scoring-rule',
+    term: 'Proper scoring rule',
+    group: 'Limits',
+    short:
+      'A way of scoring predictions where the best score is earned by stating the probability you actually believe. Overclaim and it punishes you; hedge everything and it punishes you too.',
+    more: 'Cross-entropy, the loss these models are trained on, is one — which is why pre-training produces probabilities that roughly track reality without anyone asking. Scoring against a model of human approval instead is not proper, and that is where honest uncertainty gets lost.',
+    see: { label: 'what happens when it is lost', href: './lab.html?tab=calibration' },
+  },
+  {
+    id: 'reward-model',
+    term: 'Reward model',
+    group: 'Limits',
+    short:
+      "A second model trained to predict which answer a human would prefer, used to score the first one during preference tuning. It stands in for a human rater so training can run at scale.",
+    more: 'It is also the weak point. A rater can judge fluency and confidence far more easily than correctness, so those are what it learns to reward, and a capable model optimising against it will find and exploit that gap.',
   },
   {
     id: 'calibration',

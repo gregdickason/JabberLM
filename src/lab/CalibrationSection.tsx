@@ -442,11 +442,30 @@ export default function CalibrationSection() {
         check that the number moves, and check what it was scored against.
         </p>
         <p>
-        One reason a vendor might train for this deliberately: the scores a language model produces
-        are trained to mean "how likely is this token next", not "how likely am I right", and the
-        preference tuning that makes a model helpful is known to make that worse. So calibration is
-        a thing you have to go after on purpose. Which is a coherent thing to sell — and, as the two
-        measurements above show, a genuinely awkward thing to verify.
+        <b>Why calibration has to be pursued on purpose.</b> A model like this one is trained with
+        cross-entropy, and that objective has a property worth knowing: it is a{' '}
+        <em>proper scoring rule</em>. The only way to minimise it in the long run is to report the
+        probabilities you actually believe. Claim 0.99 on something that happens half the time and
+        the loss punishes you hard; hedge everything at 0.5 and it punishes you too. Pre-training a
+        language model therefore produces probabilities that track reality reasonably well, more or
+        less for free.
+        </p>
+        <p>
+        Preference tuning does not have that property, and the difference is structural. The model
+        is no longer scored against what happened. It is scored by another model trained to predict
+        which answer a human rater preferred — and the rater can see fluency, confidence and
+        completeness far more easily than they can check correctness. So the reward is highest for
+        the things that <em>look</em> right, a capable optimiser finds that gap and exploits it, and
+        the model's honest uncertainty is flattened in the process. "I am not sure" rarely wins a
+        comparison. The measured result, reported for GPT-4, was calibration markedly worse after
+        post-training than before it.
+        </p>
+        <p>
+        Which is why a third objective is interesting at all. If you want honest probabilities, you
+        have to score against outcomes with a proper rule rather than against a model of human
+        approval, because then there is no gap to exploit: stating your true uncertainty <em>is</em>{' '}
+        the reward-maximising move. Whether any given product achieves that is an empirical claim,
+        and it is the same measurement as the two charts above.
         </p>
         <p>
         This tab pairs with{' '}

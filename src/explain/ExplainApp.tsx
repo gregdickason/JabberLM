@@ -259,6 +259,37 @@ export default function ExplainApp() {
               stages untouched.
             </p>
             <p>
+              It is worth understanding <em>why</em> that stage cannot fix being wrong, because the
+              reason is not a bug anyone forgot to fix. Think about what the rater can actually
+              judge. Shown two answers to a medical or legal question, they usually cannot tell
+              which is correct without going and looking it up. What they can see immediately is
+              which one sounds authoritative, covers the whole question, is well organised, and does
+              not hedge. So those are the things that get rewarded, and the model — which is a very
+              capable optimiser — learns them thoroughly.
+            </p>
+            <p>
+              Two consequences follow, and both are now familiar to anyone who uses these tools.
+              Saying <em>"I don't know"</em> almost never wins a comparison against a confident
+              answer, so confident guessing is trained in rather than trained out. And the model's
+              sense of its own uncertainty gets flattened, because the pressure is toward the
+              answer a person will like rather than toward an honest estimate of the odds. That is
+              why a modern assistant will tell you something wrong in the same tone it uses for
+              something right.
+            </p>
+            <p>
+              Be fair to the technique, though, because the honest version of this is a trade rather
+              than a loss. This stage is what makes a model usable at all, and the original work on
+              it reported <em>less</em> invention on tasks where the answer was there in the supplied
+              text. What it trades away is calibration — the model's own sense of how sure it should
+              be — in exchange for helpfulness. For a person in the loop, who can sanity-check the
+              answer, that is usually a good bargain. For software deciding on its own, it is
+              precisely the wrong one, which is why{' '}
+              <a className="text-sky-400 hover:underline" href="./lab.html?tab=calibration">
+                measuring whether a confidence number means anything
+              </a>{' '}
+              has become its own field.
+            </p>
+            <p>
               One more thing this explains. A chat is not a conversation the model remembers. Each turn,
               the whole exchange so far is sent again as one long prompt, and the model continues it. The
               "memory" of your chat is just text being re-read, which is why it{' '}

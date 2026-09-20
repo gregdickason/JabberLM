@@ -260,3 +260,32 @@ confidence means higher accuracy"* — a ranking claim, not a probability one �
 headline question was aimed at something they had not said. Three of the four questions were
 rewritten. The strongest surviving one came from their own benchmark note: the reference answer is
 the average of two frontier models, so ~68% is agreement rather than correctness.
+
+**30. Why preference tuning costs calibration, in two registers.**
+The site asserted in several places that a model's confidence is not evidence, and the talk supplied
+the mechanism, so it is now explained rather than asserted. Split deliberately by audience, and the
+two must not drift apart:
+
+- **explain §5, plain language.** A rater shown two answers usually cannot check which is correct,
+  but can instantly see which sounds authoritative, complete and unhedged. Those are therefore what
+  get rewarded. "I don't know" loses comparisons, so confident guessing is trained in, and the
+  model's sense of its own uncertainty is flattened.
+- **lab calibration tab, the mechanism.** Cross-entropy is a **proper scoring rule**: the
+  loss-minimising move is to state the probability you actually believe, so pre-training yields
+  roughly-calibrated probabilities for free. Scoring against a *reward model* of human approval is
+  not proper — there is a gap between "looks right" and "is right" for a capable optimiser to
+  exploit. Calibration measured worse after post-training than before, as reported for GPT-4.
+
+**The honest counterweight is mandatory in both places, and is in both.** This is a trade, not a
+loss: the same stage is what makes a model usable at all, and the original instruction-tuning work
+reported *less* invention on closed-domain tasks. The copy must not drift into "RLHF makes models
+dumber", which is not defensible — the defensible claim is that it trades calibration for
+helpfulness, which is a good bargain with a person in the loop and the wrong one for software
+deciding alone. Noted in CLAUDE.md so a future edit does not sharpen it.
+
+Glossary gains **proper scoring rule** and **reward model**; the RLHF entry now carries the cost.
+
+**31. A drift bug caught while doing it.** GUIDE §6's numbered list of the explain page had never
+been updated when the instruction-tuning section was added, so it was missing an entry and
+misnumbered from 5 onward against the live page. Fixed, and the new section documented. Worth a
+check whenever a section is inserted: the guide lists them by hand.

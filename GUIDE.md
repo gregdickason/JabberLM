@@ -339,23 +339,34 @@ Walk it in order. The sections build on each other.
 4. **Why it makes things up.** The model produces fluent output whether or not it has anything real to
    say. Ask the bundled model for algebra working and read the answer: the form is right, the
    arithmetic is invented.
-5. **Tokens, and why letters trip it up.** The pivotal demo for a general audience. `strawberry` is
+5. **Why it answers instead of continuing.** The step most people do not know exists, shown with two
+   bundled models of nearly identical size: the three-skill model, trained on plain text, and the
+   tool-caller, trained on instruction-and-response pairs. Send both the same instruction. The first
+   carries on writing, and will confidently answer a question nobody asked; the second responds.
+   Same architecture, same scale — the training data is the whole difference. The section then
+   explains *why* the preference-tuning stage that follows cannot fix being wrong: a rater can judge
+   fluency and confidence far faster than correctness, so those are what get rewarded, "I don't
+   know" loses comparisons, and the model's honest uncertainty is flattened. Framed as a trade
+   rather than a loss — it is what makes a model usable at all, and the wrong bargain only when
+   software must decide alone. The mechanism, including why cross-entropy is a proper scoring rule
+   and preference tuning is not, lives in the lab's calibration tab.
+6. **Tokens, and why letters trip it up.** The pivotal demo for a general audience. `strawberry` is
    **three** tokens to GPT-3.5/4 — `str`, `aw`, `berry` — and **ten** to a character-level model. A
    model that never sees individual letters is guessing when you ask it to count them. Same cause for
    multi-digit arithmetic and string reversal.
-6. **Words as coordinates.** Nearest neighbours by cosine similarity, live analogies
+7. **Words as coordinates.** Nearest neighbours by cosine similarity, live analogies
    (`king − man + woman ≈ queen`, 0.86), and a 2-D projection of the 50-dimensional vectors. Meaning
    is stored as direction.
-7. **Giving it real facts — retrieval (RAG).** A tiny document store the model was never trained on.
+8. **Giving it real facts — retrieval (RAG).** A tiny document store the model was never trained on.
    Exact lookup, then semantic retrieval over the same GloVe vectors, then a knowledge graph that
    answers multi-hop questions flat chunk retrieval cannot compose.
-8. **What it costs to run.** Text in, tokens out, an illustrative price, and how it scales with answer
+9. **What it costs to run.** Text in, tokens out, an illustrative price, and how it scales with answer
    length and volume.
-9. **Inference economics.** Three demos measuring real in-browser generation speed: model size against
+10. **Inference economics.** Three demos measuring real in-browser generation speed: model size against
    latency, KV-cache prefill against recompute, and a specialist model against a generalist doing the
    same job. The quantisation sweep runs here too — 32-bit down to 2-bit on the bundled sort model,
    re-measuring accuracy at each step. The curve holds to 4-bit and collapses at 3.
-10. **What you can't see.** The questions to ask a vendor, and which of them the demos above have just
+11. **What you can't see.** The questions to ask a vendor, and which of them the demos above have just
     shown you how to answer.
 
 ## 7. How it works — `learn.html`
