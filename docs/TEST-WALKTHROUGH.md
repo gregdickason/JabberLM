@@ -342,3 +342,48 @@ The three numbers that must be right, because the post is a public challenge to 
 claim and they will be checked: **60%** of positions get an occupied cell, confidence ranges
 **17.4158% to 17.4225%**, and the strong model says **71.5% / 48.1%**. All three are in
 `post-jev-notes.md` with their measurement, and all three are reproduced by the tab.
+
+---
+
+# Embedded intelligence (21 Sept 2026)
+
+## E1. The capstone's third section
+
+`/capstone.html?section=embedded`, between the harness-halves section and the recap.
+
+1. Read the two paragraphs before the demo. They should make the assistance-versus-automation
+   argument: every model most people have used was trained on human preferences, so a person is in
+   the loop by construction, and the lesson businesses drew was not to let it decide anything
+   costly.
+2. The demo lists thirteen messages: eight held-out complaints, one per route, then five ambiguous
+   ones. **None of these were trained on.**
+3. The first eight should route sensibly and confidently.
+4. The last five should come back with noticeably **lower** confidence, and at the default 70%
+   threshold most should be marked `→ a person`. That is the demo working, not failing — each one
+   genuinely belongs to two routes, and the second-choice route is printed beside it.
+5. Drag the threshold to 99%: nearly everything escalates, and the count of automatically-routed
+   messages collapses. Drag to 30%: the ambiguous ones get routed on what is close to a coin-flip,
+   and any wrong auto-routes appear in red.
+6. Type your own complaint in lower case, e.g. `the salmon was mouldy`. It should classify and show
+   a confidence. Type nonsense: it still answers, with a confidence, which is worth seeing once.
+
+## E2. The claim to check hardest
+
+The section ends by saying the whole design depends on the confidence varying with the input, and
+links to the calibration tab where this site's own undertrained agent does not. Follow that link and
+confirm it still lands on `?tab=calibration`.
+
+## E3. The embeds
+
+- `/embed.html?demo=classifier` — the demo alone, no prose.
+- `/embed.html?demo=calibration` — should now be **only** the agent selector, the worked position
+  and the tiles. The histogram and reliability chart should NOT be in the frame; they stay on the
+  lab page. If you see charts, the split did not take.
+- `teachers.html?lesson=classifier` should show a full lesson.
+
+## E4. If the model looks wrong
+
+The classifier is regenerated with `npm run gen:classifier`, which now works (it previously failed
+on `npx vite-node`). It takes around thirty minutes. The generator prints held-out accuracy and the
+exact rows the demo shows, so compare those against what the page renders — they should match,
+since the page runs the same model with the same read.

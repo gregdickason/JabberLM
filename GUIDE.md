@@ -539,7 +539,7 @@ altogether. These three make that measurable rather than asserted.
 
 ## 10. The capstone — `capstone.html`
 
-Two agents. Play them, then look inside them.
+Two agents to play and look inside, then the commercial version of the same mechanism.
 
 **Tic-tac-toe.** A ~130K-parameter character model plays you. The board is index-labelled
 (`0X1O2.…`), so choosing a move is copying an empty cell's index rather than counting positions. The
@@ -573,6 +573,33 @@ if food shares it. Correct action requires attending across the whole order, whi
 reason to use a transformer. No SKU's attribute is ever a token — the model infers it. The concept map
 projects the learned SKU embeddings to 2-D, where they cluster by the attribute nobody labelled.
 
+**Embedded intelligence** (`?section=embedded`). The page closes on what this mechanism is likely to
+be *for*. Both agents above are games; this is a ~90K model trained on 64 short customer messages,
+routing a grocery operation's inbound post into eight desks — one forward pass, eight allowed
+answers, a probability on each, no prose for anyone to read. The argument around it is
+assistance versus automation: every model most people have used was trained on human preferences, so
+the human is in the loop by construction, and the lesson businesses drew was not to let it decide
+anything costly. A typed decision is the alternative, cheap enough to sit inside the software rather
+than beside it.
+
+The threshold slider is the demo. Above it a message is routed and nobody looks; below it a person
+does. Nothing shown was trained on. The first eight name products the model has never seen, and on
+that kind it scores **97.9%**. The next five are **deliberately ambiguous** — "the milk was warm
+when it arrived" is both a quality complaint and a delivery complaint — so they come back with a
+split belief and escalate, which is the design working rather than failing. Push the slider to 99%
+and it automates nothing; push it to 30% and the ambiguous ones go through on a coin-flip.
+
+The last two rows are the honest limit and are deliberately left on screen. Their *phrasing* was
+held out — "i cannot find the bread at all" shares no words with anything it trained on — and on
+that kind the model manages **39.6%**, against 12.5% for guessing. It generalises over the noun and
+hardly at all over the sentence, because at this size it matches wording rather than meaning. The
+threshold earns its keep here: the model says 98% on what it gets right and 68% on what it gets
+wrong, and that gap is the only thing a threshold can live in.
+
+It closes by naming its own dependency: a threshold is a control only if the confidence varies with
+the input, and the lab's calibration tab shows this site's own undertrained agent reporting the same
+figure on every board in the game.
+
 ## 11. Teaching with it — `teachers.html`
 
 Session plans, a per-page "moment to point at", and the embed reference.
@@ -585,8 +612,9 @@ iframe:
         width="100%" height="1080" style="border:0"></iframe>
 ```
 
-Ten demos are embeddable: `tictactoe`, `harness-tools`, `agent-loop`, `prompt-injection`, `lora`,
-`tokenizer`, `embeddings`, `adder`, `head-ablation`, `warehouse`. Add `&scale=1.6` to enlarge
+Twenty-one demos are embeddable, listed in the table on the page itself — among them `tictactoe`,
+`harness-tools`, `agent-loop`, `prompt-injection`, `lora`, `tokenizer`, `embeddings`, `adder`,
+`head-ablation`, `warehouse`, `what-fits`, `verifiers-budget`, `calibration` and `classifier`. Add `&scale=1.6` to enlarge
 everything for a lecture theatre, and any of the prefill parameters from §1 (`&list=6+9+2`,
 `&a=1234&b=5678`, and the rest) to open the frame on the exact example your slide is about. The frame
 carries no navigation and no teaching copy — the host page supplies the words. Each demo has a written

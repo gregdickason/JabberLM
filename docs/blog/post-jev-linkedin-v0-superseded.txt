@@ -1,12 +1,12 @@
-A new model called Jev landed this week that does not predict the next token. It does not write at all.
+A new model called Jev was announced this week that does not predict the next word like a 'normal' LLM. It does not write at all.
 
 You give it a question and a fixed list of allowed answers, and it returns one of them in a single pass, with a probability attached. TypeSafe AI, the lab behind it, says it therefore cannot hallucinate: the valid answers are fixed in the schema in advance, so an invalid one is impossible. They report a 0% structured output error rate.
 
-No quarrel with the engineering — it is a genuinely interesting design. But I have been running a model of that shape on my own site for weeks without thinking to call it one, and what mine does is worth putting beside that claim.
+This is a genuinely interesting design. And I realised I have been running a model of that shape on my own site for weeks without thinking to call it one.
 
 WHAT OURS DOES
 
-The tic-tac-toe agent on JabberLM does not write its move out as text. One forward pass, and the harness reads the scores for the nine cells and nothing else. One of a fixed set of answers, with a probability. A typed decision.
+The tic-tac-toe agent on JabberLM does not write its move out as text. One forward pass, and the harness reads the scores for the nine cells only. One of a fixed set of answers, with a probability. A typed decision.
 
 It is impossible for it to return a malformed move.
 

@@ -13,6 +13,7 @@ import WarehouseDemo from './WarehouseDemo'
 import ConceptMap from './ConceptMap'
 import TicTacToe from './TicTacToe'
 import Inspector from './Inspector'
+import ClassifierDemo from './ClassifierDemo'
 import { type Board } from '../data/tictactoe'
 import { BUNDLES, MEASURED } from '../data/modelStats'
 import { useSectionRoute } from '../lib/useSectionRoute'
@@ -38,7 +39,7 @@ type View = 'bundled' | 'live'
 
 // Short, stable section ids. The capstone had none, so nothing on it could be linked from a
 // blog post or the guide; these are the addresses those links use.
-const SECTIONS = ['play', 'inside', 'warehouse', 'train', 'concepts', 'loop-halves', 'recap'] as const
+const SECTIONS = ['play', 'inside', 'warehouse', 'train', 'concepts', 'loop-halves', 'embedded', 'recap'] as const
 
 export default function CapstoneApp() {
   const [bundled, setBundled] = useState<Trainer | null>(null)
@@ -375,6 +376,64 @@ export default function CapstoneApp() {
             <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=loop">agent loop</a>{' '}
             and the{' '}
             <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=injection">injection demo</a>.
+          </p>
+        </section>
+
+        {/* embedded intelligence — the economic argument, and the number it rests on */}
+        <section id="embedded" className="scroll-mt-6 space-y-3 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+          <h2 className="text-base font-bold text-sky-200">
+            Embedded intelligence, and the future of software
+          </h2>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-300">
+            Both agents above are fun, and neither is what this technology is likely to be for. So
+            here is the commercial version of the same mechanism, and the argument about where
+            software goes next.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Notice what has barely changed since 2019: business software. The last few years bolted
+            a chat window onto the side of it, which is precisely what you would expect from a
+            technology built to please a person reading the answer. Every model you have met was
+            trained that way — shown pairs of answers and told which one a human preferred. That
+            makes a superb assistant and a poor component. The lesson most businesses have drawn is
+            blunt: do not let it make decisions that cost you anything.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            The alternative is not a cleverer chatbot. It is a model small and cheap enough to sit{' '}
+            <em>inside</em> the software, deciding things, with no prose for anyone to read. Below
+            is one: <b>{BUNDLES.classifier.paramsLabel} parameters</b>, trained on{' '}
+            {MEASURED.classifier.nTrain.toLocaleString()} short customer messages, sorting a grocery
+            operation's inbound post into eight routes. One forward pass, eight allowed answers, a
+            probability on each — the same typed decision the game agent makes, doing something a
+            business would actually pay for.
+          </p>
+
+          <ClassifierDemo />
+
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            The threshold is the whole design. Above it the message is routed and nobody looks at
+            it; below it a person does. Raise the bar for decisions that matter more — an allergy
+            note misrouted is not a refund, it is a safety incident — and lower it where being
+            wrong is cheap. This is what people mean by putting intelligence inside a business
+            rather than beside it, and it is a genuinely different proposition from a chat window.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Read the last two rows before believing any of it. This model generalises over the{' '}
+            <em>product</em> almost perfectly — {MEASURED.classifier.unseenProduct}% on items it has
+            never seen — and over the <em>phrasing</em> hardly at all, managing{' '}
+            {MEASURED.classifier.unseenPhrasing}% when the wording is new, against{' '}
+            {MEASURED.classifier.chance}% for guessing. At this size it matches wording rather than
+            meaning. Every deployment of this idea has a boundary like that somewhere, and finding
+            where yours sits is the work.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            It also rests entirely on one number being real. A threshold is only a control if the
+            confidence varies with the input, and{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
+              the undertrained agent on this very page
+            </a>{' '}
+            reports the same confidence — 17.4158% to 17.4225% — on every board in the game. It
+            looked exactly like a measurement for weeks. Before you design a process around a
+            confidence score, check that it moves, and check what it was scored against.
           </p>
         </section>
 

@@ -18,6 +18,7 @@ export type BundleId =
   | 'warehouse'
   | 'tictactoe'
   | 'tictactoeStrong'
+  | 'classifier'
 
 export type Bundle = {
   id: BundleId
@@ -48,6 +49,7 @@ const STRUCT: Record<BundleId, Pick<Bundle, 'params' | 'dModel' | 'nHeads' | 'nL
   warehouse: { params: 24_896, dModel: 32, nHeads: 2, nLayers: 2, contextLen: 96, dFF: 96, vocab: 24 },
   tictactoe: { params: 127_872, dModel: 64, nHeads: 4, nLayers: 3, contextLen: 32, dFF: 192, vocab: 20 },
   tictactoeStrong: { params: 127_872, dModel: 64, nHeads: 4, nLayers: 3, contextLen: 32, dFF: 192, vocab: 20 },
+  classifier: { params: 89_184, dModel: 48, nHeads: 3, nLayers: 3, contextLen: 64, dFF: 192, vocab: 37 },
 }
 // --- END GENERATED ---
 
@@ -103,6 +105,13 @@ const META: Record<BundleId, Omit<Bundle, 'params' | 'paramsLabel' | 'dModel' | 
     taughtOn: 'board positions paired with a soft move preference from a perfect minimax player — for 100 steps, about a third of one pass over the 4,520 reachable positions. It was never told the rules, and never told which cells are legal',
     measuredBy: 'npm run eval:tictactoe',
   },
+  classifier: {
+    file: 'classifier-model.json',
+    label: 'the message classifier',
+    genScript: 'npm run gen:classifier',
+    taughtOn:
+      '64 short customer messages about grocery orders, each paired with one of eight route codes. It was never taught to write anything — the only thing it produces is a single character naming a route',
+  },
   tictactoeStrong: {
     file: 'tictactoe-strong-model.json',
     label: 'the well-trained agent',
@@ -142,6 +151,23 @@ export const MEASURED = {
    * small to act on: it is 94% confident on the ones it gets wrong.
    */
   multitaskSortConfidence: { whenRight: 98.0, whenWrong: 93.9, nRight: 132, nWrong: 13 },
+  /**
+   * The grocery message classifier, measured on the shipped weights. The split matters more than
+   * the headline: it generalises over the PRODUCT almost perfectly and over the PHRASING barely
+   * at all, because at this size it is matching wording rather than meaning.
+   */
+  classifier: {
+    train: 99.8,
+    unseenProduct: 97.9,
+    unseenPhrasing: 39.6,
+    chance: 12.5,
+    /** Mean stated confidence when right and when wrong, on the unseen-product split. */
+    saidWhenRight: 98,
+    saidWhenWrong: 68,
+    nTrain: 960,
+    nUnseenProduct: 240,
+    nUnseenPhrasing: 240,
+  },
   /** Warehouse: unseen baskets (a rule-covering held-out split). */
   warehouseHeldOut: { pct: 90, n: 16, of: 'unseen baskets' },
   warehouseTrain: { pct: 98, n: 0, of: 'baskets it trained on' },

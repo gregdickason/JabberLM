@@ -21,6 +21,7 @@ import { loadDemoModel } from '../explain/loadDemoModel'
 import WhatFitsSection from '../lab/WhatFitsSection'
 import VerifierBudgetSection from '../lab/VerifierBudgetSection'
 import CalibrationSection from '../lab/CalibrationSection'
+import ClassifierDemo from '../capstone/ClassifierDemo'
 import type { Trainer } from '../engine/trainer'
 
 // The embeddable shell: a JabberLM wordmark, then the demo. Nothing else — no nav, no
@@ -133,6 +134,7 @@ const RENDER: Record<DemoId, () => React.ReactNode> = {
   'verifiers-budget': () => <VerifierBudgetSection embed />,
   // Cached sweeps, so this one renders complete on load with no measurement wait.
   calibration: () => <CalibrationSection embed />,
+  classifier: () => <ClassifierDemo embed />,
   warehouse: () => (
     <WithModel
       load={loadWarehouseModel}

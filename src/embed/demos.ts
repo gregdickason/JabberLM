@@ -29,6 +29,7 @@ export type DemoId =
   | 'what-fits'
   | 'verifiers-budget'
   | 'calibration'
+  | 'classifier'
 
 export interface Demo {
   id: DemoId
@@ -182,10 +183,17 @@ export const DEMOS: Demo[] = [
     font: 'mono',
   },
   {
+    id: 'classifier',
+    title: 'A model that routes the post, and knows when to ask a person',
+    source: { label: 'Capstone', href: './capstone.html?section=embedded' },
+    frame: { w: 60, h: 40 },
+    font: 'mono',
+  },
+  {
     id: 'calibration',
     title: 'Does the confidence number mean anything?',
     source: { label: 'Lab — Limits', href: './lab.html?tab=calibration' },
-    frame: { w: 64, h: 52 },
+    frame: { w: 62, h: 30 },
     font: 'mono',
   },
 ]

@@ -21,6 +21,7 @@ const FILES = [
   ['warehouse', 'warehouse-model.json'],
   ['tictactoe', 'tictactoe-model.json'],
   ['tictactoeStrong', 'tictactoe-strong-model.json'],
+  ['classifier', 'classifier-model.json'],
 ]
 
 const u = (n) => n.toLocaleString('en-US').replace(/,/g, '_')

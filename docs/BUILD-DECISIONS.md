@@ -316,3 +316,69 @@ The calibration test is the first thing under `src/` to read a file from disk, a
 Adding node's full type surface to a browser app's config to satisfy a test is the wrong trade,
 and importing the 1.3 MB model JSON directly would make TypeScript infer a structural type for a
 megabyte of weights on every check. Declaring the single function used is the smallest honest fix.
+
+---
+
+## Embedded intelligence section (21 Sept 2026)
+
+**36. The calibration embed is the worked position only.**
+The embed was rendering the whole tab — selector, position panel, tiles, histogram and reliability
+chart. A reliability diagram needs a paragraph of explanation to mean anything, and an embed has no
+paragraphs by design. The frame now carries the agent selector, the worked position and one line of
+orientation; the two aggregate charts stay on the lab page. Frame dropped from 64×52rem to 62×30.
+
+**37. `gen:*` scripts work again, and this unblocked the whole section.**
+Every generator shelled out to `npx --yes vite-node`, which cannot resolve in this environment — I
+had logged that as a hard blocker. It is not: vitest ships vite-node, and
+`node node_modules/vitest/node_modules/vite-node/vite-node.mjs` runs the scripts fine. All twelve
+`gen:*` scripts plus `eval:tictactoe` now use that path. Training is slow — around 30 minutes for
+2,500 steps at context 64 — so run them in the background.
+
+**38. The first classifier corpus was hand-written, and the model memorised it.**
+64 messages, eight per route. Result: **100% on training, 12-25% held out**, and — the part that
+matters — it was **98-100% confident while wrong**. "my jar arrived smashed" came back as *allergy*
+at 98%.
+
+That is a real finding and exactly the failure the rest of the site warns about, but it is the wrong
+demo for a section arguing that this technology is commercially useful. A section claiming typed
+decisions can route a business's post cannot be illustrated by one that cannot.
+
+So the corpus is now **generated**: per-route templates crossed with a slot vocabulary, ~960
+training messages. The held-out split is deliberately hard — unseen templates crossed with unseen
+items, so a held-out message is novel in both its phrasing and its nouns. A unit test asserts every
+template carries a slot, because the first version of the generated corpus silently produced eight
+delivery messages (those templates had no `{item}`) and would have reproduced the original failure
+in a new disguise.
+
+**39a. The second corpus also failed, and the diagnosis is the demo's best material.**
+The generated corpus held out unseen templates AND unseen items at once, and scored 33-45% — with
+the model 93-100% confident while wrong. Rather than retrain blind, the trained model was measured
+on the two kinds of generalisation separately:
+
+| split | accuracy |
+|---|---|
+| known phrasing, **unseen product** | **97.9%** (n=240) |
+| **unseen phrasing**, known product | 39.6% (n=240) |
+| both unseen | 33.3% |
+| training | 99.8% |
+
+So the model generalises over the *noun* almost perfectly and over the *sentence* hardly at all.
+The original split conflated the two and hid a near-perfect result behind a near-useless one.
+
+The reason is worth stating: "i cannot find the bread at all" shares no words with any training
+phrasing for a missing item, so recognising it is paraphrase, which a 90K character model cannot
+do. That is a boundary, not a bug, and it is more instructive than a demo that simply works.
+
+The demo now shows all three: eight unseen-product messages it gets right, five ambiguous ones it
+should escalate, and **two unseen-phrasing ones it gets wrong, left on screen and marked**. No
+retrain was needed — the shipped weights are the ones measured.
+
+**39b. The confidence gap is what makes the threshold more than decoration.**
+On the unseen-product split the model says 98% when right and 68% when wrong. That gap is the only
+room a threshold has, and it is now the closing argument of both the demo and the capstone section.
+
+**39c. The ambiguous messages stay hand-written.**
+Five held-out messages sit across two routes on purpose — "the milk was warm when it arrived" is a
+quality complaint and a delivery complaint. Templates cannot generate genuine ambiguity, and these
+are the point of the demo: the model *should* be unsure, and the threshold should send them to a
+person. That is the escalation design working rather than failing.

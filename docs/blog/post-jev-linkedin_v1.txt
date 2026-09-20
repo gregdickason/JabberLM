@@ -1,27 +1,45 @@
-Does an LLM always need to predict the next word to be useful?
+What is the economic benefit of AI if is stops talking to us and starts just working inside our systems?
 
-A new model called Jev was announced this week that does not predict the next token. It does not write anything out at all.
+
+
+A new model called Jev was announced this week that does not predict the next word. It does not write anything out at all.
+
+
 
 You give it a question and a fixed list of allowed answers, and it returns one of them as its top choice, with a confidence attached. TypeSafe AI, the lab behind it, report it running 40 to 200 times faster and far cheaper than a frontier model on classification work.
 
-They are careful about what the schema does and does not buy, and it is worth repeating because the coverage is not. Their own FAQ asks "Can Jev still get things wrong?" and answers yes: the shape of the answer is guaranteed, the correctness is not. It cannot invent a category outside your list, but it can choose the wrong one from inside it. Of the 0% structured output error rate they report, they say plainly: "Our number is not empirical. Schema matching is guaranteed."
 
-This is a genuinely interesting design. The shape of it is not new, though, and the market agreed fast: six open clones appeared within about two days. The leading one, Laya, is built on ModernBERT-large — an encoder in the BERT family, the same approach used to score multiple-choice answers for years. I have been running laya-mlx, the Apple Silicon port, locally. Reading a model's scores over a fixed set of allowed answers is old. Training those scores to mean something is the new part.
 
-Which is when I realised I have one on my own JabberLM site, and never thought to call it that. The tic-tac-toe agent does not write its move out as text: one forward pass, a score for each of the nine cells, and the harness plays the highest. A typed decision.
+They are careful about is does, and the press coverage missed some of the nuance. Their own FAQ asks "Can Jev still get things wrong?" and answers yes: the shape of the answer is guaranteed, the correctness is not. It cannot invent a category outside your list, but it can choose the wrong one from inside it.
 
-It also displays how confident it is. So I checked that number across all 4,520 positions in the game.
 
-It ranges from 17.4158% to 17.4225%. The same number every time, because that version is not really reading the board. A figure sat on screen for weeks, to four significant figures, meaning nothing at all.
+
+This is a genuinely interesting design.  And it got a lot of attention: Six open clones appeared within about two days. The leading one, Laya, is built on ModernBERT-large — an encoder in the BERT family, the same approach used to score multiple-choice answers for years. I have been running laya-mlx, the Apple Silicon port, locally on a Mac mini to test legal classification of clauses (it is pretty good).   Come to the LexisNexis AI lab in NY to see it in action. 
+
+
+
+What is exciting about Jev and models like it is that they are not just reading a model's scores over a fixed set of allowed answers, they are training those scores to mean something.
+
+
+
+Which is when I realised I have one on my own JabberLM site, and never thought to call it that. The tic-tac-toe agent does not write its move out as text: one forward pass, a score for each of the nine cells, and the harness plays the highest score. A typed decision.
+
+
 
 ECONOMIC VALUE
 
+
+
 What I like about the promise here is a model quick and cheap enough to sit inline inside software, rather than at the end of a chat window.
+
+
 
 Think of a complex insurance claim. Today's models are poor at this because they are built to produce language for a human to read. A typed decision model could classify the whole inbound stream instead, across multiple steps, alongside the software you already have — routing the low-confidence cases to a person.
 
-That last clause is the entire business case, and it is worth being clear-eyed about it. Routing on confidence only works if the confidence is real. Mine was a constant. That is the thing to test before you design a process around it, and it is testable in an afternoon.
 
-So: no, an LLM does not always need to predict the next word to be useful. It does need to know when it is guessing.
+
+So: no, an LLM does not always need to predict the next word to be useful. It does need to know when it is guessing, and often LLMs are rewarded for guessing as part of their training rather than saying plainly they are not confident. Jev shows a potentially more valuable path: let the model do work when it is confident, defer to a human when it is not. This is the next evolution of a SAAS business.
+
+
 
 JabberLM is a personal side project for teaching, unrelated to my work. Links to it and to TypeSafe in the comments.

@@ -51,7 +51,7 @@ export const POSTS: Post[] = [
     title: 'What has to be true before software can decide anything',
     idea: "Why AI can crush every benchmark and still not be trusted to route a support ticket. TypeSafe's argument is that RLHF built us assistants when we wanted automation, and that the blocker is not intelligence but knowing when to believe it — which makes the confidence number the product. Two agents here show what that number can quietly be.",
     status: 'draft',
-    tryIt: { label: 'is the confidence number real?', href: './lab.html?tab=calibration' },
+    tryIt: { label: 'route the post, then check the number', href: './capstone.html?section=embedded' },
   },
   {
     n: 1,

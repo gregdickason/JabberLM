@@ -214,6 +214,33 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
     actions still need explicit authorisation. Try: `harness §4` (inject + mitigation), `harness` agent
     loop. Deeper: multi-step planning, the data-vs-instruction confusion, guardrails/allow-lists; honest
     note that a large NL-trained model is *far* easier to hijack than this grammar-rigid toy.
+15B. *Embedded intelligence — when software decides for itself* — **NEW, and the chapter the
+    capstone's third section now carries.** Everything to Ch 15 produces an *assistant*: a thing that
+    writes for a person to read. The divide that explains why AI crushes benchmarks and still cannot be
+    trusted to route a support ticket is **assistance versus automation** — the tasks it excels at are
+    those whose goal is to please a human in the loop; the ones it fails are those whose goal is to
+    remove one. The cause is the objective: preference tuning collects human preferences and optimises
+    them, so the human is *literally in the loop by construction*, and overpromising is structural
+    rather than a defect ("no matter how wrong the models are, they will look right"). Hence business
+    software has barely changed — a chat window bolted onto the side, which is exactly what an
+    assistance-native technology affords. The alternative is a **typed decision**: a fixed set of
+    allowed answers, one forward pass, a probability on each, no prose. Cheap enough to sit *inside*
+    the software rather than beside it.
+    Try: `capstone §embedded` — a ~90K-parameter model routing grocery complaints into eight
+    desks, with a threshold slider deciding what it handles alone and what goes to a person; and
+    `lab?tab=calibration`. **Measured, and the split is the chapter's best material:** 97.9% when
+    the product is new but the wording is familiar (the realistic case — catalogues change, the
+    ways people complain do not), and 39.6% when the wording itself is new, against 12.5% for
+    guessing. It generalises over the noun and hardly at all over the sentence. Say confidence
+    98% when right against 68% when wrong, because that gap is the only room a threshold has. Deeper: encoder scoring of fixed options (how multiple-choice benchmarks
+    have been scored for years — the leading open clone of the commercial models is ModernBERT), the
+    asymmetry that makes preference tuning cost calibration, and why cross-entropy is a proper scoring
+    rule and a learned reward model is not.
+    **The honest close, which is the chapter's real work:** the whole design rests on one number. A
+    threshold is only a control if the confidence varies with the input — and this site's own
+    undertrained agent reports 17.4158% to 17.4225% on every board in the game, a figure that sat on
+    screen for weeks looking exactly like a measurement. Before designing a process around a
+    confidence score, check that it moves, and check what it was scored against.
 16. *What you can't see, and what to ask* — governance, evaluation, safety, cost. Try: `explain` governance + cost suite. Deeper: evals, alignment.
     - **Inference economics (a proper treatment — this is where the money is).** Beyond price-per-token:
       (a) **which model** — specialist-vs-generalist at inference (callback to Sidebar 7A: same answer,

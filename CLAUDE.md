@@ -122,7 +122,7 @@ and its px→rem conversion, and why any demo added to the registry must avoid p
 `{type:'jabberlm:height'}` to the parent for auto-sizing — height only. `noindex`, and the `?demo=`
 query makes each embed countable in analytics.
 
-Twenty demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
+Twenty-one demos ship: `tictactoe`, `harness-tools` (harness §1), `flaky-harness` (§2),
 `agent-loop` (§3), `prompt-injection` (§4), `adder` (§5), `lora`, `tokenizer`, `embeddings`,
 `head-ablation`, `warehouse`, and the Part I/II spine added for the blog series — `next-token`,
 `attention`, `hallucination`, `instruction`, `rag`, `quantisation`, plus the two measuring (not
@@ -324,6 +324,20 @@ is roughly honest.** Both measures are now on the tab, because which is right de
 you are testing a RANKING claim or a PROBABILITY claim; see the header comment in
 `CalibrationSection.tsx` and `MEASURED.ttt.confidence.ties`.) Corpora in
 `src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.)
+
+**The capstone closes on `#embedded`, the commercial case.** `ClassifierDemo` + `src/data/packing.ts`
+(pure, unit-tested): 64 short grocery-order messages over **eight** routes, `note <msg> => <digit>`,
+read as a softmax over the eight route characters — the same typed decision as the game agent's nine
+cells. `public/classifier-model.json` via `npm run gen:classifier`. Five held-out messages are
+**deliberately ambiguous** (they sit across two categories) and a confidence threshold should send
+them to a person: that is the escalation design working, not failing, and it is the demo's point.
+The section's argument is assistance-vs-automation, and it ends by naming its own dependency — a
+threshold is a control only if the confidence varies, which `lab?tab=calibration` shows it need not.
+
+**`gen:*` scripts work again.** They shelled out to `npx --yes vite-node`, which cannot resolve
+here; they now use `node node_modules/vitest/node_modules/vite-node/vite-node.mjs`, which is present
+via vitest. Training is slow on this engine — the classifier is ~30 min for 2,500 steps — so run
+them in the background.
 
 **A transformer is not necessarily a language model**, and the site now says so where it matters
 (capstone recap, glossary `next-token-prediction`). `readCells` in `tictactoe-agent.ts` is already

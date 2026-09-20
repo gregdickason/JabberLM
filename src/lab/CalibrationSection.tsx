@@ -97,7 +97,10 @@ export default function CalibrationSection({ embed = false }: { embed?: boolean 
   const maxN = Math.max(...cur.top.map((b) => b.n))
   const flat = cur.max - cur.min < 1
 
-  const body = (
+  // The embed is the worked position and the headline tiles — one self-contained idea that needs
+  // no surrounding prose. The two aggregate charts stay on the lab page, where there is room to
+  // explain what a reliability diagram is.
+  const picker = (
     <>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-slate-400">agent:</span>
@@ -218,6 +221,11 @@ export default function CalibrationSection({ embed = false }: { embed?: boolean 
         </div>
       </div>
 
+    </>
+  )
+
+  const charts = (
+    <>
       <div>
         <div className="mb-1 text-[11px] text-slate-400">
           <b>Does it vary?</b> Positions per confidence band. One bar means one answer, whatever the
@@ -255,7 +263,16 @@ export default function CalibrationSection({ embed = false }: { embed?: boolean 
     </>
   )
 
-  if (embed) return <div className="space-y-3">{body}</div>
+  if (embed)
+    return (
+      <div className="space-y-3">
+        {picker}
+        <p className="text-[11px] leading-relaxed text-slate-400">
+          A tic-tac-toe agent that picks one of nine cells in a single pass, with a confidence on
+          each. Switch agents and positions, and watch what the confidence number does.
+        </p>
+      </div>
+    )
 
   return (
     <div className="space-y-4">
@@ -273,7 +290,8 @@ export default function CalibrationSection({ embed = false }: { embed?: boolean 
         of them this number does the work that correctness cannot.
       </SectionIntro>
 
-      {body}
+      {picker}
+      {charts}
 
       <div className="max-w-3xl space-y-2 text-[12px] leading-relaxed text-slate-400">
         <p>

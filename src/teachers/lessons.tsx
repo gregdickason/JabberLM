@@ -955,4 +955,140 @@ export const LESSONS: Record<DemoId, Lesson> = {
       },
     ],
   },
+
+  classifier: {
+    headline: 'The commercial version of everything else on the site, in one screen.',
+    model: (
+      <>
+        A {BUNDLES.classifier.paramsLabel}-parameter character model trained on{' '}
+        <b>{MEASURED.classifier.nTrain.toLocaleString()}</b> short customer messages about grocery
+        orders, each paired with one of eight route codes. It was never taught to write: the only
+        thing it emits is a single character naming a route, read as a softmax over those eight and
+        nothing else. Nothing on screen was trained on. Measured on the shipped weights it gets{' '}
+        <b>{MEASURED.classifier.unseenProduct}%</b> right when the product is new but the wording
+        is familiar, and <b>{MEASURED.classifier.unseenPhrasing}%</b> when the wording is new —
+        against {MEASURED.classifier.chance}% for guessing. That gap is the lesson.
+      </>
+    ),
+    tests: (
+      <>
+        What "putting AI inside software" actually means, and what it rests on. Not a chat window
+        beside the business, but a decision inside it — and a threshold deciding when that decision
+        is trusted enough to act on without a person.
+      </>
+    ),
+    steps: [
+      {
+        do: 'Read the first eight messages and their routes before touching the slider.',
+        see: (
+          <>
+            Confident, correct routing of complaints about <b>melon</b> and <b>salmon</b> — items
+            never in its training data. This is the boring part, and it is the part that would save
+            an operation money. Worth saying out loud that the catalogue changes constantly and the
+            ways people complain do not, which is why this is the case that matters.
+          </>
+        ),
+      },
+      {
+        do: 'Now read the last five, and the confidence beside them.',
+        see: (
+          <>
+            Much lower. "The milk was warm when it arrived" is a quality complaint and a delivery
+            complaint; "you swapped my bread for one with nuts" is a substitution error and an
+            allergy report. The model is not failing — it is unsure about things that are
+            genuinely unclear, and saying so.
+          </>
+        ),
+      },
+      {
+        do: 'Drag the threshold to 99%, then down to 30%.',
+        see: (
+          <>
+            At 99% almost everything goes to a person: safe, and it has automated nothing. At 30%
+            the ambiguous ones get routed on what is close to a coin-flip. Somewhere between is a
+            business decision about the cost of being wrong — and note it is a different number for
+            the allergy route than for a late delivery.
+          </>
+        ),
+      },
+      {
+        do: 'Read the last two rows, which are marked in red.',
+        see: (
+          <>
+            Both wrong. Their <em>phrasing</em> was held out — "i cannot find the bread at all"
+            shares no words with any training example for a missing item — and on that kind the
+            model manages {MEASURED.classifier.unseenPhrasing}%. It generalises over the noun and
+            barely at all over the sentence, because at this size it is matching wording rather
+            than meaning. Leaving these on screen is the point: every deployment has a boundary
+            like this, and the work is finding where yours sits.
+          </>
+        ),
+      },
+      {
+        do: 'Type your own complaint into the box, lower case.',
+        see: (
+          <>
+            It routes anything you give it, including nonsense, and reports a confidence for that
+            too. Worth doing once so nobody leaves thinking the model understands English.
+          </>
+        ),
+      },
+      {
+        do: 'Ask the room what breaks this whole design.',
+        see: (
+          <>
+            A confidence number that does not vary. Then show them the calibration tab, where this
+            site's own undertrained agent reports 17.4% on every board it has ever seen. The
+            threshold is a control only if the number underneath it is real.
+          </>
+        ),
+      },
+    ],
+    mechanism: (
+      <>
+        The prompt is <span className={c}>note &lt;message&gt; =&gt; </span> and the model's next
+        character is the route. At inference the demo reads the logits for the eight route
+        characters at the final position and softmaxes over those alone, so an answer outside the
+        eight is impossible by construction. The confidence is that softmax. It is the same read as
+        the tic-tac-toe agent's nine cells, and the same read a commercial decision model performs.
+      </>
+    ),
+    questions: [
+      {
+        q: 'Why not just use keywords?',
+        a: (
+          <>
+            For this toy you could, and you should — that is the honest answer, and the
+            unseen-phrasing result sharpens it: at {MEASURED.classifier.unseenPhrasing}% this
+            particular model is worse than a decent keyword list on exactly the long tail a model
+            is supposed to win. What the demo shows is the shape of the decision and the
+            escalation, which is identical at a scale where rules stop being maintainable. What it
+            also shows is that you have to measure the boundary rather than assume it.
+          </>
+        ),
+      },
+      {
+        q: 'Could it route something dangerous?',
+        a: (
+          <>
+            Yes, which is why the allergy category is in the set. A misrouted allergy note is not a
+            refund, it is a safety incident, and the right response is a much higher threshold for
+            that route than for a late delivery — per-category thresholds rather than one global
+            number.
+          </>
+        ),
+      },
+      {
+        q: 'Is this what the new decision models do?',
+        a: (
+          <>
+            Structurally, yes: fixed answers, one pass, a probability each. Theirs are far larger,
+            accept the allowed answers at request time rather than fixed at training, and are
+            trained specifically so the probabilities mean something. The shape you can see here.
+            Whether the probabilities mean anything is the part worth testing, whoever built it.
+          </>
+        ),
+      },
+    ],
+  },
 }
