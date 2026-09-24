@@ -164,13 +164,36 @@ export const TERMS: Term[] = [
     id: 'logit',
     term: 'Logit',
     group: 'Inside the model',
-    short: "The raw score the model gives each possible next token, before it is turned into a probability.",
+    short:
+      'The raw score the model gives each possible answer, before it is turned into a probability. For a language model the answers are the next token; they do not have to be.',
+    more: 'Swap the last matrix for a classification head and the logits are over your categories instead of over the vocabulary. Same word, same softmax, different set of things being scored.',
+    see: { label: 'the output end', href: './learn.html?section=logits' },
   },
   {
     id: 'softmax',
     term: 'Softmax',
     group: 'Inside the model',
-    short: 'The step that turns those raw scores into probabilities that add up to 1.',
+    short: 'The step that turns a set of raw scores into probabilities that add up to 1.',
+    more: 'Exponentiate each score, then divide by the total. It appears twice in a transformer: inside attention, turning one position\'s scores over the others into shares, and at the output, turning logits into probabilities.',
+  },
+  {
+    id: 'classification-head',
+    term: 'Classification head',
+    also: 'sequence classification, linear head',
+    group: 'Inside the model',
+    short:
+      'The last matrix of a transformer, replaced so that it scores a fixed set of categories instead of the whole vocabulary. The body is unchanged; only the output end and the training loss differ.',
+    more: 'It reads one pooled position — a special first token in an encoder, the last token in a decoder-only model, since only that one has seen the whole input — and is trained on "which category was right" rather than "which token came next". It is small (model width × number of categories) and old: this is what BERT was fine-tuned with from 2018. One category and a squared error instead makes it a regression head, which is exactly what a reward model is.',
+    see: { label: 'swap the last matrix', href: './learn.html?section=logits' },
+  },
+  {
+    id: 'encoder',
+    term: 'Encoder',
+    also: 'encoder-only, BERT-style',
+    group: 'Inside the model',
+    short:
+      'A transformer built to read rather than to write: every position may look at every other, in both directions, and the output is a representation rather than a next token.',
+    more: 'Dropping the causal mask is the whole difference, and it costs the ability to generate — a position that can see the future cannot be asked to predict it. What you gain is a better representation for judging a whole piece of text, which is why encoders with a classification head still win on routing and scoring work. Every model on this site is the other kind, decoder-only.',
   },
   {
     id: 'transformer',
@@ -486,8 +509,8 @@ export const TERMS: Term[] = [
     group: 'Limits',
     short:
       'Fixing the set of answers a model may give before it answers — one of these five categories, a score out of ten, yes or no — so anything outside the set is impossible rather than merely unlikely.',
-    more: 'It removes malformed answers, which is a real gain. It does nothing about wrong ones: the tic-tac-toe agent picks from nine legal-looking cells and still names an occupied one most of the time.',
-    see: { label: 'watch a schema-valid wrong answer', href: './capstone.html?section=play' },
+    more: 'It removes malformed answers, which is a real gain, and says nothing about wrong ones. The case no schema reaches is the answer that is allowed and simply worse — the well-trained agent picks one in about 2% of positions, and no way of writing the schema excludes it, because the whole question is which of the allowed answers is right. Note also that fixing the answers is not the same as building a classification head: read a few of a language model\'s vocabulary scores and you get the same shape without the guarantee being structural.',
+    see: { label: 'watch an allowed answer be the wrong one', href: './capstone.html?section=play' },
   },
   {
     id: 'autoregressive',

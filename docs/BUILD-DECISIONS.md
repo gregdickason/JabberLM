@@ -419,3 +419,44 @@ copy, the capstone `#embedded` prose (which gained a paragraph arguing for perma
 of the automated route), the teachers lesson (steps 2, 4 and 6), GUIDE §11 and the CLAUDE.md
 summary. The test asserts the 3-of-5 split and the >95% top row, so a retrain that changes the
 story fails the build rather than quietly making the copy wrong.
+
+**42. The masked read is not a classification head, and the difference is now taught and measured.**
+Asked whether the site had anywhere to explain a classification head rather than describing what a
+vendor does. It did not: BERT and encoders appeared in four places, all of them in `docs/`, none on
+a live page — while the published LinkedIn post already tells readers the leading open clone is
+ModernBERT-large with nowhere to send them. Chapter 15B of the book outline had reserved "encoder
+scoring of fixed options" as a Deeper bullet and never cashed it.
+
+The mechanism now sits on **`learn §5`**, extended in place rather than added as a new section —
+inserting one would have renumbered §6-8 and `?section=logits` is linked from `series.ts`. A second
+Callout makes the point that the final matrix is the only part of the stack that knows a vocabulary
+exists, so swapping it for `d_model × K` turns the same network into a classifier. Glossary gains
+`classification-head` and `encoder`; `logit` and `softmax` were both hard-wired to "next token" and
+are not any more.
+
+**And the measurement went the other way, which is why it was worth taking.** `readCells` and
+`classify` keep the full vocabulary head and renormalise a softmax over the answer characters, so
+the obvious worry is that dividing by a small remainder manufactures confidence. Measured with the
+new `scripts/measure-escaped-mass.ts`: across all 1,440 in-format messages the mass landing outside
+the eight answers is at most **0.47%**, and the argmax over the whole 37-character vocabulary is one
+of the eight **every single time**. The weak tic-tac-toe agent's escaped mass is **0.65% and
+constant on all 4,520 states**, which is the same fact as its constant confidence wearing a
+different hat. So the mask is not hiding anything — and it is not buying anything either. "hello"
+routes to *wrong item sent* at **97.9%** with nothing discarded at all. That confidence belongs to
+the model, and the wording-familiarity problem from decision 41 is the whole problem.
+
+The two approaches only part company **off-distribution**, and a visitor can reach it through the
+demo's own text box: forty identical letters escapes **98%** of the model's belief and the demo
+still prints a route at **58%**, computed from the remainder. That is the honest statement of the
+difference, and it is what the copy says — with a head the guarantee is structural and free; here it
+is a learned habit that cost training capacity and holds only while the input behaves. Three tests
+in `classifier-model.test.ts` lock all of it.
+
+Two existing errors were fixed in passing. `GUIDE.md` still said the classifier trained on **64**
+messages, a leftover from the hand-written corpus that decision 38 replaced with 960. And the
+glossary's `typed-decision` entry was the last holdout still leading with the occupied-cell argument
+that decision 28 retired everywhere else; it now leads with legal-but-worse.
+
+**Standing rule, worth repeating: never frame a classification head as new.** The site's position is
+that the shape is old — BERT plus a linear layer, 2018, still how multiple-choice benchmarks are
+scored — and that only the calibration training is the new part.

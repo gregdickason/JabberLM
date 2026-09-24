@@ -437,6 +437,41 @@ export default function CapstoneApp() {
             where yours sits is the work.
           </p>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            One more thing is worth being exact about, because a real product would not be built the
+            way this one is. A production classifier would have a{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./glossary.html#classification-head">
+              classification head
+            </a>{' '}
+            — the last matrix swapped for one that scores eight categories instead of thirty-seven
+            characters, trained on "which route was right" rather than "which character came next".
+            What is below keeps the whole character vocabulary and reads eight of its scores. It is
+            the cheap version, and it is the reason the same model can be inspected everywhere else on
+            this site.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            So how much does the cheap version cost? Less than expected, and the measurement is worth
+            reporting because it went the other way. Discarding everything outside the eight answers
+            could inflate the confidence — divide by a small remainder and any number comes out
+            large. Across all {MEASURED.maskedRead.nInFormat.toLocaleString()} messages in the training
+            set and both held-out sets, the mass landing outside the eight is at most{' '}
+            <b>{MEASURED.maskedRead.escapedWorst}%</b>, and the highest-scoring character in the whole
+            vocabulary was one of the eight <b>every single time</b>. The model learned the format so
+            completely that the constraint in the reading code has nothing left to do. Which also means
+            it is not hiding anything: type <b>hello</b> into the box and it comes back as{' '}
+            <b>{MEASURED.maskedRead.helloRoute} at {MEASURED.maskedRead.helloShown}%</b> with nothing
+            discarded at all. That confidence is the model's own, not an artefact of the reading.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Where the two do part company is on input that stops looking like training data. Type
+            forty identical letters into the box above and <b>{MEASURED.maskedRead.degenerateEscaped}%</b>{' '}
+            of the model's belief lands outside the eight answers — it wants to carry on writing
+            letters — and the demo still reports a route at{' '}
+            <b>{MEASURED.maskedRead.degenerateShown}%</b>, computed entirely from the remainder. A
+            classification head cannot do that, because it has no other tokens to prefer. That is the
+            real difference: with a head the guarantee is structural and free; here it is a habit the
+            model learned, which cost training capacity and holds only while the input behaves.
+          </p>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
             It also rests entirely on one number being real. A threshold is only a control if the
             confidence varies with the input, and{' '}
             <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">

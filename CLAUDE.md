@@ -343,6 +343,27 @@ model was already competent. All of it is recomputed from the shipped weights in
 The section's argument is assistance-vs-automation, and it ends by naming its own dependency — a
 threshold is a control only if the confidence varies, which `lab?tab=calibration` shows it need not.
 
+**Neither demo has a CLASSIFICATION HEAD, and the site now says so precisely.** `readCells` and
+`classify` are **masked reads** of a language-modelling head: the full `d_model × vocab` unembedding
+is kept, the final position's logits are sliced to the answer characters and renormalised. A real
+classification head swaps that matrix for `d_model × K`, reads ONE pooled position (a `[CLS]` token
+in an encoder, the last token in a decoder-only model) and trains on K-way CE instead of next-char
+CE. The mechanism is taught on **`learn §5`** (a second Callout — the last matrix is the only part
+of the stack that knows a vocabulary exists), the glossary carries `classification-head` and
+`encoder`, and the capstone `#embedded` carries the commercial version. **Measured with
+`scripts/measure-escaped-mass.ts`** (`MEASURED.maskedRead`, asserted in `classifier-model.test.ts`):
+the obvious worry — that renormalising over 8 of 37 inflates the confidence — **is wrong**. Across
+all 1,440 in-format messages the escaped mass is ≤ **0.47%** and the argmax over the WHOLE vocabulary
+is one of the eight **every time** (`outsideWins: 0`); the weak tic-tac-toe agent's escaped mass is
+**0.65% constant**, another face of its constant confidence. So the mask buys nothing and hides
+nothing — "hello" → *wrong item sent* at **97.9%** is the model's own belief. The two only diverge
+**off-distribution**, and a visitor can reach it: forty identical letters escapes **98%** and the
+demo still prints a route at **58%** computed from the remainder. Frame it that way — with a head the
+guarantee is structural and free; here it is a learned habit that cost training capacity. **Never
+frame a classification head as new**: the site's standing position is that the shape is old (BERT +
+a linear layer, 2018; ModernBERT-large is the leading open Jev clone) and only the calibration
+training is new.
+
 **`gen:*` scripts work again.** They shelled out to `npx --yes vite-node`, which cannot resolve
 here; they now use `node node_modules/vitest/node_modules/vite-node/vite-node.mjs`, which is present
 via vitest. Training is slow on this engine — the classifier is ~30 min for 2,500 steps — so run
@@ -458,6 +479,8 @@ npm run gen:tictactoe-strong # WELL-TRAINED tic-tac-toe agent (250 epochs, T=0.1
                              # knobs: EPOCHS (not STEPS) · DECK=uniform|balanced|sample · TARGET_T · SEED · WD · FILE
 npm run eval:tictactoe       # exhaustive strength report + never-loses proof for both bundles
 # scripts/measure-threat-focus.ts  # mean attention on your threat cell, both bundles (run after any retrain)
+# scripts/measure-escaped-mass.ts   # what a MASKED READ discards: mass outside the answer set, for the
+#                                   # classifier and both tic-tac-toe bundles (run after any retrain)
 npm run gen:adder    # reasoning-loop adder (columns + whole sums + traces) -> public/adder-model.json
                      # knobs: COL_REPEATS · LR_DECAY=1 (cosine) · LR_MIN_FRAC
 npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json

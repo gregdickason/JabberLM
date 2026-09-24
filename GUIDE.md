@@ -382,7 +382,12 @@ uses the bundled three-skill model, so every matrix shown is a matrix that model
 3. **Letting tokens look at each other (attention).** Q, K and V for the example prompt, the
    attention matrix, and the causal mask that stops a position seeing the future.
 4. **Each token does its own thinking (the MLP).**
-5. **Turning the last vector into a guess (logits → softmax).**
+5. **Turning the last vector into a guess (logits → softmax).** The final matrix is the only part
+   of the stack that knows a vocabulary exists — everything before it moves vectors around and never
+   names a character. Which is why swapping it for a **classification head** (model width × number
+   of categories, read at one position, trained on "which category was right") turns the same
+   network into a classifier. That is old and ordinary: it is how BERT-family **encoders** have been
+   used since 2018 and how multiple-choice benchmarks are scored.
 
 **Act 2 — how it learns.** Those vectors and weights started random; training is the slow nudging.
 
@@ -574,7 +579,7 @@ reason to use a transformer. No SKU's attribute is ever a token — the model in
 projects the learned SKU embeddings to 2-D, where they cluster by the attribute nobody labelled.
 
 **Embedded intelligence** (`?section=embedded`). The page closes on what this mechanism is likely to
-be *for*. Both agents above are games; this is a ~90K model trained on 64 short customer messages,
+be *for*. Both agents above are games; this is a ~90K model trained on 960 short customer messages,
 routing a grocery operation's inbound post into eight desks — one forward pass, eight allowed
 answers, a probability on each, no prose for anyone to read. The argument around it is
 assistance versus automation: every model most people have used was trained on human preferences, so
@@ -600,6 +605,18 @@ find the bread at all" shares almost no words with anything it trained on — an
 model manages **39.6%**, against 12.5% for guessing. One lands right and one does not, and both
 escalate, because here it does not recognise the wording and says so. It generalises over the noun
 and hardly at all over the sentence, because at this size it matches wording rather than meaning.
+
+One more distinction the page now draws, because a real product would not be built this way. A
+production classifier would have a **classification head** — the last matrix swapped so it scores
+eight categories instead of thirty-seven characters, trained on "which route was right". This keeps
+the whole character vocabulary and reads eight of its scores. Measured, the cheap version costs
+almost nothing: across all 1,440 messages in the training and held-out sets the mass falling outside
+the eight answers is at most **0.47%**, and the best character in the whole vocabulary is one of the
+eight *every time*. The model learned the format so completely that the mask has nothing left to do.
+The two only part company on input that stops looking like training data — type forty identical
+letters and **98%** of its belief lands outside the eight, while the demo still reports a route at
+**58%**, computed from the remainder. With a head that guarantee is structural and free; here it is
+a learned habit.
 
 Two measurements say where a threshold can and cannot help. On unseen products the model says 98%
 when right and 68% when wrong — thirty points of daylight to put a line through. On unseen

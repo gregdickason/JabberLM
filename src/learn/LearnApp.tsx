@@ -373,6 +373,14 @@ export default function LearnApp() {
               probabilities that add up to 1, and the model picks from them. That's the entire output: a
               probability for every possible next character.
             </p>
+            <p>
+              Worth noticing what that last matrix is doing, because it is the only part of the whole
+              stack that knows a vocabulary exists. Everything before it — attention, the MLP, the{' '}
+              <Gloss id="residual-stream">residual stream</Gloss> — moves vectors around and never
+              mentions a character. The vocabulary only reappears at the very end, when one matrix of
+              shape <em>width of the model</em> × <em>size of the vocabulary</em> turns the last vector
+              into one score per character.
+            </p>
             <Viz>
               <LogitsView trace={trace} tok={tok} sampled={built?.sampled} />
             </Viz>
@@ -387,6 +395,30 @@ export default function LearnApp() {
               open <strong>Step Through</strong> in the{' '}
               <a className="text-sky-300 underline" href="./">
                 playground
+              </a>
+              .
+            </Callout>
+            <Callout title="Swap that last matrix and the same model is a classifier">
+              Nothing in the stack requires the output to be a character. Replace the final matrix with
+              one of shape <em>width of the model</em> × <em>number of categories</em> and the same
+              network scores your categories instead of the alphabet. That is a{' '}
+              <Gloss id="classification-head">classification head</Gloss>, and it is tiny — a few
+              thousand numbers bolted onto a body of millions.
+              <br />
+              <br />
+              Two other things change with it. It runs at <em>one</em> position rather than all of them:
+              here that has to be the last one, because the causal mask from section 3 means only the
+              last position has seen the whole input. And training changes to match — instead of "which
+              character came next", the loss becomes "which of the categories was right". This is old
+              and ordinary. It is how <Gloss id="encoder">encoder</Gloss> models like BERT have been
+              used since 2018, and how multiple-choice benchmarks have been scored for years.
+              <br />
+              <br />
+              The site's own classifier does <em>not</em> do this — it keeps the vocabulary matrix and
+              reads eight of its scores. That turns out to make less difference than you would expect,
+              and the place it does make a difference is{' '}
+              <a className="text-sky-300 underline" href="./capstone.html?section=embedded">
+                measured on the capstone
               </a>
               .
             </Callout>

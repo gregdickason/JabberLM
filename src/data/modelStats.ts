@@ -152,6 +152,51 @@ export const MEASURED = {
    */
   multitaskSortConfidence: { whenRight: 98.0, whenWrong: 93.9, nRight: 132, nWrong: 13 },
   /**
+   * What a MASKED READ throws away, measured with `scripts/measure-escaped-mass.ts`.
+   *
+   * Neither the classifier nor the game agent has a classification head. Both keep the full
+   * language-modelling head over the whole vocabulary, take the final position's logits, pick out
+   * the answer characters and renormalise a softmax over just those. Everything the model wanted
+   * to say outside the answer set is discarded without appearing anywhere, so the displayed
+   * confidence could in principle be manufactured from a remainder.
+   *
+   * IT IS NOT, and that is the finding. On all 1,440 in-format classifier prompts the escaped mass
+   * is at most half a percentage point, and the single highest-scoring character over the whole
+   * 37-character vocabulary is one of the eight answers every single time. The model learned the
+   * format so completely that the constraint in the reading code has nothing left to do.
+   *
+   * The exception needs a degenerate input, and a visitor can type one: forty identical letters
+   * escapes 98% and the demo still reports a confident route. That is the honest difference from a
+   * real classification head — there the guarantee is structural and free, here it is a learned
+   * habit that cost training capacity and holds only while the input looks like training data.
+   */
+  maskedRead: {
+    /** Mean mass outside the eight answer characters, by split. */
+    escapedTrain: 0.01,
+    escapedUnseenProduct: 0.01,
+    escapedUnseenPhrasing: 0.02,
+    /** Worst single in-format prompt, over all 1,440. */
+    escapedWorst: 0.47,
+    /** Largest gap between the confidence shown and the raw probability, in percentage points. */
+    inflationWorst: 0.39,
+    nInFormat: 1440,
+    /** How often the best character in the WHOLE vocabulary was not one of the eight. */
+    outsideWins: 0,
+    /** A visitor typing forty identical letters: mass escaped, and what the demo still shows. */
+    degenerateEscaped: 98.1,
+    degenerateShown: 58.2,
+    /**
+     * "hello" — an ordinary word that is not a complaint at all. Escaped mass 0.00%, so this is
+     * the model's genuine belief and not an artefact of the renormalisation. The masked read is
+     * innocent here; the model is not.
+     */
+    helloShown: 97.9,
+    helloRoute: 'wrong item sent',
+    /** The same read on the game agent, over all 4,520 states. The weak agent's is constant. */
+    tttWeakEscaped: 0.65,
+    tttStrongEscaped: 0.02,
+  },
+  /**
    * The grocery message classifier, measured on the shipped weights. The split matters more than
    * the headline: it generalises over the PRODUCT almost perfectly and over the PHRASING barely
    * at all, because at this size it is matching wording rather than meaning.

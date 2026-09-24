@@ -47,6 +47,42 @@ function classify(model: Model, tok: CharTokenizer, text: string): number[] {
 
 const top = (p: number[]) => p.reduce((a, _, i) => (p[i] > p[a] ? i : a), 0)
 
+/**
+ * The FULL softmax over all 37 vocabulary characters at the final position — what `classify`
+ * throws away before it renormalises. The demo is a masked read of a language-modelling head,
+ * not a classification head, so this is the gap between the two.
+ */
+function fullProbs(model: Model, tok: CharTokenizer, text: string): Float32Array {
+  const ids = tok.encode(askPrompt(text))
+  const { logits } = model.forward(
+    ids.slice(Math.max(0, ids.length - model.cfg.contextLen)),
+    DEFAULT_FEATURE_FLAGS,
+  )
+  const V = logits.cols
+  const base = (logits.rows - 1) * V
+  const row = new Float32Array(V)
+  let mx = -Infinity
+  for (let i = 0; i < V; i++) mx = Math.max(mx, logits.data[base + i])
+  let s = 0
+  for (let i = 0; i < V; i++) {
+    row[i] = Math.exp(logits.data[base + i] - mx)
+    s += row[i]
+  }
+  for (let i = 0; i < V; i++) row[i] /= s
+  return row
+}
+
+/** Mass that landed outside the eight answer characters, as a percentage. */
+function escapedPct(text: string): number {
+  const p = fullProbs(t.model, t.tok, text)
+  let inside = 0
+  for (const c of CATEGORIES) {
+    const id = t.tok.stoi.get(c.code)
+    if (id != null) inside += p[id]
+  }
+  return 100 * (1 - inside)
+}
+
 function score(ms: Message[]) {
   let right = 0
   let confRight = 0
@@ -139,5 +175,48 @@ describe('the shipped classifier bundle', () => {
     expect(amb).toHaveLength(5)
     expect(amb.filter((r) => r.conf >= 70)).toHaveLength(3)
     expect(Math.max(...amb.map((r) => r.conf))).toBeGreaterThan(95)
+  })
+})
+
+describe('the masked read, and what it discards', () => {
+  const M = MEASURED.maskedRead
+  const inFormat = [...trainMessages(), ...heldOutMessages(), ...unseenPhrasingMessages()]
+
+  it('discards almost nothing on a well-formed prompt, so the renormalised confidence is honest', () => {
+    // This is the number that says whether the displayed confidence is a real probability or an
+    // artefact of dividing by a small remainder. It is a real probability.
+    expect(inFormat).toHaveLength(M.nInFormat)
+    const escaped = inFormat.map((m) => escapedPct(m.text))
+    const worst = Math.max(...escaped)
+    const mean = escaped.reduce((a, b) => a + b, 0) / escaped.length
+    expect(worst, 'worst in-format escaped mass').toBeLessThan(M.escapedWorst + 0.5)
+    expect(mean, 'mean in-format escaped mass').toBeLessThan(0.1)
+  })
+
+  it('never prefers a character outside the answer set on a well-formed prompt', () => {
+    // The model learned the format so completely that the mask has nothing left to do. If this
+    // ever fails, the demo is reporting a route the model did not actually want to give.
+    let outsideWins = 0
+    const answerIds = new Set(CATEGORIES.map((c) => t.tok.stoi.get(c.code)))
+    for (const m of inFormat) {
+      const p = fullProbs(t.model, t.tok, m.text)
+      let gi = 0
+      for (let i = 1; i < p.length; i++) if (p[i] > p[gi]) gi = i
+      if (!answerIds.has(gi)) outsideWins++
+    }
+    expect(outsideWins).toBe(M.outsideWins)
+  })
+
+  it('DOES manufacture a confidence on a degenerate input a visitor can actually type', () => {
+    // The free-text box lowercases and strips to [a-z ], so this is reachable: forty identical
+    // letters. Almost all the model's belief lands outside the eight answers, and the demo still
+    // prints a confident route computed from what is left. A real classification head cannot do
+    // this, because it has no other tokens to prefer. That is the honest difference between the
+    // two, and it is why the copy does not claim the mask is free.
+    const degenerate = 'a'.repeat(40)
+    const escaped = escapedPct(degenerate)
+    expect(escaped, 'degenerate escaped mass').toBeGreaterThan(90)
+    const probs = classify(t.model, t.tok, degenerate)
+    expect(100 * probs[top(probs)], 'what the demo shows anyway').toBeGreaterThan(40)
   })
 })

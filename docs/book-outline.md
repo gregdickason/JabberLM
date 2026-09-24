@@ -232,10 +232,28 @@ Each chapter = objective ("after this you can…") · plain spine · **Try it �
     the product is new but the wording is familiar (the realistic case — catalogues change, the
     ways people complain do not), and 39.6% when the wording itself is new, against 12.5% for
     guessing. It generalises over the noun and hardly at all over the sentence. Say confidence
-    98% when right against 68% when wrong, because that gap is the only room a threshold has. Deeper: encoder scoring of fixed options (how multiple-choice benchmarks
-    have been scored for years — the leading open clone of the commercial models is ModernBERT), the
-    asymmetry that makes preference tuning cost calibration, and why cross-entropy is a proper scoring
-    rule and a learned reward model is not.
+    98% when right against 68% when wrong, because that gap is the only room a threshold has. Deeper — **now a real surface, not a promise**: the
+    **classification head**. Everything before the last matrix moves vectors around and never names a
+    character; the vocabulary only reappears at the very end. Swap that matrix for one of shape
+    *model width × number of categories*, read it at one pooled position (a special first token in an
+    encoder, the last token in a decoder-only model, since only that one has seen the whole input),
+    and train on "which category was right" — and the same network is a classifier. This is how
+    BERT-family **encoders** have been used since 2018 and how multiple-choice benchmarks are scored,
+    which is the cleanest evidence that the *shape* is old and only the calibration training is new.
+    The mechanism is on `learn §5`; the glossary carries `classification-head` and `encoder`.
+    **And the chapter should own that our own classifier is not one.** It keeps the whole 37-character
+    vocabulary and reads eight of its scores — a *masked read* of a language-modelling head. The
+    obvious worry is that renormalising over eight of thirty-seven inflates the confidence. Measured
+    (`scripts/measure-escaped-mass.ts`), it does not: across all 1,440 messages the mass outside the
+    eight answers is at most **0.47%**, and the best character in the whole vocabulary is one of the
+    eight **every time**. The model learned the format so completely that the mask has nothing left
+    to do — which also means it is hiding nothing, and "hello" routing to *wrong item sent* at
+    **97.9%** is the model's own belief, not an artefact. The two only diverge off-distribution: forty
+    identical letters escapes **98%** and the demo still prints a route at **58%**, computed from the
+    remainder. With a head the guarantee is structural and free; here it is a learned habit that cost
+    training capacity and holds only while the input behaves. Then: the asymmetry that makes
+    preference tuning cost calibration, and why cross-entropy is a proper scoring rule and a learned
+    reward model is not.
     **The honest close, which is the chapter's real work:** the whole design rests on one number. A
     threshold is only a control if the confidence varies with the input — and this site's own
     undertrained agent reports 17.4158% to 17.4225% on every board in the game, a figure that sat on

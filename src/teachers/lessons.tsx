@@ -1035,11 +1035,18 @@ export const LESSONS: Record<DemoId, Lesson> = {
         ),
       },
       {
-        do: 'Type your own complaint into the box, lower case.',
+        do: 'Type your own complaint into the box, lower case. Then type "hello". Then type forty letter a\'s.',
         see: (
           <>
-            It routes anything you give it, including nonsense, and reports a confidence for that
-            too. Worth doing once so nobody leaves thinking the model understands English.
+            It routes anything you give it and reports a confidence for that too. "hello" comes back{' '}
+            <b>{MEASURED.maskedRead.helloRoute} at {MEASURED.maskedRead.helloShown}%</b>, and that is
+            the model's genuine belief — nothing is being discarded to produce it. The forty a's are
+            the other case: <b>{MEASURED.maskedRead.degenerateEscaped}%</b> of the model's belief
+            lands outside the eight routes (it wants to carry on writing a's) and the demo still
+            prints a route at <b>{MEASURED.maskedRead.degenerateShown}%</b>, computed from the small
+            remainder. Worth doing all three so nobody leaves thinking the model understands English,
+            and so the difference between a real classification head and this cheap version is
+            something the room has seen rather than been told.
           </>
         ),
       },
@@ -1066,7 +1073,19 @@ export const LESSONS: Record<DemoId, Lesson> = {
         character is the route. At inference the demo reads the logits for the eight route
         characters at the final position and softmaxes over those alone, so an answer outside the
         eight is impossible by construction. The confidence is that softmax. It is the same read as
-        the tic-tac-toe agent's nine cells, and the same read a commercial decision model performs.
+        the tic-tac-toe agent's nine cells.
+        <br />
+        <br />
+        Be precise if someone asks whether this is a classification head, because it is not. A
+        classification head replaces the last matrix so it scores eight categories instead of
+        thirty-seven characters, and is trained on "which route was right" rather than "which
+        character came next". This keeps the whole character vocabulary and reads eight of its
+        scores — the cheap version, which is what lets the same model be inspected everywhere else
+        on the site. Measured, it costs almost nothing: across all{' '}
+        {MEASURED.maskedRead.nInFormat.toLocaleString()} messages the mass falling outside the eight
+        is at most {MEASURED.maskedRead.escapedWorst}%, and the best character in the whole
+        vocabulary is one of the eight every time. The model learned the format so thoroughly that
+        the mask has nothing left to do.
       </>
     ),
     questions: [
@@ -1101,7 +1120,10 @@ export const LESSONS: Record<DemoId, Lesson> = {
             Structurally, yes: fixed answers, one pass, a probability each. Theirs are far larger,
             accept the allowed answers at request time rather than fixed at training, and are
             trained specifically so the probabilities mean something. The shape you can see here.
-            Whether the probabilities mean anything is the part worth testing, whoever built it.
+            Whether the probabilities mean anything is the part worth testing, whoever built it. If
+            the room wants the older version of the same idea, it is an encoder with a
+            classification head — BERT and a linear layer, from 2018, which is still how
+            multiple-choice benchmarks are scored. The shape is not the new part.
           </>
         ),
       },
