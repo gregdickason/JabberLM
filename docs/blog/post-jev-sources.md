@@ -138,6 +138,23 @@ snapshot 25 September 2026, except where noted.
 | "Laya scores 5.5 where Jev scores 51.7" | 5.51 vs 51.67 | `scores.balanced_skill` |
 | "40 to 200 times faster and cheaper" | TypeSafe's own claim | attributed as theirs, as in the first post |
 
+**Rewritten 26 September 2026 as a how-to.** The angle changed from "it does not top its own
+leaderboard" to "and here is how to use one anyway", which is more useful and fairer. Numbers added
+in the rewrite, all from the site's own `MEASURED.ttt.confidence`:
+
+| Claim | Figure | Source |
+|---|---|---|
+| "between 17.4158 and 17.4225 percent on every board" | spread 0.007pp over 4,520 states | decision 22; the constant-confidence finding |
+| "budgeting for one error in fifty, you will take one in fifteen" | at a 0.9 threshold: 1.92% expected vs 6.58% actual | computed from `jev.calibration.rel`, weighted over buckets ≥ 0.9 |
+| "says 75, right 59; says 98, right 93" | 0.747→0.590 and 0.981→0.934 | `jev.calibration.rel` |
+| "forty-seven percent have more than one best move" | 46.8%, mean 1.96 | `MEASURED.ttt.confidence.ties` |
+| "an open 27B reproduction, four times better" | cut from the final draft for length | — |
+
+The post now closes on the two mistakes rather than on a vendor question, because both were ours and
+both are the kind a reader will repeat. The second one — scoring top-1 against set membership and
+publishing "wildly under-confident" before retracting it — is decision 22's correction, and it is
+the most useful paragraph in the piece.
+
 **Fairness checks done before writing, and worth repeating for any future version.**
 
 1. *Is the ECE comparison like for like?* Yes for AutoJev: same `calibration.n` (72,594) over the

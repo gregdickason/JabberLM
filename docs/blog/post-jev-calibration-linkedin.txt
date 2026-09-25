@@ -1,41 +1,57 @@
-Calibration is Jev's central claim. It does not top its own leaderboard on it.
+Calibration is Jev's central claim. On the community leaderboard it comes third on it. That is not a reason to avoid it — it is a reason to know how to use it.
 
 
 
-I wrote about Jev, TypeSafe's decision model, when it launched. The pitch was never accuracy — frontier models beat it there and TypeSafe say so plainly. The pitch is that when it tells you it is 80 percent sure, it is right about 80 percent of the time. That is the number that lets software act on its own below a threshold and call a person above it. Calibration is the product.
+Two questions get muddled. Accuracy asks whether the answer is right. Calibration asks whether the confidence attached to it tells the truth. You do not buy a decision model to read its answers. You buy it to set a threshold, act unattended above the line and send everything below it to a person — which makes the confidence the load-bearing part.
 
 
 
-Someone has now measured it. A community leaderboard has scored 51 open reproductions against Jev on the same panel and published an expected calibration error for each.
+The public numbers: Jev is right 73.9 percent of the time and claims 81.1 percent on average. That gap gets paid exactly where you stopped looking. Set the threshold at 90 percent and you are budgeting for one error in fifty. You will take one in fifteen.
 
 
 
-Jev has the best accuracy on the board at 73.9 percent. On calibration it comes third. Measured over the same 72,594 scored decisions, an open 27-billion-parameter fine-tune called AutoJev-27B records a calibration error of 0.018 against Jev's 0.074, at almost exactly the same skill.
+But its confidence still ranks correctly, and that is the part that matters. Higher means more likely right, all the way up. Where it says 75 percent it is right 59; where it says 98 it is right 93. A shifted curve, not a broken one, and shifts are repairable.
 
 
 
-Jev's own reliability curve has the shape you would expect from a model that is good but not as good as the claim: honest at the top, optimistic through the middle. Where it says 75 percent, it is right 59 percent of the time.
+HOW TO ACTUALLY USE ONE
 
 
 
-Two caveats, and they are not small. This is an unofficial community board of self-reported runs, not a controlled comparison. And a 27B model is not the same product as one sold on being 40 to 200 times faster and cheaper — beating something on one axis while ignoring the axis it was built for is not a win.
+Never inherit a vendor's threshold. It was calibrated on their distribution, not your inbound.
 
 
 
-I also got something wrong last time. I said the leading open clone was Laya, built on ModernBERT: an encoder, the old shape, which I read as evidence that the idea itself was not new. Laya scores 5.5 where Jev scores 51.7. The whole encoder family sits at the bottom of the board. What actually reproduces Jev is a large autoregressive model trained for the job.
+Label a few hundred examples of your own traffic, sampled across the whole confidence range. A set made only of the cases that went wrong is not a calibration set.
 
 
 
-Which inverts the lesson I drew. I thought the architecture was the old part and the training was the new part. It looks like the architecture was never the hard part at all, and the training is the entire thing.
+Plot stated confidence against observed accuracy and ask three separate questions. Does the number move at all? Does it rank? Does 0.9 mean nine times in ten? A model can pass any of those and fail the others.
 
 
 
-So if you are about to put a confidence threshold into a production workflow, there is now one question worth asking any vendor, including this one: what is your expected calibration error, and measured on what? It is a real number, it is measurable, and you can ask for it.
+Fit the correction on held-out data, set the threshold from the corrected curve, and use a different one per route. An allergy note misrouted is not a refund, it is a safety incident.
 
 
 
-https://huggingface.co/spaces/multimodalart/jev-decision-index
+Then sample the automated lane forever, not just the escalations. Confidence reports how familiar the input looks, not how hard the decision is, so it cannot flag the cases it does not know are hard.
 
 
 
-JabberLM is a personal side project for teaching, unrelated to my work. Link to it in the comments.
+TWO TRAPS, BOTH OF WHICH I WALKED INTO
+
+
+
+I ran this on my own toy agent, a 130,000 parameter thing that plays tic-tac-toe, across all 4,520 positions. It reported a confidence between 17.4158 and 17.4225 percent on every board. A constant to four decimal places, printed beside every move as though it meant something, and it had looked like a measurement for weeks. Check the number moves before you check anything else.
+
+
+
+The second is worse, because it produces a confident wrong conclusion. I scored the top choice against "was that the best move", published that the model was wildly under-confident, and had to retract it. Forty-seven percent of those positions have more than one best move, so a model splitting its belief honestly across three scores 33 percent and looks terrified. The bug was in my ground truth. Score a known-perfect answer first, and check it comes out perfect.
+
+
+
+https://jabberlm.com/lab?tab=calibration
+
+
+
+JabberLM is a personal side project for teaching, unrelated to my work. Leaderboard link in the comments.
