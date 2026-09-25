@@ -460,3 +460,49 @@ that decision 28 retired everywhere else; it now leads with legal-but-worse.
 **Standing rule, worth repeating: never frame a classification head as new.** The site's position is
 that the shape is old — BERT plus a linear layer, 2018, still how multiple-choice benchmarks are
 scored — and that only the calibration training is the new part.
+
+**43. "Architecturally Jev is a classifier" was wrong, and so was the evidence for it.**
+Asked to check whether a classification head is the same thing Jev claims. It is not, and decision
+42's framing plus a line in `post-jev-notes.md` said it was. Both came from reasoning rather than
+from TypeSafe's documentation, which had never been read directly — `post-jev-notes.md` contained
+**zero external URLs**, on a site whose whole discipline is traceable claims.
+
+The primary source settles it. A `Choice` supplies its options in a `criteria` map of option name to
+natural-language description, and TypeSafe's docs say "the option names and their descriptions are
+both sent to the model". The slots are bound to meaning by **text in the request**. A classification
+head's slots are bound by **training**. Different machines. Also documented and now recorded: 255
+options per choice, 64 questions per request, evaluated "in parallel and in isolation" so it cannot
+chain, output tokens free, and `confidence` computed from the spread of `probabilities` rather than
+being a second independent signal.
+
+**The supporting evidence failed harder than the claim.** "The strongest open clone is a BERT-family
+encoder" was the load-bearing argument for "the shape is old". The community Decision Index scores 51
+reproductions on a chance-corrected 40-benchmark panel, and the encoder family is at the **bottom**:
+Laya 5.5, Decision 1.0 Kai 7.0, GLiNER2.5-Decide 10.0, against Jev at 51.7. What reproduces Jev is a
+large autoregressive fine-tune — AutoJev-27B at 50.9 skill and **ECE 0.018, four times better
+calibrated than Jev's 0.074**. Of 51 entrants, 38 are autoregressive.
+
+Carry the caveat, because it is the more interesting half: that panel measures breadth, so a 340M
+specialist losing to a 27B generalist is Sidebar 7A's trade, not a verdict on encoders. On its own
+narrow benchmark GLiNER2.5-Decide beats a Jev clone, 60.2% to 57.6%. Specialist wins on its own
+ground, loses five to one on breadth.
+
+Of the two models asked about specifically: **Tev1-4B-experimental** reaches about half Jev's skill
+(26.3), is worse calibrated (0.104), emits a bare letter with no probability at all, and its own card
+says it is "a Jev-inspired experiment, not a non-autoregressive Jev runtime" — it is also beaten by
+JevK5, a LoRA on the same base. **GLiNER2.5-Decide** is the honest specialist described above.
+
+Corrected: the teachers lesson (which had just been given the wrong reply to "isn't this just
+BERT?"), the capstone's "the shape is not the new part", the `CLAUDE.md` standing rule, and the notes
+line, struck through rather than deleted. Added: a `decision-model` glossary entry, a four-shape
+comparison table on the capstone, `docs/blog/post-jev-sources.md` with every URL, and
+`docs/LEARNING-PATH-decisions.md` as a proposal only.
+
+Three open items closed on the way: the founder is **Diogo Almeida** (the transcript's "Tiago" was a
+transcription error), the launch was **15 September 2026**, and the 255-option figure now has a
+source. **Do not cite** `aiintoai.vercel.app`'s "deep report"; it contradicts the primary docs and
+reads as generated filler.
+
+**The lesson for next time is the same one as decisions 39a and 41: read the primary source before
+characterising someone else's system.** Two confident architectural claims were published off
+inference alone, and the second one was repeated as a standing rule in `CLAUDE.md`.

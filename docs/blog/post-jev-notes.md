@@ -159,7 +159,12 @@ A second conversation sharpened the thesis, and the post was restructured around
 
 **The mechanism is old; the calibration claim is the new part.** Reading a model's scores over
 just the allowed answers and softmaxing over those is how multiple-choice benchmarks have been
-scored for years. Architecturally Jev is a classifier. The post now leads with that, and with the
+scored for years. ~~Architecturally Jev is a classifier.~~ **SUPERSEDED 25 September 2026 — see
+`post-jev-sources.md`.** TypeSafe's own docs show a `criteria` map of option name to natural-language
+description, supplied per request, so the answer slots are bound to meaning by text rather than by
+training. That is not a classification head. The supporting claim that the leading open clone is a
+BERT-family encoder also fails against the community Decision Index, where Laya scores 5.5 to Jev's
+51.7 and the best reproduction is a 27B autoregressive fine-tune. The post now leads with that, and with the
 fact that JabberLM has been running the naive version of exactly that mechanism for weeks —
 `readCells` is one pass, nine cells, a softmax. That is a stronger opening than the schema argument
 because it is generous, verifiable and hard to dismiss, and it makes the calibration question the

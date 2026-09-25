@@ -206,9 +206,11 @@ export default function CapstoneApp() {
             technique is old: scoring multiple-choice answers by reading the scores for just the
             allowed options has been standard for years. It is worth knowing because models are now
             being sold on exactly this shape — one pass, a fixed set of answers, a confidence
-            attached — and the shape is not the new part. The confidence number is. It is what lets
-            software decide when to act on its own and when to ask a person, so it has to be worth
-            something, and whether it is turns out to be{' '}
+            attached. Reading answers out of a fixed set is the old part. What those products add is
+            a set that arrives with each request, and a confidence number trained to be worth
+            something. The number is the part that matters: it is what lets software decide when to
+            act on its own and when to ask a person, and whether it is worth anything turns out to
+            be{' '}
             <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=calibration">
               measurable
             </a>
@@ -470,6 +472,55 @@ export default function CapstoneApp() {
             classification head cannot do that, because it has no other tokens to prefer. That is the
             real difference: with a head the guarantee is structural and free; here it is a habit the
             model learned, which cost training capacity and holds only while the input behaves.
+          </p>
+          <div className="max-w-3xl overflow-x-auto">
+            <table className="w-full min-w-[34rem] border-collapse text-[11px]">
+              <caption className="pb-1 text-left text-[11px] text-slate-500">
+                Four ways to make a model answer from a fixed set. They are routinely called the same
+                thing and they are not.
+              </caption>
+              <thead>
+                <tr className="border-b border-slate-700 text-left text-slate-300">
+                  <th className="py-1 pr-3 font-semibold">shape</th>
+                  <th className="py-1 pr-3 font-semibold">an answer means what it means because of</th>
+                  <th className="py-1 pr-3 font-semibold">passes</th>
+                  <th className="py-1 font-semibold">what the probability was trained to do</th>
+                </tr>
+              </thead>
+              <tbody className="text-slate-400">
+                <tr className="border-b border-slate-800">
+                  <td className="py-1 pr-3 text-slate-300">classification head</td>
+                  <td className="py-1 pr-3">training — new categories need a retrain</td>
+                  <td className="py-1 pr-3">one</td>
+                  <td className="py-1">be right, on its own fixed set</td>
+                </tr>
+                <tr className="border-b border-slate-800">
+                  <td className="py-1 pr-3 text-slate-300">reading a few vocabulary scores</td>
+                  <td className="py-1 pr-3">the prompt</td>
+                  <td className="py-1 pr-3">one, at one position, which has only seen what came before it</td>
+                  <td className="py-1">nothing — it is a by-product of predicting the next character</td>
+                </tr>
+                <tr className="border-b border-slate-800">
+                  <td className="py-1 pr-3 text-slate-300">scoring each option against the text</td>
+                  <td className="py-1 pr-3">the prompt</td>
+                  <td className="py-1 pr-3">one <em>per option</em></td>
+                  <td className="py-1">whatever the fine-tune happened to give it</td>
+                </tr>
+                <tr>
+                  <td className="py-1 pr-3 text-slate-300">a decision model</td>
+                  <td className="py-1 pr-3">a description supplied with the request</td>
+                  <td className="py-1 pr-3">one, for every question at once</td>
+                  <td className="py-1 text-slate-300">be honest — that is the whole training objective</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            This page is row two, and so is every multiple-choice benchmark score you have ever read.
+            Row one is what a business would actually deploy. The bottom row is what is now being sold,
+            and the honest summary is that only its last column is new: answering from a fixed set is
+            decades old, and a probability that is trained to mean something is not. Which is why the
+            argument always lands back on the same question, and why this site keeps measuring it.
           </p>
           <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
             It also rests entirely on one number being real. A threshold is only a control if the

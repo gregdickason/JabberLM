@@ -183,7 +183,7 @@ export const TERMS: Term[] = [
     group: 'Inside the model',
     short:
       'The last matrix of a transformer, replaced so that it scores a fixed set of categories instead of the whole vocabulary. The body is unchanged; only the output end and the training loss differ.',
-    more: 'It reads one pooled position — a special first token in an encoder, the last token in a decoder-only model, since only that one has seen the whole input — and is trained on "which category was right" rather than "which token came next". It is small (model width × number of categories) and old: this is what BERT was fine-tuned with from 2018. One category and a squared error instead makes it a regression head, which is exactly what a reward model is.',
+    more: 'It reads one pooled position — a special first token in an encoder, the last token in a decoder-only model, since only that one has seen the whole input — and is trained on "which category was right" rather than "which token came next". It is small (model width × number of categories) and old: this is what BERT was fine-tuned with from 2018. One category and a squared error instead makes it a regression head, which is exactly what a reward model is. The thing to hold on to: the slots mean what training taught them, so a new set of categories needs a new head. That is exactly what a decision model does not require, and why the two are not the same.',
     see: { label: 'swap the last matrix', href: './learn.html?section=logits' },
   },
   {
@@ -511,6 +511,16 @@ export const TERMS: Term[] = [
       'Fixing the set of answers a model may give before it answers — one of these five categories, a score out of ten, yes or no — so anything outside the set is impossible rather than merely unlikely.',
     more: 'It removes malformed answers, which is a real gain, and says nothing about wrong ones. The case no schema reaches is the answer that is allowed and simply worse — the well-trained agent picks one in about 2% of positions, and no way of writing the schema excludes it, because the whole question is which of the allowed answers is right. Note also that fixing the answers is not the same as building a classification head: read a few of a language model\'s vocabulary scores and you get the same shape without the guarantee being structural.',
     see: { label: 'watch an allowed answer be the wrong one', href: './capstone.html?section=play' },
+  },
+  {
+    id: 'decision-model',
+    term: 'Decision model',
+    also: 'System One model',
+    group: 'Limits',
+    short:
+      'A model built to answer a fixed question with one of a fixed set of answers, rather than to write. The allowed answers arrive with each request, each one named and described in plain language, and the model returns a probability across them.',
+    more: 'Worth separating from the two things it gets confused with. It is not a classification head, whose slots mean whatever training taught them and which needs a retrain for a new set of categories. And it is not the trick this site uses, where a language model keeps its whole vocabulary and you read the scores of a few answer tokens. The old part is answering from a fixed set, which has been done since 2018. The new claim is that the set can be anything, described in prose at request time, and the probabilities are still honest — which is a training claim, not an architecture one, and the only part worth testing.',
+    see: { label: 'the shape, on a model you can inspect', href: './capstone.html?section=embedded' },
   },
   {
     id: 'autoregressive',

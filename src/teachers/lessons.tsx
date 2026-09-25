@@ -1120,10 +1120,17 @@ export const LESSONS: Record<DemoId, Lesson> = {
             Structurally, yes: fixed answers, one pass, a probability each. Theirs are far larger,
             accept the allowed answers at request time rather than fixed at training, and are
             trained specifically so the probabilities mean something. The shape you can see here.
-            Whether the probabilities mean anything is the part worth testing, whoever built it. If
-            the room wants the older version of the same idea, it is an encoder with a
-            classification head — BERT and a linear layer, from 2018, which is still how
-            multiple-choice benchmarks are scored. The shape is not the new part.
+            Whether the probabilities mean anything is the part worth testing, whoever built it.
+            <br />
+            <br />
+            Be careful with the "this is just BERT with a classification head" reply, which is the
+            common one and is not right. A classification head's slots mean whatever training taught
+            them, so a new set of categories means a new head and a retrain. A decision model takes
+            a new set per request with the meanings supplied as prose, which is a different machine.
+            The constrained <em>output</em> is genuinely old; the per-request schema trained for
+            calibration is not. The community leaderboard bears that out: the BERT-family encoders
+            sit at the bottom of it, and what reproduces the commercial model is a large
+            autoregressive fine-tune.
           </>
         ),
       },

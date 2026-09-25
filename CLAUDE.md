@@ -360,9 +360,17 @@ nothing — "hello" → *wrong item sent* at **97.9%** is the model's own belief
 **off-distribution**, and a visitor can reach it: forty identical letters escapes **98%** and the
 demo still prints a route at **58%** computed from the remainder. Frame it that way — with a head the
 guarantee is structural and free; here it is a learned habit that cost training capacity. **Never
-frame a classification head as new**: the site's standing position is that the shape is old (BERT +
-a linear layer, 2018; ModernBERT-large is the leading open Jev clone) and only the calibration
-training is new.
+frame a classification head as new** — reading answers out of a fixed set is old. **But do not say
+Jev IS one, either; that was wrong and is corrected in `docs/blog/post-jev-sources.md`.** A head is
+`d_model × K` with slots bound to meaning by TRAINING; TypeSafe's `Choice` takes a `criteria` map of
+option name → natural-language description **per request**, so the slots are bound by TEXT. Different
+machines. And the old evidence for "the shape is old" — Laya being a ModernBERT encoder and the leading clone —
+**does not survive the community Decision Index**: Laya scores 5.5 against Jev's 51.7 on a
+chance-corrected 40-benchmark panel, the encoder and GLiNER families are at the bottom, and what
+actually reproduces Jev is a large autoregressive fine-tune (AutoJev-27B, skill 50.9, ECE 0.018 —
+better calibrated than Jev). Carry the caveat too: that panel measures breadth, and on its own narrow
+benchmark GLiNER2.5-Decide beats a Jev clone (60.2% vs 57.6%), which is Sidebar 7A's specialist-vs-
+generalist trade, not a verdict on encoders.
 
 **`gen:*` scripts work again.** They shelled out to `npx --yes vite-node`, which cannot resolve
 here; they now use `node node_modules/vitest/node_modules/vite-node/vite-node.mjs`, which is present
