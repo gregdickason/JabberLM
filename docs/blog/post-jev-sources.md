@@ -120,3 +120,33 @@ the shape is the familiar one: honest at the top, optimistic through the middle.
 This is the same measurement the lab's calibration tab performs on our own agents, on the same axes.
 Worth saying plainly: **calibration is the claim, it is now measurable in public, and Jev does not
 top its own leaderboard on it.** An open 27B fine-tune does.
+
+## Numbers used in `post-jev-calibration-linkedin.txt`
+
+Every figure traced. Source for all of them is `data/index.json` from the Decision Index Space,
+snapshot 25 September 2026, except where noted.
+
+| Claim in the post | Figure | Where it comes from |
+|---|---|---|
+| "51 open reproductions" | 51 entrants with a score | `models[]`, filtered to those with `scores.balanced_skill` |
+| "best accuracy on the board at 73.9 percent" | Jev acc 0.7393; best open is AutoJev 0.7295 | `jev.calibration.acc`, checked against every entrant |
+| "on calibration it comes third" | 3 of 18 entrants scored on the same n beat Jev's ECE | AutoJev 0.0178, Decider 35B-A3B 0.0226, Jevfire 0.0521, vs Jev 0.0740 |
+| "the same 72,594 scored decisions" | `calibration.n` = 72,594 for both Jev and AutoJev | verified equal before the comparison was written |
+| "0.018 against Jev's 0.074" | AutoJev ECE 0.0178, Jev 0.0740 | `calibration.ece` |
+| "almost exactly the same skill" | 50.94 vs 51.67 | `scores.balanced_skill` |
+| "says 75 percent, right 59 percent" | bucket 0.7+: stated 0.747, actual 0.590 | `jev.calibration.rel` |
+| "Laya scores 5.5 where Jev scores 51.7" | 5.51 vs 51.67 | `scores.balanced_skill` |
+| "40 to 200 times faster and cheaper" | TypeSafe's own claim | attributed as theirs, as in the first post |
+
+**Fairness checks done before writing, and worth repeating for any future version.**
+
+1. *Is the ECE comparison like for like?* Yes for AutoJev: same `calibration.n` (72,594) over the
+   same 32 benchmarks, and `gaps.share` is 0.0, so it answered everything. **Not** like for like for
+   Xor and reflex 27B, whose ECE is computed over 32,693 decisions — those have lower ECE than
+   AutoJev and were deliberately left out of the post for that reason.
+2. *Does a model look better calibrated by refusing the hard ones?* Checked. AutoJev has no answer
+   gaps. The `coverage` figure of 0.76 that most entrants carry is benchmark coverage (32 of 42),
+   not a refusal rate.
+3. *Is the accuracy claim in TypeSafe's favour stated?* Yes, and first. Jev leads the board on it.
+4. *Is the product comparison fair?* No, and the post says so: 27B against a model sold on speed and
+   cost is not a like-for-like product comparison, only a like-for-like calibration one.

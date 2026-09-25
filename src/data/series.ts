@@ -54,6 +54,17 @@ export const POSTS: Post[] = [
     tryIt: { label: 'route the post, then check the number', href: './capstone.html?section=embedded' },
   },
   {
+    n: 0.5,
+    kind: 'dispatch',
+    date: '25 September 2026',
+    part: 4,
+    title: 'Calibration is the claim, and it is now measurable',
+    idea: "Jev's pitch was never accuracy, it was that the confidence number means something. A community leaderboard has now scored 51 open reproductions on the same panel with expected calibration error. Jev leads on accuracy and comes third on calibration. Also the correction: the encoder clones I called the leading ones are at the bottom of that board, so the architecture was never the hard part.",
+    status: 'draft',
+    tryIt: { label: 'the same measurement, on a model you can open', href: './lab.html?tab=calibration' },
+    embed: 'calibration',
+  },
+  {
     n: 1,
     part: 1,
     title: 'The smallest possible transformer',

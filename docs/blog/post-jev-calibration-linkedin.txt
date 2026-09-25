@@ -1,0 +1,41 @@
+Calibration is Jev's central claim. It does not top its own leaderboard on it.
+
+
+
+I wrote about Jev, TypeSafe's decision model, when it launched. The pitch was never accuracy — frontier models beat it there and TypeSafe say so plainly. The pitch is that when it tells you it is 80 percent sure, it is right about 80 percent of the time. That is the number that lets software act on its own below a threshold and call a person above it. Calibration is the product.
+
+
+
+Someone has now measured it. A community leaderboard has scored 51 open reproductions against Jev on the same panel and published an expected calibration error for each.
+
+
+
+Jev has the best accuracy on the board at 73.9 percent. On calibration it comes third. Measured over the same 72,594 scored decisions, an open 27-billion-parameter fine-tune called AutoJev-27B records a calibration error of 0.018 against Jev's 0.074, at almost exactly the same skill.
+
+
+
+Jev's own reliability curve has the shape you would expect from a model that is good but not as good as the claim: honest at the top, optimistic through the middle. Where it says 75 percent, it is right 59 percent of the time.
+
+
+
+Two caveats, and they are not small. This is an unofficial community board of self-reported runs, not a controlled comparison. And a 27B model is not the same product as one sold on being 40 to 200 times faster and cheaper — beating something on one axis while ignoring the axis it was built for is not a win.
+
+
+
+I also got something wrong last time. I said the leading open clone was Laya, built on ModernBERT: an encoder, the old shape, which I read as evidence that the idea itself was not new. Laya scores 5.5 where Jev scores 51.7. The whole encoder family sits at the bottom of the board. What actually reproduces Jev is a large autoregressive model trained for the job.
+
+
+
+Which inverts the lesson I drew. I thought the architecture was the old part and the training was the new part. It looks like the architecture was never the hard part at all, and the training is the entire thing.
+
+
+
+So if you are about to put a confidence threshold into a production workflow, there is now one question worth asking any vendor, including this one: what is your expected calibration error, and measured on what? It is a real number, it is measurable, and you can ask for it.
+
+
+
+https://huggingface.co/spaces/multimodalart/jev-decision-index
+
+
+
+JabberLM is a personal side project for teaching, unrelated to my work. Link to it in the comments.
