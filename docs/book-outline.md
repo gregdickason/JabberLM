@@ -41,6 +41,14 @@ works": it ends by asking, with earned clarity, what it *means* (Hofstadter's st
   engineering, evaluation of generative models, jailbreaks, scaling laws/emergence. Multimodality = out of
   scope for v1. *(Tokenization/BPE, prompt injection, quantisation, embeddings & RAG now have live demos —
   `explain §5–§9` and `harness §4` — so they're off this list.)*
+  **The exclusion is now written down on the site rather than only here** (`glossary.html#out-of-scope`
+  plus the teachers page's "is this a real one?") — `site-evaluation.md` item 12, which had never been
+  done. It names four absences: anything but text, long context, agents that learn inside an environment,
+  and frontier scale. **But note the gap that exclusion does NOT cover, because it caught us out:**
+  diffusion as a way of generating **text** is squarely inside this book's subject, and the site had been
+  quietly asserting the opposite — the `autoregressive` glossary entry said left-to-right "is how language
+  models generate text", offering a classifier as the only alternative to writing. Corrected; the glossary
+  now carries `diffusion-model`, and post 22.5 is the rung for it.
 - **Apparatus gaps:** exercises/solutions, guided capstone. *(Two are now closed: the site ships a
   **glossary page** (`glossary.html`) and a **series** index (`series.html`) for the companion posts;
   and the stat pipeline exists — `src/data/modelStats.ts` holds `BUNDLES` (params, dims, vocab,
@@ -332,6 +340,22 @@ near-uniform output — a clean cameo of "distil the teacher's whole distributio
 Prose-led but anchored to mechanisms the reader has *seen* (grokking/number-line = emergence; the agent
 loop = a literal feedback loop; steering/ablation = reaching into a representation).
 17. *Emergence* — from the number line and the grokking jump to scaling and emergent abilities. Try: revisit `lab` grokking with new eyes. Deeper: phase changes, why prediction pressure builds world-structure.
+    - **"Prediction pressure builds world-structure" now has something behind it.** That line sat here
+      as an assertion with no demo and no citation. Both exist. The site's own evidence is the
+      **warehouse concept map**: the SKU attributes (fragile/heavy/food/chemical) are never characters the
+      model reads, and its learned embeddings separate the goods by exactly those attributes anyway
+      (`capstone.html?section=warehouse`; the digit number line is the same result in miniature). The
+      literature's evidence is **Othello-GPT** — Li, Hopkins, Bau, Viégas, Pfister & Wattenberg,
+      *Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task* (ICLR 2023,
+      arXiv 2210.13382) — a model given no rules, only legal-move sequences, that builds a nonlinear
+      internal representation of the board.
+      **Write the asymmetry, because it is the chapter's honesty:** ours is a *probe* finding structure;
+      theirs ran **interventions** — "interventional experiments indicate this representation can be used
+      to control the output of the network" — which is the difference between finding a map and moving the
+      territory. Say which one we have. Glossary: `world-model`, which also separates this sense from the
+      two louder ones (a learned simulator an agent plans inside — Ha & Schmidhuber, *World Models*, arXiv
+      1803.10122, 2018, and the Dreamer line after it; and a video generator sold as a simulator). Both of
+      those are out of scope, and the site now says so instead of staying quiet.
 18. *The strange loop* — self-reference and feedback; the agent loop pointed back at itself; **Hofstadter, *I Am a Strange Loop***. Try: `harness` agent loop as feedback; steering as intervening on a self-representation. Deeper: level-crossing feedback, Gödelian self-reference.
 19. *Prediction or understanding?* — "it's just autocomplete" vs "so, arguably, are you"; Chinese Room, symbol grounding, argued with mechanisms in view. Deeper: representation vs computation.
 20. *What we can — and can't — claim* — consciousness, the self as a pattern, the honest open questions; a reflective close that hands the reader judgement, not answers.

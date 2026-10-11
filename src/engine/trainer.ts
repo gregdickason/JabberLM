@@ -369,6 +369,76 @@ export class Trainer {
   }
 
   /**
+   * One step of MASKED DIFFUSION — the absorbing-state objective diffusion language
+   * models are trained on. Same architecture, same vocabulary, different paradigm.
+   *
+   * Three things separate it from `sftMaskedStep`, and the first is the easiest to get wrong:
+   *
+   *  1. There is NO target shift. The input is the CORRUPTED sequence and the target is the
+   *     CLEAN one at the SAME positions — a diffusion model predicts the token at position
+   *     i from position i. Next-token training predicts ids[i+1] from ids[i], and that one
+   *     index is the whole difference between the two paradigms.
+   *  2. A per-example timestep t in (0,1] says how much of the ANSWER to destroy:
+   *     ceil(t·answerLen) randomly chosen answer positions become `maskId`. Prompt positions
+   *     are never corrupted — this is conditional generation, so the question stays legible.
+   *  3. The loss is weighted 1/t on the corrupted positions and 0 everywhere else, which is
+   *     the ELBO weighting for absorbing-state diffusion. `weightedNLL` already computes
+   *     exactly that, which is why this objective needs no new op and no new gradient check.
+   *
+   * On the normalisation, since it is the one place this could quietly go wrong: the op
+   * divides by `seq`, and t is nMask/answerLen, so 1/t is answerLen/nMask and the result is
+   * the MEAN loss over the masked positions times the constant answerLen/seq. The gradient
+   * scale therefore does NOT drift with how many positions a given example masked — which
+   * is the thing to check, because `sftMaskedStep`'s flat weight of 1 does drift that way.
+   *
+   * The caller must pass `flags` with `causalMask: false`. The entire point of denoising is
+   * that a masked position reads the characters on BOTH sides of it; left-to-right masking
+   * would reduce this to a slower next-token model. Not for LoRA fine-tune mode.
+   */
+  diffusionStep(
+    trainCfg: TrainConfig,
+    flags: FeatureFlags,
+    batch: { ids: number[]; answerStart: number }[],
+    maskId: number,
+  ): StepResult {
+    let total: ReturnType<typeof crossEntropy>['loss'] | null = null
+    let n = 0
+    for (const ex of batch) {
+      const L = Math.min(this.cfg.contextLen, ex.ids.length)
+      if (L <= ex.answerStart) continue
+      const clean = ex.ids.slice(0, L)
+      const answerLen = L - ex.answerStart
+      // How many answer characters to destroy: at least one, at most all of them.
+      const nMask = Math.floor(this.rng.next() * answerLen) + 1
+      const t = nMask / answerLen
+      // Partial Fisher-Yates over the answer offsets -> nMask distinct positions.
+      const offsets = Array.from({ length: answerLen }, (_, i) => i)
+      for (let i = 0; i < nMask; i++) {
+        const j = i + Math.floor(this.rng.next() * (answerLen - i))
+        ;[offsets[i], offsets[j]] = [offsets[j], offsets[i]]
+      }
+      const corrupted = clean.slice()
+      const w = new Float32Array(L)
+      for (let i = 0; i < nMask; i++) {
+        const pos = ex.answerStart + offsets[i]
+        corrupted[pos] = maskId
+        w[pos] = 1 / t
+      }
+      const weights = new Tensor(w, L, 1, 'diffusion.w')
+      const { logits } = this.model.forward(corrupted, flags)
+      const loss = weightedNLL(logits, clean, weights)
+      total = total ? add(total, loss) : loss
+      n++
+    }
+    if (!total || n === 0) return { loss: 0, gradNorm: 0, gradNorms: this.opt.gradNorms() }
+    const meanLoss = scale(total, 1 / n)
+    this.opt.zeroGrad()
+    meanLoss.backward()
+    const gradNorm = this.opt.step(trainCfg)
+    return { loss: meanLoss.data[0], gradNorm, gradNorms: this.opt.gradNorms() }
+  }
+
+  /**
    * Soft-target DISTILLATION of a one-token output: forward `promptIds` and match the model's
    * distribution at the FINAL position to a supplied target over a small set of output tokens
    * (`digitTargets[j]` is the target prob for the token whose string is `j`). Only the final

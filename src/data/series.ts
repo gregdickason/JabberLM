@@ -254,6 +254,18 @@ export const POSTS: Post[] = [
     embed: 'quantisation',
   },
   {
+    // A fractional rung (like the dispatches) so nothing after it renumbers. Sits next to the
+    // cost post deliberately: the interesting claim about diffusion here is not that it is a
+    // different kind of model — it is the same transformer — but that it decouples the number
+    // of sequential passes from the length of the answer, which is the same lever speculative
+    // decoding pulls. No `tryIt` until a demo exists, per this file's rule.
+    n: 22.5,
+    part: 4,
+    title: 'It does not have to write in order',
+    idea: 'Every post so far has assumed a model produces text left to right, one pass per character. It does not have to. A diffusion language model starts from a blank answer and fills in whichever positions it is most confident about, so the number of passes becomes a setting — and whether that is free depends on whether the positions needed to know about each other.',
+    status: 'planned',
+  },
+  {
     n: 23,
     part: 4,
     title: 'Play it, then look inside',

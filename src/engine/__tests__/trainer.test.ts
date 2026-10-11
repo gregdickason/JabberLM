@@ -3,6 +3,11 @@ import { Trainer } from '../trainer'
 import { serialize, deserialize } from '../persist'
 import { crossEntropy } from '../ops'
 import { JABBERWOCKY } from '../../data/jabberwocky'
+import { diffusionGenerate } from '../generate'
+import {
+  ANSWER_LEN, MASK_CHAR, buildDiffusionSortCorpus, sortDiffusionExample, sortDiffusionPrompt,
+  sortTrainVecs, type SortVec,
+} from '../../data/tasks'
 import {
   DEFAULT_FEATURE_FLAGS,
   DEFAULT_SAMPLE_CONFIG,
@@ -176,4 +181,72 @@ describe('Trainer (integration)', () => {
     // and both still learn the new task (finite, trained loss)
     expect(Number.isFinite(taskLoss(repT, NEW))).toBe(true)
   }, 30000)
+})
+
+// Masked diffusion is a second TRAINING PARADIGM on the same engine, so the thing worth
+// testing is that it is genuinely a different objective that genuinely learns — not that the
+// numbers move (any loss falls), but that it produces a model the diffusion decoder can read,
+// which a next-token-trained model cannot be. The paradigm's defining property is the one
+// asserted last: the loss is computed at the SAME position as the input, not the next one.
+describe('masked diffusion training', () => {
+  const cfg: ModelConfig = {
+    vocabSize: 0, dModel: 24, nHeads: 2, nLayers: 2, contextLen: 24, dFF: 48,
+    activation: 'gelu', weightTying: true,
+  }
+  const flags = { ...DEFAULT_FEATURE_FLAGS, causalMask: false }
+  const tcfg = { ...DEFAULT_TRAIN_CONFIG, batchSize: 16 }
+
+  const batchOf = (t: Trainer, vecs: SortVec[]) =>
+    vecs.map((v) => {
+      const ex = sortDiffusionExample(v)
+      return { ids: t.tok.encode(ex.line), answerStart: ex.answerStart }
+    })
+
+  it('drives the denoising loss down', () => {
+    const t = new Trainer(buildDiffusionSortCorpus(12000), cfg, 5)
+    const maskId = t.tok.encode(MASK_CHAR)[0]
+    const vecs = sortTrainVecs()
+    const first = t.diffusionStep(tcfg, flags, batchOf(t, vecs.slice(0, 16)), maskId).loss
+    let last = first
+    for (let i = 1; i < 60; i++) {
+      last = t.diffusionStep(tcfg, flags, batchOf(t, vecs.slice((i * 16) % 400, ((i * 16) % 400) + 16)), maskId).loss
+    }
+    expect(first).toBeGreaterThan(0)
+    expect(last).toBeLessThan(first)
+  })
+
+  it('learns the answer FORMAT — three digits separated by spaces — from denoising alone', () => {
+    const t = new Trainer(buildDiffusionSortCorpus(12000), cfg, 5)
+    const maskId = t.tok.encode(MASK_CHAR)[0]
+    const vecs = sortTrainVecs()
+    for (let i = 0; i < 200; i++) {
+      t.diffusionStep(tcfg, flags, batchOf(t, vecs.slice((i * 16) % 400, ((i * 16) % 400) + 16)), maskId)
+    }
+    const out = diffusionGenerate(t.model, flags, t.tok, sortDiffusionPrompt([6, 9, 2]), ANSWER_LEN, maskId, ANSWER_LEN).text
+    // Not asserting the answer is right — this is a 24-wide model after 200 steps. Asserting
+    // it learned where the spaces go, which next-token training cannot have taught it here.
+    expect(out).toMatch(/^\d \d \d$/)
+  })
+
+  it('supervises the masked position itself, not the one after it', () => {
+    // A model trained only on diffusion should predict the CLEAN token AT a masked position.
+    // Feed it a line with exactly one position masked and check the argmax there, which is
+    // the assertion that would fail if the step had kept next-token prediction's target shift.
+    const t = new Trainer(buildDiffusionSortCorpus(12000), cfg, 5)
+    const maskId = t.tok.encode(MASK_CHAR)[0]
+    const vecs = sortTrainVecs()
+    for (let i = 0; i < 300; i++) {
+      t.diffusionStep(tcfg, flags, batchOf(t, vecs.slice((i * 16) % 400, ((i * 16) % 400) + 16)), maskId)
+    }
+    // "sort 1 1 1 => 1 1 1" with the middle answer digit masked: the only consistent fill is 1.
+    const ex = sortDiffusionExample([1, 1, 1])
+    const ids = t.tok.encode(ex.line)
+    const pos = ex.answerStart + 2
+    ids[pos] = maskId
+    const { logits } = t.model.forward(ids, flags)
+    const v = logits.cols
+    let best = 0
+    for (let j = 1; j < v; j++) if (logits.data[pos * v + j] > logits.data[pos * v + best]) best = j
+    expect(t.tok.decode([best])).toBe('1')
+  })
 })

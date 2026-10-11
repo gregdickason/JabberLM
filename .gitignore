@@ -12,3 +12,9 @@ public/guide.html
 
 # local-only deploy notes (not relevant to the public repo)
 DEPLOY.md
+
+# Spike weights for the masked-diffusion experiment (docs/DIFFUSION-decisions.md). Deliberately
+# NOT committed: no page loads them yet, so shipping ~700 KB per arm to production would be waste.
+# Regenerate with `npm run gen:diffusion-sort` (SEED=1337 and SEED=2024, FILE= to separate them).
+public/diffusion-sort-model.json
+public/diffusion-sort-seed2024.json

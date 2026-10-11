@@ -5,7 +5,7 @@
 // as a routing one. Cloudflare Web Analytics' beacon builds the URL it reports from
 // `pathname + search`; a fragment is invisible to it (fragments never reach a server either).
 // The beacon also patches `history.pushState`, so pushing a new `?tab=` counts as its own
-// pageview — which is the only way to see which of the thirteen demos anyone actually opens.
+// pageview — which is the only way to see which of the seventeen demos anyone actually opens.
 // Two rules fall out of that beacon's dedupe logic, and LabApp depends on both:
 //   1. push on a real tab switch (replaceState is not a navigation and reports nothing);
 //   2. push an ABSOLUTE path — it resolves a relative URL to the bare origin, which would

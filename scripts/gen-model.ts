@@ -18,7 +18,10 @@ import { serialize } from '../src/engine/persist'
 import { JABBER_POEMS } from '../src/data/jabberPoems'
 import { SHAKESPEARE_SONNETS } from '../src/data/shakespeare'
 import { buildMultitaskCorpus, type SortVec } from './multitask-corpus'
-import { buildMoeCorpus, buildSortCorpus, sortHeldOut } from '../src/data/tasks'
+import {
+  buildMoeCorpus, buildSortCorpus, sortHeldOut, sortTrainVecs,
+  buildDiffusionSortCorpus, sortDiffusionExample, sortDiffusionPrompt, MASK_CHAR, ANSWER_LEN,
+} from '../src/data/tasks'
 import { buildHarnessCorpusFull } from '../src/data/harnessTasks'
 import { buildWarehouseCorpus, heldOutBaskets, warePrompt, warehouseReward } from '../src/data/warehouse'
 import {
@@ -32,11 +35,13 @@ import {
 } from '../src/data/addition'
 import { runAdder, runSinglePass } from '../src/harness/runAdder'
 import { RNG } from '../src/engine/random'
+import { diffusionGenerate } from '../src/engine/generate'
 import {
   DEFAULT_FEATURE_FLAGS,
   DEFAULT_MODEL_CONFIG,
   DEFAULT_SAMPLE_CONFIG,
   DEFAULT_TRAIN_CONFIG,
+  type FeatureFlags,
   type ModelConfig,
   type TrainConfig,
 } from '../src/engine/config'
@@ -81,6 +86,8 @@ interface DS {
   evalLabel?: string
   sftBatch?: (bs: number) => { ids: number[]; start: number }[] // present ⇒ train with masked SFT
   distillBatch?: (bs: number) => { promptIds: number[]; digitTargets: number[] }[] // ⇒ soft-target distillation (tic-tac-toe)
+  diffusionBatch?: (bs: number) => { ids: number[]; answerStart: number }[] // ⇒ masked-diffusion denoising
+  flags?: FeatureFlags // per-dataset feature-flag override (diffusion needs causalMask: false)
   deckSize?: number // examples in one pass — lets EPOCHS set the step count (tic-tac-toe)
 }
 
@@ -189,6 +196,48 @@ function makeDS(name: string): DS {
       return { corpus: buildHarnessCorpusFull(), file: 'harness-model.json', seed: 'sort 6 9 2 then reverse it => ', config: DEFAULTP }
     case 'sort':
       return { corpus: buildSortCorpus(), file: 'sort-model.json', seed: 'sort 6 9 2 => ', config: DEFAULTP, sortHeldOut: sortHeldOut() }
+    // The same task and the same architecture as 'sort', trained with a DIFFERENT OBJECTIVE:
+    // masked denoising instead of next-token prediction, bidirectional instead of causal. Run
+    // it at the gen:sort defaults (6000 steps, batch 32, lr 0.005) so the two arms are
+    // budget-matched in steps — but see docs/DIFFUSION-decisions.md, because steps are not the
+    // same thing as supervised positions here and the write-up has to say so.
+    case 'diffusion-sort': {
+      const dTrain = sortTrainVecs()
+      const dRng = new RNG(4242)
+      const dFlags: FeatureFlags = { ...DEFAULT_FEATURE_FLAGS, causalMask: false }
+      return {
+        corpus: buildDiffusionSortCorpus(),
+        file: 'diffusion-sort-model.json',
+        seed: 'sort 6 9 2 => ',
+        config: DEFAULTP,
+        flags: dFlags,
+        deckSize: dTrain.length,
+        diffusionBatch: (bs) => {
+          const out: { ids: number[]; answerStart: number }[] = []
+          for (let i = 0; i < bs; i++) {
+            const v = dTrain[Math.floor(dRng.next() * dTrain.length)]
+            const { line, answerStart } = sortDiffusionExample(v)
+            // Char-level tokenizer, so a character index IS a token index.
+            out.push({ ids: trainer.tok.encode(line), answerStart })
+          }
+          return out
+        },
+        evalLabel: 'DIFFUSION-SORT held-out (one round per character)',
+        evalAcc: () => {
+          const maskId = trainer.tok.encode(MASK_CHAR)[0]
+          const sample = sortHeldOut().slice(0, 80)
+          let ok = 0
+          for (const v of sample) {
+            const want = [...v].sort((a, b) => a - b).join(' ')
+            const got = diffusionGenerate(
+              trainer.model, dFlags, trainer.tok, sortDiffusionPrompt(v), ANSWER_LEN, maskId, ANSWER_LEN,
+            ).text
+            if (got === want) ok++
+          }
+          return Math.round((ok / sample.length) * 100)
+        },
+      }
+    }
     case 'warehouse':
       return {
         corpus: buildWarehouseCorpus(60000),
@@ -280,6 +329,9 @@ const LR_MIN_FRAC = Number(process.env.LR_MIN_FRAC ?? 0.05)
 const BASE_LR = Number(process.env.LR ?? 0.005)
 
 const trainer = new Trainer(ds.corpus, MODEL_CONFIG, Number(process.env.SEED ?? 1337))
+// Most recipes train causally on the default flags; diffusion needs bidirectional attention.
+const FLAGS: FeatureFlags = ds.flags ?? DEFAULT_FEATURE_FLAGS
+const MASK_ID = ds.diffusionBatch ? trainer.tok.encode(MASK_CHAR)[0] : -1
 const nParams = trainer.model.params.reduce((n, p) => n + p.rows * p.cols, 0)
 console.log(
   `[gen-model:${DATASET}] ${nParams.toLocaleString()} params · vocab ${trainer.cfg.vocabSize} · ` +
@@ -313,10 +365,25 @@ function writeModel(step: number, loss: number): void {
   for (const p of saved.params) p.data = p.data.map((x) => Math.round(x * ROUND_F) / ROUND_F)
   const json = JSON.stringify(saved)
   writeFileSync(out, json)
-  let extra = `\n--- sample ---\n${trainer.sample(DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, ds.seed, 160)}`
-  if (ds.evalAcc) {
-    const plan = trainer.sample(DEFAULT_FEATURE_FLAGS, { ...DEFAULT_SAMPLE_CONFIG, temperature: 0 }, ds.seed, 64).split('\n')[0]
-    extra = `\n  ${ds.evalLabel} held-out acc: ${ds.evalAcc()}%` + `\n  ${ds.seed}${plan}` + extra
+  // A diffusion model must be read with the diffusion decoder. Sampling it autoregressively
+  // on causal flags would print a fluent-looking string that means nothing — exactly the kind
+  // of number this project does not leave on a screen. Show both ends of the rounds dial
+  // instead: one pass (every position decided independently) and one pass per character.
+  let extra: string
+  if (ds.diffusionBatch) {
+    const dFlags: FeatureFlags = ds.flags ?? DEFAULT_FEATURE_FLAGS
+    const one = diffusionGenerate(trainer.model, dFlags, trainer.tok, ds.seed, ANSWER_LEN, MASK_ID, 1)
+    const full = diffusionGenerate(trainer.model, dFlags, trainer.tok, ds.seed, ANSWER_LEN, MASK_ID, ANSWER_LEN)
+    extra =
+      `\n  ${ds.seed}${full.text}   (${full.forwards} rounds)` +
+      `\n  ${ds.seed}${one.text}   (1 round, positions decided independently)`
+    if (ds.evalAcc) extra = `\n  ${ds.evalLabel}: ${ds.evalAcc()}%` + extra
+  } else {
+    extra = `\n--- sample ---\n${trainer.sample(DEFAULT_FEATURE_FLAGS, DEFAULT_SAMPLE_CONFIG, ds.seed, 160)}`
+    if (ds.evalAcc) {
+      const plan = trainer.sample(DEFAULT_FEATURE_FLAGS, { ...DEFAULT_SAMPLE_CONFIG, temperature: 0 }, ds.seed, 64).split('\n')[0]
+      extra = `\n  ${ds.evalLabel} held-out acc: ${ds.evalAcc()}%` + `\n  ${ds.seed}${plan}` + extra
+    }
   }
   if (ds.sortHeldOut) {
     const sortPrompt = `sort ${ds.sortHeldOut[0].join(' ')} => `
@@ -341,11 +408,13 @@ for (let i = 1; i <= STEPS; i++) {
     const frac = LR_MIN_FRAC + (1 - LR_MIN_FRAC) * 0.5 * (1 + Math.cos((Math.PI * (i - 1)) / STEPS))
     TRAIN_CONFIG.learningRate = BASE_LR * frac
   }
-  last = ds.distillBatch
-    ? trainer.distillMoveStep(TRAIN_CONFIG, DEFAULT_FEATURE_FLAGS, ds.distillBatch(TRAIN_CONFIG.batchSize)).loss
-    : ds.sftBatch
-      ? trainer.sftMaskedStep(TRAIN_CONFIG, DEFAULT_FEATURE_FLAGS, ds.sftBatch(TRAIN_CONFIG.batchSize)).loss
-      : trainer.stepBatch(TRAIN_CONFIG, DEFAULT_FEATURE_FLAGS).loss
+  last = ds.diffusionBatch
+    ? trainer.diffusionStep(TRAIN_CONFIG, FLAGS, ds.diffusionBatch(TRAIN_CONFIG.batchSize), MASK_ID).loss
+    : ds.distillBatch
+      ? trainer.distillMoveStep(TRAIN_CONFIG, FLAGS, ds.distillBatch(TRAIN_CONFIG.batchSize)).loss
+      : ds.sftBatch
+        ? trainer.sftMaskedStep(TRAIN_CONFIG, FLAGS, ds.sftBatch(TRAIN_CONFIG.batchSize)).loss
+        : trainer.stepBatch(TRAIN_CONFIG, FLAGS).loss
   if (i % LOG_EVERY === 0 || i === 1) {
     const secs = (Date.now() - t0) / 1000
     const rate = i / secs

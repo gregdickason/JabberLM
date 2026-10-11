@@ -506,3 +506,51 @@ reads as generated filler.
 **The lesson for next time is the same one as decisions 39a and 41: read the primary source before
 characterising someone else's system.** Two confident architectural claims were published off
 inference alone, and the second one was repeated as a standing rule in `CLAUDE.md`.
+
+**44. Diffusion was a wrong sentence, not a missing topic; world models were a missing name.**
+Asked whether diffusion models and world models are a gap in the corpus. Both are, but they needed
+opposite treatments, and the diffusion half turned out to be a correction rather than an expansion.
+
+The site's own copy was the problem. `autoregressive` said left-to-right generation "is how language
+models generate text", and its `more` offered only the typed-decision door — so the stated position was
+*generate in order, or do not generate*. Meanwhile `post-jev-sources.md:84` already publishes a
+leaderboard row for a **diffusion** entrant, and Inception's front page (fetched 12 Oct 2026) sells
+exactly the denied thing: "All other LLMs generate text one token at a time. Mercury diffusion LLMs
+(dLLMs) generate tokens in parallel." Their speed and cost figures are vendor-reported and are **not**
+quoted as measurements. Decision 41/43's lesson a third time: the claim came from inference, not a source.
+
+**The spike cost almost nothing because the engine was already there.** `weightedNLL` *is* the
+masked-diffusion loss — LLaDA's Eq 3 (arXiv 2502.09992) is per-position CE on masked positions weighted
+`1/t`, verified at source — and `flags.causalMask: false` already gives bidirectional attention. So
+`Trainer.diffusionStep` + `diffusionGenerate` needed **zero new ops and zero new grad checks**.
+
+**And the measurement killed the demo, which is why it was a spike.** Budget-matched against
+`sort-model.json` (6000 steps, batch 32, lr 0.005; 87,504 params against 87,456), two seeds, 145 held-out
+lists: diffusion scores **100% at one round and at five** — the rounds dial does nothing. Confidence at
+one round, with every sibling position still masked, is mean **1.000**, min **0.999**. The reason is the
+task: the five answer characters are two fixed spaces and three order statistics of the prompt, each
+computable from the question alone, so positions never needed each other. **Sorting cannot demonstrate
+the one risk parallel decoding carries.** Recommendation recorded in `docs/DIFFUSION-decisions.md`: build
+it on the **adder**, where carries make the digits genuinely interdependent — flagged there as a
+prediction, not a measurement. Three claims explicitly not made (better, faster, learns-faster — the last
+confounded because `diffusionStep` supervises only the answer while `stepBatch` does not, which is F-15
+again). Weights gitignored: no page loads them.
+
+**World models were the mirror image — the experiment exists and the name never appeared.** Zero hits for
+"world model" anywhere, yet the warehouse concept map *is* an emergent-world-representation result, and
+`book-outline.md`'s "prediction pressure builds world-structure" had sat there with no demo and no
+citation. Added a `world-model` glossary entry separating the three claims that share the name, and the
+honest asymmetry on the capstone: ours is a **probe** finding structure, where Othello-GPT (Li et al.,
+arXiv 2210.13382, ICLR 2023) ran **interventions** — "interventional experiments indicate this
+representation can be used to control the output of the network". We have the map; they moved the
+territory. The capstone's old "it had to build an internal notion … and it did" was softened to match the
+evidence.
+
+**Also closed: `site-evaluation.md` item 12**, open since September — declare the scope so readers stop
+looking. `glossary.html#out-of-scope` and the teachers page's "is this a real one?" now name four
+absences: anything but text (so no image diffusion), long context, agents that learn inside an
+environment, and frontier scale.
+
+**Flagged, not fixed:** `MEASURED.sortOnly` says 97%; the shipped sort model measured with the site's own
+`sortAccuracy()` gives 99% today. `MEASURED` is hand-maintained because only a person can say what a
+number was measured on, so it is left for one.

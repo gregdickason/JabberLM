@@ -65,6 +65,33 @@ higher lr/temp *collapses* it). Honest caveats in copy: needs a verifiable task 
 prompts disjoint from `sortHeldOut`. `gen:jabber`/`gen:sonnets` build the older single-skill poem models.
 Bundled-model facts in `src/data/modelStats.ts`.
 
+**A SECOND DECODING PARADIGM is in the engine, as a measured spike — not a shipped demo.**
+`Trainer.diffusionStep(cfg, flags, batch, maskId)` trains **masked (absorbing-state) diffusion**:
+corrupt `ceil(t·answerLen)` answer positions to a mask character, predict the clean token **at the
+same position** (no target shift — that one index is the whole difference from next-token training),
+loss weighted `1/t` on the corrupted positions. That is LLaDA's Eq 3 exactly, and it needed **zero new
+ops and zero new grad checks**: `weightedNLL` already is that loss, and `flags.causalMask: false`
+already gives bidirectional attention. `diffusionGenerate(model, flags, tok, prompt, answerLen, maskId,
+rounds)` (`generate.ts`) decodes by iterative unmasking — one bidirectional forward per round, commit
+the most confident positions, repeat — and reports `forwards` the way `SpecResult` reports
+`targetForwards`. Corpus + `MASK_CHAR`/`ANSWER_LEN` in `tasks.ts`; `DATASET=diffusion-sort`
+(`gen:diffusion-sort`) trains a budget-matched twin of `sort-model.json`.
+**The measured result is in `docs/DIFFUSION-decisions.md`, and it is a negative result about the
+DEMO, not about diffusion: on sorting the rounds dial does nothing** — 100% at one round and at five,
+confidence ~1.000 at round one — because each answer position is an order statistic of the prompt, so
+there is nothing for sibling positions to contribute. **Do not build the "parallel decoding is risky"
+demo on sort**; it cannot show that. The weights are deliberately **not committed** (gitignored, no page
+loads them). What DID ship is the correction: the `autoregressive` glossary entry had said left-to-right
+"is how language models generate text", offering a classifier as the only alternative to writing.
+
+**Scope is now declared, which `docs/site-evaluation.md` item 12 asked for and nobody had done.**
+`glossary.html#out-of-scope` and the teachers page's "is this a real one?" name four absences: anything
+but text (so no image diffusion), long context, agents that learn inside an environment, and frontier
+scale. The glossary carries `diffusion-model` and `world-model` — the latter separating the three
+claims that share the name, and saying which one the warehouse concept map is evidence *for*: ours is a
+**probe** finding structure, where Othello-GPT (arXiv 2210.13382) ran **interventions**. The capstone
+copy now says that too, and its old "it had to build an internal notion … and it did" is softened.
+
 **Numbers come from `src/data/modelStats.ts`, never from prose.** `BUNDLES` describes all nine
 bundled models (params, dims, vocab, the `gen:` script that makes it, and `taughtOn` — what it was
 actually trained on, which the copy must say before it says what the model does); `MEASURED` holds
@@ -489,6 +516,9 @@ npm run eval:tictactoe       # exhaustive strength report + never-loses proof fo
 # scripts/measure-threat-focus.ts  # mean attention on your threat cell, both bundles (run after any retrain)
 # scripts/measure-escaped-mass.ts   # what a MASKED READ discards: mass outside the answer set, for the
 #                                   # classifier and both tic-tac-toe bundles (run after any retrain)
+npm run gen:diffusion-sort # SPIKE: a masked-diffusion twin of the sort model, budget-matched to gen:sort
+                     # (6000 steps, batch 32, lr 0.005). Weights are gitignored — no page loads them.
+                     # Measure with scripts/measure-diffusion.ts; findings in docs/DIFFUSION-decisions.md
 npm run gen:adder    # reasoning-loop adder (columns + whole sums + traces) -> public/adder-model.json
                      # knobs: COL_REPEATS · LR_DECAY=1 (cosine) · LR_MIN_FRAC
 npm run gen:multitask-draft # tiny draft for speculative decoding -> public/multitask-draft.json

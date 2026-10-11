@@ -541,6 +541,16 @@ export default function TeachersApp() {
           skill while learning a new one), that limit is real at every scale — it just gets papered over
           by capability higher up.
         </p>
+        <p className="mt-2 text-slate-300">
+          <b>And what it is not a real one of</b> — worth having ready, because a class will ask and the
+          site is silent on it unless you look. Everything here is <b>text</b>, one character at a time,
+          written <b>left to right</b>. So: no image or video generation, which means the kind of model
+          most people have actually used — an image generator — is nowhere on the site, and the word{' '}
+          <a className={a} href="./glossary.html#diffusion-model">diffusion</a> is defined but not
+          demonstrated. No long context. No agent that learns by acting in an environment. If someone
+          asks "is this how Midjourney works?", the answer is no, and the{' '}
+          <a className={a} href="./glossary.html#out-of-scope">glossary says where the map ends</a>.
+        </p>
         <p className="mt-2 text-[13px] text-slate-400">
           Each page states its own caveats where they apply. If a claim on this site is measured, the
           number came from a script in the repo, not an estimate.

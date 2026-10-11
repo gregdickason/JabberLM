@@ -353,13 +353,28 @@ export default function CapstoneApp() {
               <p className="max-w-sm text-[12px] leading-relaxed text-slate-400">
                 The model only ever saw SKU letters and the packing decisions — never the words
                 "fragile / heavy / food / chemical". Yet projecting its learned SKU embeddings to 2-D, they
-                <b> cluster by that hidden attribute</b>: to pack correctly it had to build an internal notion of
-                each SKU's nature, and it did. (Same trick as the digit "number line" on the{' '}
+                <b> cluster by that hidden attribute</b>: to pack correctly it needed some internal notion of
+                each SKU's nature, and the structure is there to be found. (Same trick as the digit "number line" on the{' '}
                 <a className="text-fuchsia-300 hover:underline" href="./learn.html">How-it-works</a> page.)
                 {view === 'live' && ' Train the model above and watch these clusters sharpen.'}
               </p>
             </div>
             <div className="text-[11px] text-slate-400">hidden attribute key (for reference — not shown to the model): {Object.entries(ATTR).map(([s, a]) => `${s}=${a}`).join(' · ')}</div>
+            <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+              This result has a name, and the name is worth knowing because it is used for three different
+              claims. A{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./glossary.html#world-model">world model</a>{' '}
+              can mean a learned stand-in for an environment that an agent plans inside; or a video generator
+              treated as a simulator; or — this one — the claim that a model trained only to predict the
+              surface of something ends up representing whatever produced it. The third is the only one this
+              page has evidence for, and the honest limit is the <b>kind</b> of evidence: a 2-D projection
+              showing the goods separated by fragility tells you the structure is in there. It does not show
+              that the packing decision <i>reads</i> it. The stronger standard belongs to the Othello
+              board-game result, which went past looking and <b>edited</b> the representation, changing the
+              move that came out. We have the map; they moved the territory. It is the same caution the{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./lab.html?tab=head-ablation">ablation</a>{' '}
+              tabs carry — finding that a part is necessary is not the same as finding where the work happens.
+            </p>
           </section>
         )}
 

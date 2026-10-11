@@ -123,6 +123,46 @@ export default function GlossaryApp() {
           </>
         )}
 
+        {!needle && (
+          <section id="out-of-scope" className="mt-10 scroll-mt-6 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-fuchsia-400">
+              What this site leaves out
+            </h2>
+            <p className="mt-2 max-w-3xl text-[12px] leading-relaxed text-slate-400">
+              A glossary that stops without saying where it stops reads like a complete map. This one
+              covers a <b>character-level, text-only, autoregressive transformer</b> — small enough that
+              every number on the site is its own. Four things a reader could reasonably come looking
+              for are deliberately absent, and it is better to say so than to let someone keep scrolling.
+            </p>
+            <ul className="mt-2 max-w-3xl list-disc space-y-1 pl-5 text-[12px] leading-relaxed text-slate-400">
+              <li>
+                <b>Anything but text.</b> No images, audio or video, and so none of the image
+                generators people usually mean by{' '}
+                <a className="text-sky-400 hover:underline" href="#diffusion-model">diffusion</a>. The
+                reason is honest rather than principled: in-browser training at a useful resolution is
+                beyond a hand-written JavaScript engine with no batching.
+              </li>
+              <li>
+                <b>Long context.</b> These models see tens of characters, not hundreds of thousands, so
+                the techniques that exist purely to make long contexts affordable are named here and
+                not shown.
+              </li>
+              <li>
+                <b>Agents that learn inside an environment.</b> The reinforcement learning on this site
+                scores finished answers; it never learns a stand-in for a world and plans inside it —
+                the first sense of{' '}
+                <a className="text-sky-400 hover:underline" href="#world-model">world model</a>.
+              </li>
+              <li>
+                <b>Anything at frontier scale.</b> Every claim here is measured on models between
+                about fifteen thousand and a hundred and thirty thousand parameters. The mechanisms
+                are the same ones; the behaviour at six orders of magnitude more is an argument, not a
+                measurement, and the site tries to mark which is which.
+              </li>
+            </ul>
+          </section>
+        )}
+
         <footer className="mt-10 border-t border-slate-800 pt-4 text-[12px] text-slate-500">
           Numbers quoted around the site come from{' '}
           <span className="font-mono text-slate-400">src/data/modelStats.ts</span>, which is

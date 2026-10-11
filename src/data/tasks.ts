@@ -183,3 +183,53 @@ export const TASK_EXAMPLES = {
   max: 'max 6 9 2 => ',
   reverse: 'rev 6 9 2 => ',
 }
+
+// ---- masked diffusion over the sort task -----------------------------------
+// A DECODING experiment, not a new skill. The same `sort a b c => x y z` lines as
+// `buildSortCorpus`, but trained with a masked-denoising objective instead of next-token
+// prediction: some answer characters are replaced by MASK_CHAR and the model restores
+// them, reading context in BOTH directions (`flags.causalMask: false`). Generation then
+// starts from an all-mask answer and unmasks a few positions per forward pass, so the
+// number of sequential passes stops being the number of characters.
+//
+// The answer region is a FIXED five characters ("2 6 9"), which deliberately sidesteps
+// length prediction — a genuinely hard problem for diffusion language models, and not one
+// this demo shows.
+
+/** The mask character. Deliberately outside the sort alphabet (\n, space, 1-9, =, >, o, r, s, t). */
+export const MASK_CHAR = '_'
+
+/** Characters in a `sortLine` answer region — "2 6 9" is three digits and two spaces. */
+export const ANSWER_LEN = 5
+
+/** Everything before the answer region — the conditioning the diffusion model never corrupts. */
+export const sortDiffusionPrompt = (v: SortVec): string => `sort ${v.join(' ')} => `
+
+/** One diffusion training example: the clean line, and where its answer region starts. */
+export function sortDiffusionExample(v: SortVec): { line: string; answerStart: number } {
+  const line = sortLine(v)
+  return { line, answerStart: line.length - ANSWER_LEN }
+}
+
+/**
+ * A masked-diffusion sort corpus (~targetChars), drawn from the SAME training split as
+ * `buildSortCorpus` (seed 20250626), so `sortHeldOut()` stays disjoint and the two
+ * objectives can be compared on identical held-out lists.
+ *
+ * The first line is MASK_CHAR repeated. It carries no task signal and exists for exactly
+ * one reason: `CharTokenizer` builds its vocabulary from the corpus text, so the mask
+ * character must appear somewhere in it or the diffusion step has no id to corrupt with.
+ */
+export function buildDiffusionSortCorpus(targetChars = 40000): string {
+  const rnd = mulberry32(20250626)
+  const vecs = allSortVecs(rnd)
+  const train = vecs.slice(Math.floor(vecs.length * 0.2))
+  const lines: string[] = [MASK_CHAR.repeat(ANSWER_LEN)]
+  let chars = lines[0].length + 1
+  while (chars < targetChars) {
+    const l = sortLine(train[Math.floor(rnd() * train.length)])
+    lines.push(l)
+    chars += l.length + 1
+  }
+  return lines.join('\n') + '\n'
+}

@@ -259,6 +259,23 @@ export default function WhatFitsSection({ embed = false }: { embed?: boolean }) 
           </a>
           , the third tab in this group.
         </p>
+        <p>
+          <b>One qualifier, because every number on this tab assumes it.</b> "More passes, bought one
+          token at a time" is a fact about{' '}
+          <a className="text-sky-400 hover:underline" href="./glossary.html#autoregressive">
+            autoregressive
+          </a>{' '}
+          decoding — writing left to right, each character conditioned on the ones already written —
+          and that is how every model on this site generates. It is not forced by the architecture. A{' '}
+          <a className="text-sky-400 hover:underline" href="./glossary.html#diffusion-model">
+            diffusion language model
+          </a>{' '}
+          predicts many positions in the same pass and commits the confident ones, so its pass count
+          is a setting rather than the length of its answer. Note what that does and does not touch:
+          a diffusion pass costs the same fixed work as any other, so the budget argument above is
+          untouched and the sentence to be careful with is the narrower one — <em>one pass per
+          token</em> is a decoding choice, not a law.
+        </p>
         <p className="text-slate-500">
           Method: {SAMPLE} sums per width, drawn from a fixed seed so the sweep repeats exactly, so
           each point moves in steps of {(100 / SAMPLE).toFixed(0)}%. The loop and the single pass

@@ -56,7 +56,7 @@ export const TERMS: Term[] = [
     group: 'The basics',
     short:
       'The one thing a language model does: score every possible next token, pick one, add it to the text, repeat. Almost everything else in this glossary is in service of that loop.',
-    more: 'It is the job, not the hardware. The same transformer can be read as a single typed decision instead of a writer, and some recent models are trained only to do that — so "a language model predicts the next token" stays true while "every transformer does" does not.',
+    more: 'It is the job, not the hardware. The same transformer can be read as a single typed decision instead of a writer, and some recent models are trained only to do that — so "a language model predicts the next token" stays true while "every transformer does" does not. Nor is the order part compulsory: a diffusion language model writes text too, but fills positions in confidence order rather than left to right.',
     see: { label: 'watch it choose', href: './explain.html?section=prediction' },
   },
   {
@@ -527,8 +527,18 @@ export const TERMS: Term[] = [
     term: 'Autoregressive',
     group: 'Limits',
     short:
-      'Producing an answer one piece at a time, each piece conditioned on the pieces already produced. It is how language models generate text, and it is why a long answer costs more than a short one.',
-    more: 'Not every transformer is used this way. Read a single forward pass as a score over a fixed set of options and the same network makes one typed decision instead of writing.',
+      'Producing an answer one piece at a time, each piece conditioned on the pieces already produced. It is how almost every language model in use generates text, and it is why a long answer takes more passes than a short one.',
+    more: 'Two things it is worth not over-reading. The same network can be used without generating at all — read one forward pass as a score over a fixed set of options and it makes a typed decision instead of writing. And generating does not have to go in order: a diffusion language model predicts many positions in the same pass and commits the confident ones, so its number of passes is a setting rather than the length of its answer. Autoregression is the dominant choice, not the definition.',
+  },
+  {
+    id: 'diffusion-model',
+    term: 'Diffusion model',
+    also: 'denoising model',
+    group: 'Limits',
+    short:
+      'A model that generates by repeated repair rather than in order: it starts from a corrupted or blank draft and cleans it up over several passes. Image generators work this way, and so now do a growing number of text models.',
+    more:
+      'It is not a different architecture — usually the same transformer, trained on a different objective. What differs is how the draft is corrupted: image models add numerical noise to a picture and learn to subtract it, while text models usually hide a share of the characters behind a mask and learn to restore them, reading context in both directions rather than only leftwards. Generation starts from an answer that is entirely hidden and commits the positions it is most confident about each pass. Because every hidden position is predicted in the same pass, the number of passes becomes a dial you set rather than the length of the answer — that is the speed claim, and also the catch, since positions filled in the same pass cannot take account of one another.',
   },
   {
     id: 'system-1-2',
@@ -556,6 +566,16 @@ export const TERMS: Term[] = [
       'The part of a signal a bounded observer cannot predict, whether or not it is truly random. A deterministic sequence it has no way to crack counts as noise to it, and looks exactly like noise.',
     more: 'Which is why a model reporting that something looks unstructured tells you about the model, not about the thing.',
     see: { label: 'rule 30 versus random', href: './lab.html?tab=structure-vs-noise' },
+  },
+  {
+    id: 'world-model',
+    term: 'World model',
+    group: 'Looking inside',
+    short:
+      'Three different claims share this name. One: a learned stand-in for an environment, so an agent can plan inside the model instead of acting for real. Two: a video or game generator treated as a simulator you can steer. Three: that a model trained only to predict the surface of something ends up representing whatever produced it.',
+    more:
+      'Only the third is on this site, and only as far as its evidence reaches. The warehouse agent is never told which goods are fragile — the attribute is never a character it reads — yet its learned embeddings separate the goods by exactly that. What that shows is a probe finding structure, which is weaker than showing the model uses it; the stronger standard was set by the Othello board-game result, which edited the representation and changed the move that came out. The first two senses are out of scope here, and not by accident: both need an environment or pixels, and this site is characters all the way down.',
+    see: { label: 'the concept nobody labelled', href: './capstone.html?section=warehouse' },
   },
   {
     id: 'steering',

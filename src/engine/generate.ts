@@ -236,3 +236,99 @@ export function generate(
   }
   return tok.decode(out)
 }
+
+// ---- masked-diffusion decoding ---------------------------------------------
+// The counterpart to `generate` above, and the reason it is worth having: left-to-right
+// decoding needs one forward pass per character, because each character is conditioned on
+// the ones already produced. A diffusion decoder starts from an answer that is entirely
+// mask characters and, on each pass, COMMITS the positions it is most confident about —
+// so the number of sequential passes is a dial, not the length of the answer.
+//
+// At one round every position is decided independently in a single pass, which is fast and
+// can produce an answer no individual position would have chosen (for sorting: a set of
+// digits that is not a rearrangement of the input). More rounds re-read the characters
+// already committed and fix that. The trade-off between those two ends is the whole lesson,
+// and `forwards` is here so it can be counted rather than asserted — the same reason
+// `SpecResult` reports `targetForwards`.
+
+export interface DiffusionUnmask {
+  pos: number // absolute position in the sequence
+  id: number // the token committed there
+  p: number // the model's probability for it, at the moment it was committed
+}
+export interface DiffusionRound {
+  unmasked: DiffusionUnmask[]
+  stillMasked: number
+}
+export interface DiffusionResult {
+  text: string // the answer region only, decoded
+  rounds: DiffusionRound[]
+  forwards: number // sequential passes actually run (left-to-right would need answerLen)
+}
+
+/**
+ * Decode a fixed-length answer by iterative unmasking. Greedy and therefore deterministic:
+ * no RNG argument, unlike `generate`. `rounds` is clamped to [1, answerLen] — more rounds
+ * than positions would have nothing left to commit.
+ *
+ * `flags` must have `causalMask: false`, matching how `Trainer.diffusionStep` trained it.
+ */
+export function diffusionGenerate(
+  model: Model,
+  flags: FeatureFlags,
+  tok: CharTokenizer,
+  prompt: string,
+  answerLen: number,
+  maskId: number,
+  rounds: number,
+): DiffusionResult {
+  const promptIds = tok.encode(prompt)
+  const start = promptIds.length
+  if (start + answerLen > model.cfg.contextLen) {
+    throw new Error('diffusionGenerate: prompt + answer exceeds the context window')
+  }
+  const ids = promptIds.concat(new Array<number>(answerLen).fill(maskId))
+  const masked = new Set<number>()
+  for (let i = 0; i < answerLen; i++) masked.add(start + i)
+
+  const trace: DiffusionRound[] = []
+  let forwards = 0
+  const R = Math.max(1, Math.min(rounds, answerLen))
+
+  for (let r = 0; r < R && masked.size > 0; r++) {
+    const { logits } = model.forward(ids, flags)
+    forwards++
+    const vocab = logits.cols
+    const cands: DiffusionUnmask[] = []
+    for (const pos of masked) {
+      const row = logits.data.subarray(pos * vocab, (pos + 1) * vocab)
+      let max = -Infinity
+      for (let j = 0; j < vocab; j++) if (row[j] > max) max = row[j]
+      let sum = 0
+      for (let j = 0; j < vocab; j++) sum += Math.exp(row[j] - max)
+      // The mask character is in the vocabulary, so the model can nominate it. Exclude it:
+      // committing a mask to a position would leave the answer unfinished.
+      let bestId = -1
+      let bestLogit = -Infinity
+      for (let j = 0; j < vocab; j++) {
+        if (j !== maskId && row[j] > bestLogit) {
+          bestLogit = row[j]
+          bestId = j
+        }
+      }
+      cands.push({ pos, id: bestId, p: Math.exp(bestLogit - max) / sum })
+    }
+    // Commit the most confident share of what is left, spread evenly over the rounds
+    // remaining. Ties break on position so the result is reproducible.
+    const k = Math.ceil(masked.size / (R - r))
+    cands.sort((a, b) => b.p - a.p || a.pos - b.pos)
+    const chosen = cands.slice(0, k)
+    for (const c of chosen) {
+      ids[c.pos] = c.id
+      masked.delete(c.pos)
+    }
+    trace.push({ unmasked: chosen, stillMasked: masked.size })
+  }
+
+  return { text: tok.decode(ids.slice(start)), rounds: trace, forwards }
+}
