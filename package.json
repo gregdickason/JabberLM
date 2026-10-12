@@ -26,6 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "stats": "node scripts/gen-stats.mjs",
+    "gen:cover": "node scripts/gen-cover.mjs",
     "gen:classifier": "node node_modules/vitest/node_modules/vite-node/vite-node.mjs scripts/gen-classifier.ts"
   },
   "dependencies": {
