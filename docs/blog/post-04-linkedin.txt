@@ -1,0 +1,41 @@
+Ask a chatbot the same question twice and you can get two different answers. That is not a fault. It is a choice somebody made, and once you see it you will read every AI answer differently.
+
+A PROBABILITY FOR EVERYTHING
+
+A language model does one thing. Given the text so far, it gives every possible next piece a probability. It predicts what tends to come next.
+
+My demo model works one character at a time, from 77 possible characters. Give it "'Twas brillig, and the" and it says: s 17%, c 10%, w 10%, t 8% and a long tail.
+
+Give it "sort 6 9 2 =>" and it puts 98.8% on "2". Sorting is a skill it genuinely learned, and you can see the confidence in the numbers.
+
+That list is the model's entire output. Chat, agents, summaries: all of it is that list, a choice from it, the chosen piece added to the text, and the question asked again.
+
+BEFORE YOU SCROLL ON
+
+Which piece should it choose? The obvious answer is the most likely one, every time. So if it always takes its top pick, what does the poem look like?
+
+Have a guess. The live version is linked in the comments. The answer is at the end.
+
+WHY THIS MATTERS AT WORK
+
+The setting that controls this is called temperature. At zero the model always takes its top pick. For anything that must be consistent or audited, turn it down and record the model version and the output.
+
+But a low temperature buys you the same answer every time, not the right one. A fluent answer is a prediction, not a fact. Last week's post showed this model writing algebra that looks right 94% of the time and is right 8% of the time. At temperature zero it is wrong the same way, every time.
+
+THE ANSWER
+
+Always taking the top pick writes: "stone song, And stood the cross the stood the stood the stood the stood..."
+
+It gets stuck. The choice is deterministic, so once the text comes back to somewhere it has been before, it must say the same thing again, forever.
+
+The same weights, choosing in proportion: "The quoggs shies conftercante deep, The snicker-creature roads ploud gre!" Not Lewis Carroll, but alive. Nothing changed in the model, only how its output was read.
+
+THIS WEEK'S HEADLINE WAS A LOOP
+
+Choosing in proportion makes the groove rarer. It does not make it impossible.
+
+The most-discussed AI result of recent weeks was a frontier model editing another model's weights directly and lifting its maths score sixfold. Underneath, it was a fix for exactly this. The small model being edited was already choosing in proportion, with a penalty for repeating itself, and still 93% of its maths answers ran to the length limit, going round in circles.
+
+The edit removed one direction in its weights that drove the loop. Afterwards 33% still hit the limit, and its score went from 7.9% to 48.1%. Critics point out that most of that gain is a model that stopped looping long enough to finish.
+
+Next: how the model decides which earlier words matter, and why there is a hard edge to how far back it can look.

@@ -138,6 +138,15 @@ export const paramsOf = (id: BundleId) => BUNDLES[id].paramsLabel
 export const MEASURED = {
   /** Three-skill model: exact-match on unseen 3-number sort lists. */
   multitaskSort: { pct: 89, n: 145, of: 'unseen 3-number sort lists', seed: 1337 },
+  /** Three-skill model, greedy, on every equation of the taught form (a 2-9, x 0-9, b 0-9).
+   *  "Looks right" = the line has the shape of valid working (`ax = n => x = m`); "right" = the
+   *  whole line matches. Re-measure with scripts/measure-confidently-wrong.ts after a retrain. */
+  multitaskAlgebra: {
+    looksRightPct: 94.1,
+    rightPct: 8.4,
+    n: 800,
+    of: 'every single-variable equation of the form it was trained on (650 of the 800 appear verbatim in its training text; 8.8% of those are right)',
+  },
   /** Sort-only model, ascending, held-out. */
   sortOnly: { pct: 97, n: 145, of: 'unseen 3-number sort lists' },
   /** Adder: single columns, and whole sums through the harness loop. */

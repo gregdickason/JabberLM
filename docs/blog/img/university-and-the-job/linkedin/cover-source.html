@@ -1,0 +1,86 @@
+<!doctype html><html><head><meta charset="utf-8"><title>cards</title>
+<style>
+:root{--bg:#0a0f1c;--ink:#e5e7eb;--ink2:#94a3b8;--muted:#64748b;--rule:#1e293b;--job:#199e70;--study:#3987e5;--lazy:#d95926;--cold:#9085e9;--red:#f87171;--green:#34d399}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;width:1920px;height:1080px;overflow:hidden}
+.card{width:1200px;height:1200px;padding:80px;display:flex;flex-direction:column}
+.kick{font:600 22px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2)}
+h1{font-size:62px;line-height:1.08;letter-spacing:-.02em;margin-top:30px;font-weight:700}
+.sub{font-size:27px;line-height:1.35;color:var(--ink2);margin-top:22px;max-width:1000px}
+.body{flex:1;display:flex;flex-direction:column;justify-content:center}
+.foot{border-top:1px solid var(--rule);padding-top:24px;display:flex;justify-content:space-between;font:22px ui-monospace,Menlo,monospace;color:var(--muted)}
+.mono{font-family:ui-monospace,Menlo,monospace}
+.att{font-size:36px;line-height:1.75}
+.att .p{color:var(--ink2)} .att .x{color:var(--red)}
+.hero{display:flex;align-items:baseline;gap:34px;margin:10px 0}
+.hero b{font-size:190px;line-height:1;letter-spacing:-.05em;font-weight:800}
+.hero span{font-size:34px;line-height:1.25;color:#cbd5e1;max-width:520px}
+.box{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:30px 36px;font-size:40px}
+.note{font-size:21px;color:var(--ink2);margin-top:18px;line-height:1.4}
+.shot{border:1px solid #1f2937;border-radius:14px;max-width:100%;max-height:640px;object-fit:contain;align-self:center}
+</style></head><body>
+<div id="root"></div>
+<script>
+const n = new URLSearchParams(location.search).get('card')
+const foot = `<div class="foot"><span>JabberLM · the 27K-parameter model from the reward-learning tab</span><span>jabberlm.com</span></div>`
+const X = (s) => 70 + s / 900 * 760, Y = (v) => 470 - v / 100 * 430
+const series = [
+  { k: 'job', label: 'The job', v: [58, 81, 86, 79, 88, 90, 86], dy: 0 },
+  { k: 'study', label: 'More study', v: [58, 60, 51, 60, 75, 74, 70], dy: 0 },
+  { k: 'lazy', label: 'Lazy checker', v: [58, 58, 57, 57, 57, 57, 57], dy: 6 },
+  { k: 'cold', label: 'No study', v: [0, 0, 0, 0, 0, 0, 0], dy: -14 },
+]
+function chart() {
+  let g = ''
+  for (const t of [0, 25, 50, 75, 100]) g += `<line x1="70" x2="830" y1="${Y(t)}" y2="${Y(t)}" stroke="#1e293b" stroke-width="1"/><text x="56" y="${Y(t) + 7}" text-anchor="end" fill="#64748b" font-size="20" font-family="ui-monospace,Menlo">${t}%</text>`
+  for (const s of [0, 300, 600, 900]) g += `<text x="${X(s)}" y="505" text-anchor="middle" fill="#64748b" font-size="20" font-family="ui-monospace,Menlo">${s}</text>`
+  g += `<text x="450" y="545" text-anchor="middle" fill="#94a3b8" font-size="21">rounds (the top three studied to ~57% first)</text>`
+  for (const s of series) {
+    const pts = s.v.map((v, i) => `${X(i * 150)},${Y(v)}`).join(' ')
+    g += `<polyline points="${pts}" fill="none" stroke="var(--${s.k})" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>`
+    s.v.forEach((v, i) => g += `<circle cx="${X(i * 150)}" cy="${Y(v)}" r="6" fill="var(--${s.k})" stroke="var(--bg)" stroke-width="2"/>`)
+    const last = s.v[s.v.length - 1]
+    g += `<text x="842" y="${Y(last) + 8 + s.dy}" fill="#e5e7eb" font-size="25" font-weight="600">${last}%</text><text x="908" y="${Y(last) + 8 + s.dy}" fill="#cbd5e1" font-size="23">${s.label}</text>`
+  }
+  const legend = series.map(s => `<span style="display:inline-flex;align-items:center;gap:10px;margin-right:30px"><i style="width:26px;height:5px;border-radius:3px;background:var(--${s.k})"></i>${s.label}</span>`).join('')
+  return `<div style="font-size:22px;color:#cbd5e1;margin-bottom:16px">${legend}</div><svg width="1040" height="560" viewBox="0 0 1100 560">${g}</svg>`
+}
+const cards = {
+  1: `<div class="kick">Sorting three numbers · same model, four careers</div>
+      <h1>University gets it started. <span style="color:var(--green)">The job makes it good.</span></h1>
+      <div class="body">${chart()}
+      <div class="note">Accuracy on lists it never saw, one run. A second run ended: the job 86%, more study 80%, lazy checker 55%, no study 0%.</div></div>${foot}`,
+  2: `<div class="kick">Straight to the job · no worked examples</div>
+      <h1>21,600 attempts. <span style="color:var(--red)">Zero rewarded.</span></h1>
+      <div class="sub">Rewarded only when it sorts correctly. It never once did, so there was nothing to do more of.</div>
+      <div class="body"><div class="box mono att">
+      <div><span class="p">sort 6 5 9 =&gt;</span> 7 <span class="x">✗</span></div>
+      <div><span class="p">sort 3 1 9 =&gt;</span> 3 <span class="x">✗</span></div>
+      <div><span class="p">sort 2 9 1 =&gt;</span> 7 <span class="x">✗</span></div>
+      <div><span class="p">sort 3 8 9 =&gt;</span> 3 1 <span class="x">✗</span></div>
+      <div><span class="p">sort 3 4 9 =&gt;</span> 9 <span class="x">✗</span></div></div>
+      <div class="note">Real attempts from its 900 rounds of practice. Not wrong lists. Not lists at all.</div></div>${foot}`,
+  3: `<div class="kick">Same graduate, lazier manager</div>
+      <h1>Perfect score. <span style="color:var(--red)">No better at the job.</span></h1>
+      <div class="sub">The checker only asks for three numbers in order. It never checks they are the numbers it was given.</div>
+      <div class="body">
+      <div class="hero"><b style="color:var(--green)">100%</b><span>its score at every check from round 150 on</span></div>
+      <div class="hero"><b style="color:var(--red)">57%</b><span>actually sorted correctly. It started at 58%.</span></div>
+      <div class="box mono" style="margin-top:30px"><span style="color:var(--ink2)">sort 4 7 4 =&gt;</span> 4 4 <span style="color:var(--red);text-decoration:underline;text-underline-offset:8px">5</span> <span style="color:var(--green)">✓ full marks</span></div>
+      </div>${foot}`,
+  4: `<div class="kick">Live in the browser</div>
+      <h1>Study, then the job. <span style="color:var(--green)">No answers, just right or wrong.</span></h1>
+      <div class="sub"><span style="color:#f59e0b">Amber</span>: studying worked examples. <span style="color:var(--green)">Green</span>: practice, scored by a checker.</div>
+      <div class="body">
+<div style="width:1040px;height:449px;border:1px solid #1f2937;border-radius:14px;background:url(rlvr-live.png) no-repeat;background-size:2486px auto;background-position:-37px -242px"></div>
+<div class="note">The real tab after one run, accuracy on lists it never saw. Study took it to about 60%; the job took it into the 90s, where the tab auto-pauses. Blue is its score on its own attempts.</div></div>${foot}`,
+}
+document.getElementById('root').innerHTML = `<div style="width:1920px;height:1080px;padding:110px 120px;display:flex;gap:70px;align-items:center">
+<div style="flex:0 0 620px">
+<div class="kick">'Twas Brillig · a dispatch</div>
+<h1 style="font-size:92px;line-height:1.02;margin-top:34px">SFT is university.<br><span style="color:var(--green)">RL is the job.</span></h1>
+<div class="sub" style="font-size:32px;margin-top:34px">One tiny model, four careers. Study, practice, both, and a manager who checks the wrong thing.</div>
+<div class="mono" style="font-size:24px;color:var(--muted);margin-top:44px">jabberlm.com</div>
+</div>
+<div style="flex:1;transform:scale(1.0);transform-origin:left center">${chart()}</div></div>`
+</script></body></html>

@@ -1,0 +1,37 @@
+My 90,000-parameter model writes algebra that looks right 94% of the time. It is right 8% of the time.
+
+It has been a strange week. Researchers showed a frontier model can read a small neural network's weights and write new ones by hand, no training. Within a day people were trying it on their own problems, including a hand-written network that tells real legal citations from fake ones.
+
+Interesting result. Good moment for a plainer question: what can a checker like that actually see?
+
+PERFECT LAYOUT, WRONG ANSWER
+
+My demo model was trained on correctly worked equations, all laid out the same way. Ask it to solve 7x + 2 = 16 and it writes:
+
+7x = 18 => x = 3
+
+The layout is perfect. The working is wrong from the first step: 16 minus 2 is 14.
+
+Across all 800 equations of the kind it was trained on, 94% of its answers look like valid working and 8.4% are right. Most of them were in its training text word for word.
+
+THE DOUBT NEVER REACHES THE PAGE
+
+At the moment it writes the wrong digit, the model gives 8 a 31% chance. The right answer, 4, is second at 18%. Inside, it is close to a coin toss. On the page there is only a clean, confident 18.
+
+WHAT A CHECKER OF FORM CAN CATCH
+
+A checker that looks only at the line (right shape, sensible numbers) would pass nearly all of these wrong answers. To catch 7x = 18 you have to do the arithmetic.
+
+Citations are the same. Fakes that give themselves away in the form, or do not exist at all, are the easy ones. The ones that reach a judge look exactly right: a real case at the wrong page, or a real case that does not say what it is cited for. A Bloomberg study this year found models caught 93-100% of citations to the wrong case, but only 37-61% of citations to the wrong page of the right case. They missed them because the case was on topic.
+
+So when a small network tells real citations from fake ones, the useful question is not whether its weights were trained or hand-written. It is what the fakes looked like. A checker that only sees the citation can only learn what fake citations look like.
+
+CHECK AGAINST THE CONTENT
+
+For algebra, the fix is a calculator. For law, it is the law itself, organised to be checked: each point of law linked to the case, page and passage that holds it, and to the later cases that followed or overruled it. A knowledge graph of points of law. Then checking a citation is a lookup, not a judgement about how it looks.
+
+And a check grounded in the source does not move every time the model does.
+
+If you are buying or building citation checking, ask one question: what does the check consult? If the answer is the citation alone, it is checking form.
+
+Screenshots from the live model below; link to try it in the comments.
