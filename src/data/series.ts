@@ -88,6 +88,16 @@ export const POSTS: Post[] = [
     tryIt: { label: 'watch study hand over to practice', href: './lab.html?tab=reward-learning-rlvr' },
   },
   {
+    n: 4.7,
+    kind: 'dispatch',
+    date: '14 November 2026',
+    part: 2,
+    title: 'Human on the loop, not in it',
+    idea: "Approving every action an agent takes turns a person into a rubber stamp. A policy gate checks each action outside the model before it runs: on the warehouse agent, 291 approvals become 4 escalations, with nothing wrong let through. What it cannot catch (allowed but worse) and where it is weakest (reading the model's output), set against AWS's automated reasoning and Dogwood.",
+    status: 'draft',
+    tryIt: { label: 'gate the warehouse agent', href: './capstone.html?section=policy' },
+  },
+  {
     n: 1,
     part: 1,
     title: 'The smallest possible transformer',

@@ -14,6 +14,7 @@ import ConceptMap from './ConceptMap'
 import TicTacToe from './TicTacToe'
 import Inspector from './Inspector'
 import ClassifierDemo from './ClassifierDemo'
+import PolicyGate from './PolicyGate'
 import { type Board } from '../data/tictactoe'
 import { BUNDLES, MEASURED } from '../data/modelStats'
 import { useSectionRoute } from '../lib/useSectionRoute'
@@ -39,7 +40,7 @@ type View = 'bundled' | 'live'
 
 // Short, stable section ids. The capstone had none, so nothing on it could be linked from a
 // blog post or the guide; these are the addresses those links use.
-const SECTIONS = ['play', 'inside', 'warehouse', 'train', 'concepts', 'loop-halves', 'embedded', 'recap'] as const
+const SECTIONS = ['play', 'inside', 'warehouse', 'train', 'concepts', 'policy', 'loop-halves', 'embedded', 'recap'] as const
 
 export default function CapstoneApp() {
   const [bundled, setBundled] = useState<Trainer | null>(null)
@@ -377,6 +378,38 @@ export default function CapstoneApp() {
             </p>
           </section>
         )}
+
+        {/* the policy gate: checking the agent from outside, human on the loop */}
+        <section id="policy" className="scroll-mt-6 space-y-3 rounded-lg border border-amber-900/40 bg-slate-900/40 p-4">
+          <h2 className="text-base font-bold text-sky-200">Checking the agent: a human on the loop, not in it</h2>
+          <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
+            The agent above gets about {MEASURED.warehouseHeldOut.pct}% of unseen orders right. That is good, and it is not
+            good enough to let it pack chemicals next to food unsupervised. The usual answer is a person who approves
+            every action: a human <b>in</b> the loop. It works, and it turns the person into the bottleneck, approving
+            hundreds of actions that were fine.
+          </p>
+          <p className="max-w-3xl text-[13px] leading-relaxed text-slate-300">
+            The alternative is a <b>policy gate</b>. Every action the agent asks for is a typed request, and a few rules
+            the model never sees decide ALLOW or DENY <em>before</em> it runs. The rules read the catalogue (which items
+            are fragile, heavy, food or chemical), the very thing the model had to guess. Some rules look at one action;
+            some look back over what the agent has already done in this order. A denied action never happens: the order
+            stops and goes to a person, with the rule it broke. The person writes the rules and reads the escalations. That
+            is a human <b>on</b> the loop. Below, the shipped agent runs every one of the {MEASURED.policyGate.orders} orders
+            through the gate.
+          </p>
+          <PolicyGate trainer={bundled} />
+          <p className="max-w-3xl text-[12px] leading-relaxed text-slate-400">
+            Three things to notice. <b>What the gate catches:</b> anything it has a rule for, whatever model is running,
+            because the check does not move when the model does. <b>What it cannot catch:</b> an allowed action that is
+            merely worse. A longer walk breaks no rule, so it is watched as a number, not blocked. <b>Where it is weakest:</b>{' '}
+            the step that turns the model's text into actions. Flip to the lax parser with five tries per order and a typo
+            walks straight through rules that were never wrong. AWS's automated-reasoning checks on free text carry the
+            same weak point, because a model does that translation. This is why the strongest version of this idea checks{' '}
+            <em>actions</em>, which are already typed, rather than prose. The same gate in front of a hijacked agent is
+            in the{' '}
+            <a className="text-fuchsia-300 hover:underline" href="./harness.html?section=injection">prompt-injection demo</a>.
+          </p>
+        </section>
 
         {/* output → input: the other half of the harness */}
         <section id="loop-halves" className="scroll-mt-6 space-y-2 rounded-lg border border-slate-800 bg-slate-900/40 p-4">

@@ -131,8 +131,13 @@ export default function HarnessApp() {
               surface, like user input. Typed, untrusted output stops a planted <em>instruction</em> — the
               tool switch above — and cannot make a poisoned <em>value</em> true.{' '}
               <b>Authorise consequential actions</b> — a payment, a deletion, an email — instead of letting
-              tool output trigger them. Models trained on natural language are easier to hijack this way
-              than this one. The mechanism is the same.
+              tool output trigger them. The third card is that authorisation done by code: a policy checks
+              every call against what the <em>user</em> asked for before it runs, so it stops the poisoned
+              value as well, and the price is that the job stops and waits for a person. The full version,
+              on an agent with many more actions, is the{' '}
+              <a className="text-fuchsia-300 hover:underline" href="./capstone.html?section=policy">policy gate</a>{' '}
+              on the capstone. Models trained on natural language are easier to hijack this way than this
+              one. The mechanism is the same.
             </Callout>
 
           </Section>

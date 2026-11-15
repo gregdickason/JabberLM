@@ -2,6 +2,7 @@ import type { Model } from '../engine/model'
 import type { CharTokenizer } from '../engine/tokenizer'
 import { DEFAULT_FEATURE_FLAGS } from '../engine/config'
 import { parseToolCall, TOOLS, type ToolName } from '../data/harnessTasks'
+import { HARNESS_RULES, callEvent, decide, harnessContext, responseEvent, type ActionEvent, type Verdict } from '../data/policy'
 
 // The HARNESS: the deterministic code around a (flaky, tiny) model. It lets the
 // model emit a tool call, PARSES it, DISPATCHES to a real JS tool, and treats the
@@ -158,29 +159,40 @@ export interface InjectedStep {
   result: string | null // what the tool actually returned (authoritative)
   observation: string | null // what was fed back into context (attacker-controlled / sanitized)
   injected: boolean // was this step's observation replaced by the attacker payload?
+  /** Set when a policy at the tool boundary refused this call: it never ran. */
+  denied?: Extract<Verdict, { allow: false }>
 }
 export interface InjectedTrace {
   instruction: string
   steps: InjectedStep[]
   done: boolean
   finalAnswer: string | null
+  /** The policy stopped the run and handed it to a person (only when `gate` is on). */
+  escalated?: Extract<Verdict, { allow: false }>
 }
 
 /**
  * The agent loop with an adversarial tool output injected at step `injectAt`. When
  * `sanitize` is on, every observation is reduced to its typed value before being fed
- * back — the "tool output is untrusted data, not instructions" defence.
+ * back — the "tool output is untrusted data, not instructions" defence. When `gate` is on,
+ * every call is first checked by HARNESS_RULES (src/data/policy.ts), outside the model: a
+ * denied call never runs, and the run stops for a person to look at. The provenance rule reads
+ * what each tool REALLY returned, as the gateway recorded it — never the (possibly poisoned)
+ * observation fed back to the model.
  */
 export function runAgentInjected(
   model: Model,
   tok: CharTokenizer,
   instruction: string,
-  opts: { injectAt: number; payload: string; sanitize: boolean },
+  opts: { injectAt: number; payload: string; sanitize: boolean; gate?: boolean },
   maxSteps = 4,
 ): InjectedTrace {
   let ctx = `${instruction.trim()} => `
   const steps: InjectedStep[] = []
   let done = false
+  const policyCtx = harnessContext(instruction)
+  const history: ActionEvent[] = []
+  let escalated: InjectedTrace['escalated']
   for (let s = 0; s < maxSteps; s++) {
     const seg = generateUntil(model, tok, ctx).trim()
     if (/done/i.test(seg)) {
@@ -192,6 +204,16 @@ export function runAgentInjected(
       steps.push({ call: null, error: p.error, result: null, observation: null, injected: false })
       break
     }
+    if (opts.gate) {
+      const ev = callEvent(p.tool, p.args)
+      const v = decide(HARNESS_RULES, ev, history, policyCtx)
+      if (!v.allow) {
+        steps.push({ call: p, error: null, result: null, observation: null, injected: false, denied: v })
+        escalated = v
+        break
+      }
+      history.push(ev)
+    }
     let result: string
     try {
       result = TOOLS[p.tool](p.args)
@@ -199,6 +221,7 @@ export function runAgentInjected(
       steps.push({ call: p, error: 'tool threw on those arguments', result: null, observation: null, injected: false })
       break
     }
+    history.push(responseEvent(p.tool, result)) // the gateway records what the tool REALLY returned
     const injected = s === opts.injectAt
     let observation = injected ? opts.payload : result
     if (opts.sanitize) observation = sanitizeObservation(observation)
@@ -206,7 +229,7 @@ export function runAgentInjected(
     ctx += `${p.tool}(${p.args.join(' ')}) = ${observation} => ` // untrusted observation fed back
   }
   const last = [...steps].reverse().find((st) => st.result != null)
-  return { instruction, steps, done, finalAnswer: last?.result ?? null }
+  return { instruction, steps, done, finalAnswer: last?.result ?? null, escalated }
 }
 
 /** Re-run parsing/dispatch on an arbitrary (possibly corrupted) model output — used

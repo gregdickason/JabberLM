@@ -236,6 +236,25 @@ export const MEASURED = {
   /** Warehouse: unseen baskets (a rule-covering held-out split). */
   warehouseHeldOut: { pct: 90, n: 16, of: 'unseen baskets' },
   warehouseTrain: { pct: 98, n: 0, of: 'baskets it trained on' },
+  /**
+   * The policy gate (src/data/policy.ts) in front of the shipped warehouse agent, every action
+   * checked before it runs (`scripts/measure-policy-gate.ts`). Greedy over all 83 orders: 291
+   * actions, 4 orders escalated, none of them a correct plan (no false alarms) and no wrong plan
+   * let through. A human IN the loop approves 291 actions; ON the loop, reads 4 escalations. The
+   * gate is silent on efficiency: 7 of the 79 completed plans walk further than they need to.
+   * Sampled (temp 0.8, 5 per order, RNG 7): 41 of 415 escalated, 0 wrong through with the
+   * strict reader; the LAX reader lets exactly one through (`get B pak1`, read as box 1).
+   */
+  policyGate: {
+    orders: 83,
+    actions: 291,
+    escalated: 4,
+    wrongThrough: 0,
+    falseAlarms: 0,
+    wastefulPassed: 7,
+    sampled: { runs: 415, escalated: 41, wrongThroughStrict: 0, wrongThroughLax: 1 },
+    of: 'all 83 warehouse orders, the shipped agent, greedy',
+  },
   /** Tic-tac-toe, over ALL 4,520 reachable decision states (`npm run eval:tictactoe`). */
   ttt: {
     states: 4_520,

@@ -4,6 +4,7 @@ import { paramString } from '../lib/urlParams'
 import { Trainer } from '../engine/trainer'
 import { harnessDispatch, runAgent, runAgentInjected, runHarness, type AgentTrace, type HarnessTrace, type InjectedTrace } from './runHarness'
 import { TOOL_EXAMPLES, TWO_STEP_EXAMPLES } from '../data/harnessTasks'
+import { HARNESS_RULES } from '../data/policy'
 import { card } from '../explain/ui'
 
 // The three INTERACTIVE demos of the harness page — a single tool call (§1), the agent
@@ -62,7 +63,12 @@ function InjTraceView({ trace }: { trace: InjectedTrace }) {
               <span className="text-red-300">✗ {s.error}</span>
             )}
           </div>
-          {s.call &&
+          {s.denied && (
+            <div className="mt-0.5 pl-6 text-[11px] text-amber-300">
+              🛑 denied by the policy ({s.denied.rule}): {s.denied.reason} — <b>this call never ran</b>
+            </div>
+          )}
+          {s.call && !s.denied &&
             (s.injected ? (
               <div className="mt-0.5 pl-6 text-[11px] text-rose-300">
                 ⚠️ tool output (attacker-controlled): <span className="text-rose-200">"{s.observation}"</span>
@@ -292,6 +298,7 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
   const [injPayload, setInjPayload] = useState(INJ_ATTACKS[0].payload)
   const [injVuln, setInjVuln] = useState<InjectedTrace | null>(null)
   const [injSafe, setInjSafe] = useState<InjectedTrace | null>(null)
+  const [injGated, setInjGated] = useState<InjectedTrace | null>(null)
 
   function runInjection(payload: string) {
     setInjPayload(payload)
@@ -299,6 +306,8 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
     const opts = { injectAt: 0, payload }
     setInjVuln(runAgentInjected(model, tok, INJ_SCENARIO, { ...opts, sanitize: false }))
     setInjSafe(runAgentInjected(model, tok, INJ_SCENARIO, { ...opts, sanitize: true }))
+    // the policy gate runs on the NAIVE loop: no sanitising, so what stops the attack is the gate alone
+    setInjGated(runAgentInjected(model, tok, INJ_SCENARIO, { ...opts, sanitize: false, gate: true }))
   }
 
   // seed it so the section is never empty on first view
@@ -355,6 +364,47 @@ export function InjectionDemo({ trainer }: { trainer: Trainer }) {
               {injSafe.steps[1] && offPlan(injSafe.steps[1], 1) ? '(numbers still poisoned — see below)' : '(stayed on plan)'}
             </div>
           </div>
+          {injGated && (
+            <div className={card + ' border-amber-900/60 sm:col-span-2'}>
+              <div className="mb-1.5 text-[11px] font-semibold text-amber-300">
+                ✓ policy at the tool boundary — the naive loop again, but every call is checked <em>before it runs</em>,
+                by code the model never sees
+              </div>
+              <InjTraceView trace={injGated} />
+              <div className="mt-2 border-t border-slate-800 pt-1.5 text-[11px] text-slate-400">
+                {injGated.escalated ? (
+                  <>
+                    <span className="font-bold text-amber-300">stopped and sent to a person</span> — the job is not
+                    finished, but nothing the attacker asked for happened. The person sees one line: which rule, and why.
+                  </>
+                ) : (
+                  <>
+                    final: <span className="font-mono font-bold text-emerald-300">{injGated.finalAnswer ?? '—'}</span> (every
+                    call passed)
+                  </>
+                )}
+              </div>
+              <details className="mt-2 text-[11px] text-slate-400">
+                <summary className="cursor-pointer text-slate-300">the two rules (Dogwood-style; a sketch, not real Dogwood)</summary>
+                {HARNESS_RULES.map((r) => (
+                  <div key={r.id} className="mt-2">
+                    <div>
+                      <span className="text-amber-300">{r.id}</span> · {r.kind} · {r.label}
+                    </div>
+                    <pre className="mt-1 overflow-x-auto rounded bg-slate-950 p-2 text-[11px] leading-snug text-slate-300">{r.source}</pre>
+                  </div>
+                ))}
+                <p className="mt-2">
+                  Both rules read the <b>user's request</b> and the <b>gateway's own record</b> of what each tool
+                  really returned, never the text fed back to the model, which is why a poisoned number fails too:{' '}
+                  <span className="font-mono">9 9 9</span> never came from the request or from any tool. Where it
+                  stops working: if the attacker controls a tool whose real output the next step is <em>supposed</em>{' '}
+                  to use (a fetched web page), the provenance rule passes it. That needs tracking which sources are
+                  trusted, not just where a value came from.
+                </p>
+              </details>
+            </div>
+          )}
         </div>
       )}
 

@@ -389,6 +389,15 @@ export const TERMS: Term[] = [
       'The part of the harness that validates what the model proposed before anything acts on it. On the capstone you can switch it off and watch the game break.',
     see: { label: 'switch it off', href: './capstone.html?section=play' },
   },
+  {
+    id: 'policy-gate',
+    term: 'Policy gate',
+    group: 'Agents and tools',
+    short:
+      "Rules outside the model that allow or deny each action an agent asks for, before it runs. A denied action never happens and goes to a person, so a human can be on the loop (writing rules, reading escalations) instead of in it (approving every action).",
+    more: "Some rules look at one action, others at what the agent has already done. It catches what it has a rule for, whichever model is running, and nothing that is allowed but merely worse. AWS's AgentCore Policy and its open-source language Dogwood are a production version of the idea.",
+    see: { label: 'gate the warehouse agent', href: './capstone.html?section=policy' },
+  },
 
   // ---- Cost and serving ---------------------------------------------------
   {

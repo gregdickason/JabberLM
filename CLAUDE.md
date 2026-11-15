@@ -352,6 +352,23 @@ you are testing a RANKING claim or a PROBABILITY claim; see the header comment i
 `CalibrationSection.tsx` and `MEASURED.ttt.confidence.ties`.) Corpora in
 `src/data/automata.ts`; spec in `docs/OPUS-LIMITS-PROMPT.md`.)
 
+**A policy gate sits in front of both agent surfaces** (`src/data/policy.ts`, pure, tested in
+`src/data/__tests__/policy.test.ts`; numbers in `MEASURED.policyGate` via `scripts/measure-policy-gate.ts`).
+It is the shape of AWS's AgentCore Policy / Dogwood — typed actions, rules OUTSIDE the model, ALLOW/DENY
+before the action runs, stateless rules plus history rules — as a teaching sketch: rules are TS
+predicates, the `source` strings are Dogwood-STYLE display only (never call them real Dogwood),
+forbid-only, nothing formally analysed. `capstone.html?section=policy` (`PolicyGate.tsx`) runs the shipped
+warehouse agent over all 83 orders: greedy → 291 actions, **4 escalated, 0 wrong through, 0 false
+alarms**, and 7 finished orders that walk further than needed (the allowed-but-worse class no rule can
+catch — an outcome metric for the human ON the loop). Sampled (temp 0.8 ×5, RNG 7) the **lax** reader
+lets exactly one wrong plan through (`get B pak1` read as box 1); strict stops it. Keep that toggle — the
+weak point is translating model output into actions, the same weak point AWS's text-based Automated
+Reasoning checks have. The harness injection demo has a third card (`runAgentInjected(..., {gate: true})`):
+a scope rule and a provenance rule (args must come from the request or the gateway's RECORDED tool
+output, never the observation fed to the model) stop all three attacks, including the poisoned value that
+sanitising cannot; the honest gap (a tool whose real output is attacker-controlled passes provenance) is on
+the page. Research and sources: `docs/blog/research-automated-reasoning.md`.
+
 **The capstone closes on `#embedded`, the commercial case.** `ClassifierDemo` + `src/data/packing.ts`
 (pure, unit-tested): **960** grocery-order messages over **eight** routes, generated from per-route
 templates crossed with a product list, `note <msg> => <digit>`, read as a softmax over the eight
