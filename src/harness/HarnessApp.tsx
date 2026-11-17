@@ -3,13 +3,14 @@ import { Trainer } from '../engine/trainer'
 import { Section, Callout } from '../explain/ui'
 import { AgentLoopDemo, FlakyDemo, InjectionDemo, ToolCallDemo, loadHarnessModel } from './demos'
 import AdderSection from './AdderSection'
+import ResearchIntegrityDemo from './ResearchIntegrityDemo'
 import SiteNav from '../components/SiteNav'
 import { useHashScroll } from '../components/useHashScroll'
 import { useSectionRoute } from '../lib/useSectionRoute'
 
 // Short, stable section ids for deep links. The long heading slugs these replaced are still
 // honoured (the capstone and the guide published some of them), see HARNESS_ALIASES.
-const SECTIONS = ['tools', 'robust', 'loop', 'injection', 'reasoning-loop', 'where-this-leaves-you'] as const
+const SECTIONS = ['tools', 'robust', 'loop', 'injection', 'reasoning-loop', 'research-integrity', 'where-this-leaves-you'] as const
 const HARNESS_ALIASES = {
   'ask-it-to-do-something-watch-the-harness-work': 'tools',
   'why-harnesses-need-to-be-robust': 'robust',
@@ -144,7 +145,27 @@ export default function HarnessApp() {
 
           <AdderSection n={5} />
 
-          <Section n={6} id="where-this-leaves-you" title="Where this leaves you">
+          <Section n={6} id="research-integrity" title="Research integrity — check evidence, escalate concerns">
+            <p>
+              Could an independent gate help screen research papers? These handwritten examples show
+              what a few checks can establish: a citation disagrees with a supplied reference snapshot,
+              participant counts conflict, or a required data declaration is missing. An illustrative
+              research-integrity workflow then combines simulated image, statistical, and provenance checks into
+              an editorial case and a proposed regression test.
+              <b> No model is reading or judging these papers.</b> The bundled models were trained on
+              other tasks; this is deterministic JavaScript operating on synthetic structured inputs.
+            </p>
+            <ResearchIntegrityDemo />
+            <Callout title="What a screening gate can establish">
+              Agreement with these checks means only that no issue was detected. Fabricated data can
+              be internally consistent. A listed dataset may not exist. A real citation may not support
+              the claim. A research-integrity specialist must investigate concerns; missing evidence
+              keeps screening incomplete. This demonstration does not detect image manipulation,
+              verify scientific claims, or determine misconduct.
+            </Callout>
+          </Section>
+
+          <Section n={7} id="where-this-leaves-you" title="Where this leaves you">
             <p>
               A harness does three separable jobs, all three on this page: it <b>checked</b> what the
               model produced, it <b>ran the tool</b> the model asked for, and in the adder it{' '}
